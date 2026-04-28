@@ -16,10 +16,19 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-# Comando vem do CMD do Dockerfile. `startCommand` aqui sobrescreve —
-# manter consistente. Se mudar pra usar só o CMD do Dockerfile, remova
-# essa linha.
-startCommand = "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port $PORT"
+# `startCommand` é executado pelo Railway runtime SEM wrapping de
+# shell — variáveis tipo `$PORT` chegam literais pro processo. Por
+# isso a versão antiga (sem `sh -c`) quebrava com:
+#   Error: Invalid value for '--port': '$PORT' is not a valid integer.
+#
+# Soluções:
+#  (a) usar `sh -c "..."` aqui — força shell pra expandir;
+#  (b) remover a linha e deixar Railway usar o `CMD` do Dockerfile.
+#
+# Ficamos com (a) pra manter `railway.toml` como fonte única de
+# verdade do startup. Se um dia mudar pra (b), remova a linha
+# `startCommand` inteira — o `CMD` do Dockerfile já chama `sh -c`.
+startCommand = "sh -c 'uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port ${PORT:-8000}'"
 healthcheckPath = "/admin/health/full"
 healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"

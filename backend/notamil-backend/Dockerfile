@@ -32,5 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia o resto do código (.dockerignore filtra data/, __pycache__/, etc.).
 COPY . .
 
-# Railway injeta $PORT em runtime. CMD em shell form pra expandir a var.
-CMD uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port ${PORT:-8000}
+# Railway injeta $PORT em runtime. Exec form com `sh -c` explícito
+# pra garantir expansão de variável mesmo se Railway sobrescrever o
+# entrypoint ou executar o CMD sem shell de wrapping. Sem `sh -c`,
+# `$PORT` chegaria literal pro uvicorn (Click) e o erro seria
+# `Invalid value for '--port': '$PORT' is not a valid integer`.
+CMD ["sh", "-c", "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port ${PORT:-8000}"]
