@@ -167,6 +167,7 @@ export function TurmaDetailView({ initial }: Props) {
         onClose={() => setModalOpen(false)}
         turmaId={data.id}
         turmaCodigo={data.codigo}
+        turmaSerie={data.serie}
         onCriada={recarregar}
       />
     </div>

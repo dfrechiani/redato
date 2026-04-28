@@ -64,7 +64,7 @@ def test_humanize_canonical():
         "Proposta de intervenção vaga"
     assert humanize_detector("repeticao_lexical") == "Repetição lexical"
     assert humanize_detector("DETECTOR_andaime_copiado") == \
-        "Andaime copiado do enunciado"
+        "Andaime copiado"
     return "humanize: detectores canônicos retornam nome oficial"
 
 

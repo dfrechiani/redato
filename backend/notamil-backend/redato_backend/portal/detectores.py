@@ -20,6 +20,12 @@ Convenções:
 - `severidade`: 'alta' | 'media' | 'baixa'. Indica o peso pedagógico —
   alta sinaliza problema que invalida competência inteira, média afeta
   parcialmente, baixa é nuance.
+  - Mapeamento UI: `critical` ↔ `alta`; `warning` ↔ `media`;
+    `info` ↔ `baixa`. O frontend pode renomear; o catálogo mantém
+    PT-BR pra alinhar com docs pedagógicas.
+- `descricao`: texto curto explicativo (1 frase) mostrado ao professor
+  no dashboard. Default vazio pra retrocompatibilidade dos detectores
+  M7 que ainda não foram revisados pedagogicamente.
 """
 from __future__ import annotations
 
@@ -40,6 +46,9 @@ class DetectorCanonico:
     nome_humano: str
     categoria: str
     severidade: str
+    # M9 — texto pedagógico curto. Vazio em detectores M7 não
+    # revisados (fallback OK; UI pode esconder a coluna se vazia).
+    descricao: str = ""
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -78,8 +87,11 @@ _CANONICOS: List[DetectorCanonico] = [
                      "argumentativo", "media"),
     DetectorCanonico("generalizacao_indevida", "Generalização indevida",
                      "argumentativo", "media"),
-    DetectorCanonico("andaime_copiado", "Andaime copiado do enunciado",
-                     "argumentativo", "alta"),
+    DetectorCanonico(
+        "andaime_copiado", "Andaime copiado",
+        "argumentativo", "alta",
+        "Aluno copiou os títulos da estrutura sugerida (texto vira lista).",
+    ),
 
     # — Linguístico —
     DetectorCanonico("repeticao_lexical", "Repetição lexical",
@@ -108,6 +120,106 @@ _CANONICOS: List[DetectorCanonico] = [
                      "forma", "baixa"),
     DetectorCanonico("rasura_excessiva", "Rasura excessiva",
                      "forma", "baixa"),
+
+    # ──────────────────────────────────────────────────────────────────
+    # M9 — flags emitidas pelos tools de missão (espelhando schemas
+    # em `redato_backend/missions/schemas.py`). Severidade default é
+    # `media` ("warning" na UI); `alta` ("critical") fica reservada
+    # pra problemas que zeram/cap-am a competência inteira.
+    # ──────────────────────────────────────────────────────────────────
+
+    # — foco_c3 (OF10) — submit_foco_c3.flags —
+    # `andaime_copiado` já está cadastrado acima (categoria
+    # argumentativo, severidade alta). Aqui só os 2 flags novos.
+    DetectorCanonico(
+        "tese_generica", "Tese genérica",
+        "argumentativo", "media",
+        "A tese é ampla demais — cabe em quase qualquer tema.",
+    ),
+    DetectorCanonico(
+        "exemplo_redundante", "Exemplo redundante",
+        "argumentativo", "media",
+        "O exemplo repete a premissa em vez de trazer evidência nova.",
+    ),
+
+    # — foco_c4 (OF11) — submit_foco_c4.flags —
+    DetectorCanonico(
+        "conectivo_relacao_errada", "Conectivo com relação errada",
+        "linguistico", "media",
+        "Conectivo introduz relação lógica diferente da pretendida "
+        "(ex.: 'portanto' usado como causa).",
+    ),
+    DetectorCanonico(
+        "conectivo_repetido", "Conectivo repetido",
+        "linguistico", "media",
+        "Mesmo conectivo aparece três ou mais vezes, empobrecendo "
+        "a coesão.",
+    ),
+    DetectorCanonico(
+        "salto_logico", "Salto lógico",
+        "argumentativo", "media",
+        "Cadeia argumentativa pula elos entre premissa e conclusão.",
+    ),
+    DetectorCanonico(
+        "palavra_dia_uso_errado", "Palavra do dia com uso errado",
+        "linguistico", "media",
+        "Palavra do dia ('premissa', 'mitigar', 'exacerbar') usada "
+        "com sentido inadequado.",
+    ),
+
+    # — foco_c5 (OF12) — submit_foco_c5.flags —
+    DetectorCanonico(
+        "proposta_vaga_constatatoria", "Proposta vaga ou constatatória",
+        "estrutural", "media",
+        "Proposta apenas constata o problema, sem ação concreta.",
+    ),
+    DetectorCanonico(
+        "proposta_desarticulada", "Proposta desarticulada",
+        "estrutural", "media",
+        "Proposta não dialoga com a discussão construída na argumentação.",
+    ),
+    DetectorCanonico(
+        "agente_generico", "Agente genérico na proposta",
+        "estrutural", "media",
+        "Agente da proposta é vago ('o governo', 'a sociedade') "
+        "sem precisar quem age.",
+    ),
+    DetectorCanonico(
+        "verbo_fraco", "Verbo fraco na proposta",
+        "estrutural", "media",
+        "Verbo da ação é vago ('combater', 'melhorar') sem detalhar "
+        "como a intervenção acontece.",
+    ),
+    DetectorCanonico(
+        "desrespeito_direitos_humanos", "Desrespeito aos direitos humanos",
+        "estrutural", "alta",
+        "Proposta viola direitos humanos — zera C5 segundo INEP.",
+    ),
+
+    # — completo_parcial (OF13) — submit_completo_parcial.flags —
+    DetectorCanonico(
+        "topico_e_pergunta", "Tópico e pergunta",
+        "estrutural", "media",
+        "Parágrafo abre com tópico frasal seguido de pergunta retórica "
+        "— andaime de roteiro.",
+    ),
+    DetectorCanonico(
+        "repertorio_de_bolso", "Repertório de bolso",
+        "argumentativo", "media",
+        "Repertório clichê reutilizável (ex.: Allan Kardec) sem "
+        "encaixe específico no tema.",
+    ),
+    DetectorCanonico(
+        "argumento_superficial", "Argumento superficial",
+        "argumentativo", "media",
+        "Argumento tangencia o tema sem aprofundar a relação causal.",
+    ),
+    DetectorCanonico(
+        "coesao_perfeita_sem_progressao", "Coesão perfeita sem progressão",
+        "linguistico", "media",
+        "Conectivos corretos mas o texto não avança — paráfrases "
+        "encadeadas no lugar de progressão argumentativa.",
+    ),
 ]
 
 

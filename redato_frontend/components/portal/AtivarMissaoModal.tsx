@@ -17,6 +17,9 @@ interface Props {
   onClose: () => void;
   turmaId: string;
   turmaCodigo: string;
+  /** Série da turma (1S/2S/3S). Filtra dropdown de missões: turma 1S
+   *  só lista oficinas 1S etc. */
+  turmaSerie: string;
   /** Disparado após criar (com sucesso). Use pra recarregar a turma. */
   onCriada?: (atividadeId: string) => void;
 }
@@ -40,6 +43,7 @@ export function AtivarMissaoModal({
   onClose,
   turmaId,
   turmaCodigo,
+  turmaSerie,
   onCriada,
 }: Props) {
   const router = useRouter();
@@ -58,11 +62,18 @@ export function AtivarMissaoModal({
     if (!open) return;
     let cancelled = false;
     setLoadingMissoes(true);
-    listarMissoes()
+    // Filtra catálogo pela série da turma — turma 1S não deve ver
+    // oficinas 2S/3S no dropdown.
+    listarMissoes(turmaSerie)
       .then((ms) => {
         if (cancelled) return;
         setMissoes(ms);
-        if (ms.length > 0 && !missaoId) setMissaoId(ms[0].id);
+        // Auto-seleciona primeira missão DISPONÍVEL pra ativação
+        // (modos sem schema aparecem na lista mas como `disabled`).
+        if (!missaoId) {
+          const primeiraDisponivel = ms.find((m) => m.disponivel_para_ativacao);
+          if (primeiraDisponivel) setMissaoId(primeiraDisponivel.id);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -74,7 +85,7 @@ export function AtivarMissaoModal({
     return () => {
       cancelled = true;
     };
-  }, [open, missaoId]);
+  }, [open, missaoId, turmaSerie]);
 
   // ESC fecha
   useEffect(() => {
@@ -191,15 +202,34 @@ export function AtivarMissaoModal({
               className="block w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime"
             >
               {loadingMissoes && <option>Carregando…</option>}
-              {missoes.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {formatMissaoLabel({
-                    oficina_numero: m.oficina_numero,
-                    titulo: m.titulo,
-                    modo_correcao: m.modo_correcao,
-                  })}
-                </option>
-              ))}
+              {missoes.map((m) => {
+                const baseLabel = formatMissaoLabel({
+                  oficina_numero: m.oficina_numero,
+                  titulo: m.titulo,
+                  modo_correcao: m.modo_correcao,
+                });
+                // Modos sem schema (foco_c1/c2 hoje) aparecem na lista
+                // pra dar visibilidade pedagógica, mas ficam bloqueados
+                // até a rubrica ser implementada (Op. B do plano M9).
+                const indisponivel = !m.disponivel_para_ativacao;
+                const label = indisponivel
+                  ? `${baseLabel} — em desenvolvimento`
+                  : baseLabel;
+                return (
+                  <option
+                    key={m.id}
+                    value={m.id}
+                    disabled={indisponivel}
+                    title={
+                      indisponivel
+                        ? "Rubrica em desenvolvimento. Disponível em breve."
+                        : undefined
+                    }
+                  >
+                    {label}
+                  </option>
+                );
+              })}
             </select>
           </FormField>
 

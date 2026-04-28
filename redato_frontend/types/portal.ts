@@ -12,6 +12,10 @@ export interface Missao {
   oficina_numero: number;
   titulo: string;
   modo_correcao: string;
+  /** false = modo está no catálogo (ex.: foco_c2 da 2S) mas a rubrica
+   *  ainda não tem schema/prompt em código. Backend bloqueia ativação;
+   *  frontend desabilita opção no dropdown. */
+  disponivel_para_ativacao: boolean;
 }
 
 export interface TurmaListItem {

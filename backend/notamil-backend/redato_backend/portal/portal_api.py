@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
@@ -34,8 +34,27 @@ from redato_backend.portal.models import (
     AlunoTurma, Atividade, Envio, Escola, Interaction, Missao, PdfGerado,
     Professor, Turma,
 )
+from redato_backend.missions.schemas import TOOLS_BY_MODE
 from redato_backend.whatsapp import messages as MSG
 from redato_backend.whatsapp import portal_link as PL
+
+
+# Modos cuja rubrica/prompt já existe em código — só esses podem ser
+# ativados como atividade no portal. Mantém em sincronia com:
+#   - `redato_backend/missions/schemas.py:TOOLS_BY_MODE` (foco_c3,
+#     foco_c4, foco_c5, completo_parcial)
+#   - pipeline v2 legado em `dev_offline.py` que cobre `completo`
+#     (OF14, modo full ENEM)
+# Modos novos (foco_c1, foco_c2) entram aqui quando ganharem schema/
+# prompt — ver `docs/redato/v3/series_oficinas_canonico.md`.
+_MODOS_COM_PROMPT: set[str] = set(TOOLS_BY_MODE.keys()) | {"completo"}
+
+
+def _modo_disponivel(modo: str) -> bool:
+    """True se o modo tem rubrica/prompt implementado e pode virar
+    atividade real. Modos sem prompt aparecem no catálogo (linha em
+    `missoes`) mas o portal bloqueia ativação até o schema chegar."""
+    return modo in _MODOS_COM_PROMPT
 
 
 router = APIRouter(prefix="/portal", tags=["portal"])
@@ -324,27 +343,43 @@ class MissaoSchema(BaseModel):
     oficina_numero: int
     titulo: str
     modo_correcao: str
+    # `False` = modo está no catálogo de séries (ex.: foco_c1/c2 da 2S)
+    # mas ainda não tem schema/prompt — frontend desabilita opção no
+    # dropdown até a rubrica ser definida. Decisão M9 (Opção B): em vez
+    # de esconder, mostrar bloqueado pra dar visibilidade pedagógica.
+    disponivel_para_ativacao: bool
 
 
 @router.get("/missoes", response_model=List[MissaoSchema])
 def listar_missoes(
+    serie: Optional[str] = Query(
+        None, description="Filtra catálogo por série (1S, 2S, 3S).",
+        pattern="^(1S|2S|3S)$",
+    ),
     auth: AuthenticatedUser = Depends(get_current_user),
 ) -> List[MissaoSchema]:
     """Catálogo de missões ativas — pra dropdown no modal de ativar missão.
 
+    `serie` opcional filtra pelo segmento (1S/2S/3S). Sem filtro, retorna
+    todas as ativas. Frontend usa o filtro pra mostrar só missões
+    compatíveis com a série da turma — turma 1S não deve ver oficinas 2S
+    no dropdown.
+
     Retorna ordenado por `oficina_numero`.
     """
     with Session(get_engine()) as session:
+        stmt = select(Missao).where(Missao.ativa.is_(True))
+        if serie:
+            stmt = stmt.where(Missao.serie == serie)
         rows = session.execute(
-            select(Missao)
-            .where(Missao.ativa.is_(True))
-            .order_by(Missao.oficina_numero)
+            stmt.order_by(Missao.oficina_numero)
         ).scalars().all()
     return [
         MissaoSchema(
             id=str(m.id), codigo=m.codigo, serie=m.serie,
             oficina_numero=m.oficina_numero, titulo=m.titulo,
             modo_correcao=m.modo_correcao,
+            disponivel_para_ativacao=_modo_disponivel(m.modo_correcao),
         )
         for m in rows
     ]
@@ -613,6 +648,20 @@ def criar_atividade(
         missao = session.get(Missao, body.missao_id)
         if missao is None or not missao.ativa:
             raise HTTPException(status_code=404, detail="Missão não encontrada")
+
+        # Defesa em profundidade: o frontend já desabilita missões sem
+        # rubrica no dropdown, mas alguém com curl bypassaria. Bloqueia
+        # aqui também — se chegou request com modo sem schema, é bug
+        # ou intenção maliciosa.
+        if not _modo_disponivel(missao.modo_correcao):
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Missão '{missao.codigo}' usa modo "
+                    f"'{missao.modo_correcao}' cuja rubrica ainda está "
+                    "em desenvolvimento. Disponível em breve."
+                ),
+            )
 
         # Detecta duplicata: atividade não-encerrada (ativa OU agendada)
         # da mesma turma+missão.
@@ -1886,7 +1935,6 @@ def evolucao_aluno(
 # M8 — PDF (geração + histórico + download)
 # ════════════════════════════════════════════════════════════════════════
 
-from fastapi import Query  # noqa: E402
 from fastapi.responses import FileResponse  # noqa: E402
 
 from redato_backend.portal import pdf_generator as PDF  # noqa: E402

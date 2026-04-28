@@ -166,9 +166,53 @@ migration. Decisão final:
 Custo: precisa lembrar de manter doc + seed sincronizados. Aceitável
 porque seed é idempotente e roda em deploy.
 
+## Pendente: schemas foco_c1 + foco_c2
+
+A migração `e9f1c8a2b4d5` (2026-04-27) liberou os modos `foco_c1` e
+`foco_c2` no `CHECK` de `missoes.modo_correcao`, e a migração
+`f0a1b2c3d4e5` (2026-04-28) seedou 7 missões da 2S — **2 delas usam
+`foco_c2`** (OF04 Fontes e Citações; OF06 Da Notícia ao Artigo).
+
+Mas:
+
+- `redato_backend/missions/schemas.py:TOOLS_BY_MODE` **só conhece**
+  `foco_c3`, `foco_c4`, `foco_c5`, `completo_parcial`.
+- Não existe tool/prompt definido para `foco_c1` nem `foco_c2`. Se um
+  professor ativasse uma atividade `foco_c2` agora, o `grade_mission`
+  daria `KeyError`.
+
+**Bloqueio temporário no portal (Opção B) implementado em 2026-04-28**:
+
+- `GET /portal/missoes` retorna `disponivel_para_ativacao: bool` por
+  missão. `False` para qualquer modo fora de
+  `set(TOOLS_BY_MODE.keys()) | {"completo"}`.
+- `AtivarMissaoModal` (frontend) renderiza essas opções desabilitadas
+  no dropdown, com tooltip *"Rubrica em desenvolvimento. Disponível
+  em breve."*.
+- `POST /portal/atividades` rejeita com `409` se chegar `missao_id`
+  cujo modo está bloqueado (defesa em profundidade contra bypass via
+  curl).
+
+**Trabalho pendente — fora desta entrega**:
+
+- **C1 (norma culta)**: definir flags candidatas (ex.: regência,
+  concordância, ortografia grave) — pendente de validação pedagógica.
+- **C2 (compreensão da proposta)**: definir flags candidatas (ex.:
+  tangenciamento, fuga ao tema, abordagem incompleta) — pendente.
+- Implementar `FOCO_C1_TOOL` e `FOCO_C2_TOOL` em `missions/schemas.py`
+  + entradas em `TOOLS_BY_MODE` + `MissionMode` enum + roteamento por
+  `activity_id` em `missions/router.py`.
+- Adicionar prompts e few-shots (`missions/prompts.py`).
+- Validar com 1-2 cursinhos parceiros antes de remover bloqueio.
+
+Quando ambos schemas chegarem, basta adicionar os modos a
+`TOOLS_BY_MODE` — o helper `_modo_disponivel` em `portal_api.py`
+recalcula automaticamente e o bloqueio cai.
+
 ## Histórico de mudanças
 
 | Data | Mudança |
 |---|---|
+| 2026-04-28 | M9 — seed das 7 missões 2S (`f0a1b2c3d4e5`); endpoint `/portal/missoes` ganha `?serie=` + `disponivel_para_ativacao`; bloqueio temporário pra modos sem schema (foco_c1/c2). |
 | 2026-04-27 | M8 — adiciona `foco_c1`, `foco_c2` ao enum (migração e9f1c8a2b4d5). Documenta template pra 2S/3S. |
 | 2026-04-27 | M4 — cria tabela `missoes` com 5 missões REJ 1S (oficinas 10-14). |

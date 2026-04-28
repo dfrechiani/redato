@@ -40,11 +40,11 @@ const COORD = {
 };
 
 const MISSOES = [
-  { id: "m1", codigo: "RJ1·OF10·MF", serie: "1S", oficina_numero: 10, titulo: "Jogo Dissertativo", modo_correcao: "foco_c3" },
-  { id: "m2", codigo: "RJ1·OF11·MF", serie: "1S", oficina_numero: 11, titulo: "Conectivos Argumentativos", modo_correcao: "foco_c4" },
-  { id: "m3", codigo: "RJ1·OF12·MF", serie: "1S", oficina_numero: 12, titulo: "Leilão de Soluções", modo_correcao: "foco_c5" },
-  { id: "m4", codigo: "RJ1·OF13·MF", serie: "1S", oficina_numero: 13, titulo: "Construindo Argumentos", modo_correcao: "completo_parcial" },
-  { id: "m5", codigo: "RJ1·OF14·MF", serie: "1S", oficina_numero: 14, titulo: "Jogo de Redação", modo_correcao: "completo" },
+  { id: "m1", codigo: "RJ1·OF10·MF", serie: "1S", oficina_numero: 10, titulo: "Jogo Dissertativo", modo_correcao: "foco_c3", disponivel_para_ativacao: true },
+  { id: "m2", codigo: "RJ1·OF11·MF", serie: "1S", oficina_numero: 11, titulo: "Conectivos Argumentativos", modo_correcao: "foco_c4", disponivel_para_ativacao: true },
+  { id: "m3", codigo: "RJ1·OF12·MF", serie: "1S", oficina_numero: 12, titulo: "Leilão de Soluções", modo_correcao: "foco_c5", disponivel_para_ativacao: true },
+  { id: "m4", codigo: "RJ1·OF13·MF", serie: "1S", oficina_numero: 13, titulo: "Construindo Argumentos", modo_correcao: "completo_parcial", disponivel_para_ativacao: true },
+  { id: "m5", codigo: "RJ1·OF14·MF", serie: "1S", oficina_numero: 14, titulo: "Jogo de Redação", modo_correcao: "completo", disponivel_para_ativacao: true },
 ];
 
 const TURMA_PROF = {
@@ -461,7 +461,7 @@ const server = createServer(async (req, res) => {
       top_detectores: [
         { codigo: "proposta_vaga", nome: "Proposta de intervenção vaga", contagem: 4 },
         { codigo: "repeticao_lexical", nome: "Repetição lexical", contagem: 3 },
-        { codigo: "andaime_copiado", nome: "Andaime copiado do enunciado", contagem: 1 },
+        { codigo: "andaime_copiado", nome: "Andaime copiado", contagem: 1 },
       ],
       outros_detectores: 2,
       alunos_em_risco: [

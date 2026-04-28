@@ -75,8 +75,12 @@ async function fetchJson<T>(path: string, opts: FetchOpts = {}): Promise<T> {
 // Missões
 // ──────────────────────────────────────────────────────────────────────
 
-export async function listarMissoes(): Promise<Missao[]> {
-  return fetchJson<Missao[]>("/api/portal/missoes");
+export async function listarMissoes(serie?: string): Promise<Missao[]> {
+  // Filtro opcional por série (1S/2S/3S). Frontend usa pra restringir
+  // dropdown do AtivarMissaoModal à série da turma — turma 1S não vê
+  // missões 2S/3S e vice-versa.
+  const qs = serie ? `?serie=${encodeURIComponent(serie)}` : "";
+  return fetchJson<Missao[]>(`/api/portal/missoes${qs}`);
 }
 
 // ──────────────────────────────────────────────────────────────────────
