@@ -1,0 +1,40 @@
+# Reduz contexto do Docker build — sem isso o `COPY . .` levaria
+# data/ runtime, caches, virtualenvs, etc.
+
+# Estado de runtime
+data/portal/
+data/whatsapp/
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.dev_offline_state.pkl
+
+# Editor / SO
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Tests / docs (opcional, reduzem imagem)
+.github/
+docker-compose.yml
+
+# Builders alternativos (não usados quando Dockerfile existe)
+nixpacks.toml
+railpack.json
+
+# Backup
+backups/
+data/portal/backups/

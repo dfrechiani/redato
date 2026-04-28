@@ -1,18 +1,24 @@
 # Railway config — backend (portal + bot unificados).
 #
-# Caso prefira sobrepor a auto-detecção do Railway, este arquivo
-# explicita builder, comando, healthcheck e restart policy.
+# Builder = DOCKERFILE: usamos `Dockerfile` manual porque Nixpacks/
+# Railpack tinham problemas reproduzíveis pra fazer bootstrap do pip
+# em derivações Nix do Python. Dockerfile é determinístico —
+# `python:3.12-slim` já traz pip funcional.
 #
-# Pra deploy múltiplo (frontend + backend + Postgres), prefere-se 1
-# arquivo por serviço (cada com seu railway.toml na pasta raiz do
-# serviço). Railway lê esse arquivo do diretório que você apontar como
-# "Root Directory" do serviço.
+# `nixpacks.toml` e `railpack.json` ficam no repo só pra referência
+# histórica do que foi tentado. Não são lidos quando builder=DOCKERFILE.
+#
+# Railway lê este `railway.toml` do diretório apontado como
+# "Root Directory" do serviço (`backend/notamil-backend`).
 
 [build]
-builder = "NIXPACKS"
-nixpacksConfigPath = "nixpacks.toml"
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
 
 [deploy]
+# Comando vem do CMD do Dockerfile. `startCommand` aqui sobrescreve —
+# manter consistente. Se mudar pra usar só o CMD do Dockerfile, remova
+# essa linha.
 startCommand = "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port $PORT"
 healthcheckPath = "/admin/health/full"
 healthcheckTimeout = 30
