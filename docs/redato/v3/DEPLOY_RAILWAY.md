@@ -238,9 +238,17 @@ Checklist:
 | `TWILIO_ACCOUNT_SID` | Twilio Console → Account | `AC...`. |
 | `TWILIO_AUTH_TOKEN` | Twilio Console → Account | Esconda — nunca commit. |
 | `TWILIO_WHATSAPP_NUMBER` | Sandbox: `whatsapp:+14155238886` | Sem o "whatsapp:" pra alguns helpers. |
-| `TWILIO_VALIDATE_SIGNATURE` | `1` | **Crucial em prod**. Valida HMAC do webhook. |
+| `TWILIO_VALIDATE_SIGNATURE` | `0` no boot, depois `1` | Inicia em `0` pra debugar webhook com `curl`. **Promove pra `1` só após smoke E2E passar** — ver [Sequência Twilio](#sequência-twilio--de-0-pra-1). |
 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Pro grading real. |
 | `REDATO_DEV_OFFLINE` | `0` | **0 em prod**. 1 em dev local. |
+| `LOG_LEVEL` | `INFO` | `DEBUG` se precisar diagnosticar. `WARNING` em prod estável reduz volume de logs. |
+
+> **Não setar `ALEMBIC_AUTO_UPGRADE` em produção.** Manter a variável
+> ausente. Migrations rodam **sempre manualmente** via shell do
+> Railway — auto-upgrade no boot causa race condition em deploys
+> simultâneos (2 dynos tentando aplicar a mesma migration → lock no
+> Postgres → 1 deploy fica preso). Comando manual em
+> [Sequência de migration](#sequência-de-migration-manual).
 
 ### Frontend
 
@@ -261,6 +269,81 @@ openssl rand -hex 16
 # Senha de teste (bcrypt)
 python -c 'from redato_backend.portal.auth.password import hash_senha; print(hash_senha("teste123"))'
 ```
+
+### Sequência Twilio — de 0 pra 1
+
+Subimos `TWILIO_VALIDATE_SIGNATURE=0` no primeiro deploy. Sem isso,
+você não consegue testar o webhook com `curl` — Twilio assina cada
+request com HMAC e o handler rejeita 403 qualquer coisa que não vem
+do Twilio real.
+
+```
+1. Deploy backend com TWILIO_VALIDATE_SIGNATURE=0
+2. Smoke E2E (sandbox real do celular):
+   a. Manda "join <duas-palavras>" pro número Twilio sandbox.
+   b. Aguarda confirmação do Twilio.
+   c. Manda código de turma → bot pede nome.
+   d. Manda nome → bot confirma cadastro.
+   e. Manda foto + número da missão → bot processa via Claude e
+      responde nota.
+3. Confere que cadastro chegou em `alunos_turma` (Postgres) e que
+   `interactions` + `envios` tem o envio com nota.
+4. Confere logs do backend pra ver se webhook foi chamado pelo
+   Twilio real (não apenas por curls de teste).
+5. Promove a variável: TWILIO_VALIDATE_SIGNATURE=1.
+6. Re-deploy (Railway redeploya automaticamente ao mudar env).
+7. Smoke novamente — passos 2.c-e. Se passar, prod travado contra
+   spoof de webhook.
+8. Se passo 7 falhar com 403:
+   - Confere TWILIO_AUTH_TOKEN bate com o auth token do Twilio Console
+     (não o "Account SID").
+   - Confere que o webhook URL configurado no Twilio é HTTPS exato
+     (com slash final ou sem — bate com o que o Railway expõe).
+   - Volta TWILIO_VALIDATE_SIGNATURE=0, debuga, repete.
+```
+
+⚠️ Não deixe `TWILIO_VALIDATE_SIGNATURE=0` permanente. Janela de
+exposição: minutos durante setup. Promove pra 1 assim que o smoke
+passar.
+
+### Sequência de migration manual
+
+Migrations Alembic rodam **sempre manualmente** no shell do Railway —
+nunca no boot do app. Razão: 2 dynos subindo simultaneamente (deploy
+gémeo durante rolling restart) tentariam `alembic upgrade head` em
+paralelo e um trava no `pg_advisory_lock` do outro.
+
+Sequência por deploy de schema:
+
+```bash
+# 1. Conecta no shell do serviço backend (Railway UI → backend → "..."
+#    → "Open Shell"). Ou via Railway CLI:
+railway shell --service redato-backend
+
+# 2. Confere a revisão atual e o que falta aplicar:
+cd /app
+alembic -c redato_backend/portal/alembic.ini current
+alembic -c redato_backend/portal/alembic.ini history --verbose | head -20
+
+# 3. Antes de upgrade em prod com dados reais: BACKUP.
+bash scripts/backup_postgres.sh
+# Salva em data/portal/backups/{ano}/{mes}/redato_<ts>.dump
+
+# 4. Aplica:
+alembic -c redato_backend/portal/alembic.ini upgrade head
+
+# 5. Smoke imediato:
+curl -fsS "$RAILWAY_PUBLIC_DOMAIN/admin/health/full" | jq
+
+# 6. Se algo deu errado, reverte 1 step:
+alembic -c redato_backend/portal/alembic.ini downgrade -1
+# (cuidado: schema downgrade pode perder dados)
+```
+
+Se você precisar mesmo de migration automática (CI/CD em deploy
+zero-touch), prefere lock externo (Redis SETNX, ou primeiro-a-bootar
+mete `current_setting('cluster.is_master')`). Mas pra MVP single-tenant,
+manual via shell é suficiente.
 
 ## Rollback
 
