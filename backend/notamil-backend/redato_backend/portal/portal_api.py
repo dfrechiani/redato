@@ -230,9 +230,43 @@ def _parse_redato_output(raw: Optional[str]) -> Optional[Dict[str, Any]]:
 
 
 def _nota_total_de(redato: Optional[Dict[str, Any]]) -> Optional[int]:
-    """Extrai nota total (0-1000) do redato_output."""
+    """Extrai nota do redato_output.
+
+    Formatos aceitos (em ordem de prioridade):
+    1. **Moderno (bot real do Claude, M9+)**: `modo` + `nota_c{N}_enem`
+       em foco — escala 0-200 da competência focada. Em completo,
+       `nota_total` ou `rubrica_rej.nota_total` (escala 0-1000).
+    2. **Legacy (seeds sintéticos M6/M7)**: keys flat `nota_total`,
+       `total`, `nota` (top-level), ou C1-C5 como sub-dicts somáveis.
+
+    Retorna `None` se nenhum formato bate — bucket cai em "sem_nota".
+    """
     if not redato:
         return None
+
+    # 1. Formato moderno por modo
+    modo = redato.get("modo")
+    if isinstance(modo, str):
+        if modo.startswith("foco_c"):
+            # foco_c1, ..., foco_c5 → procura `nota_c{N}_enem`
+            n = modo[len("foco_"):]  # "c1", "c2", ...
+            v = redato.get(f"nota_{n}_enem")
+            if isinstance(v, (int, float)):
+                return int(v)
+        elif modo.startswith("completo"):
+            # completo / completo_parcial → nota_total_enem ou
+            # rubrica_rej.nota_total (sub-dict)
+            v = redato.get("nota_total_enem")
+            if isinstance(v, (int, float)):
+                return int(v)
+            rubrica = redato.get("rubrica_rej")
+            if isinstance(rubrica, dict):
+                for key in ("nota_total", "total"):
+                    v = rubrica.get(key)
+                    if isinstance(v, (int, float)):
+                        return int(v)
+
+    # 2. Legacy / fallbacks flat
     for key in ("nota_total", "total", "nota"):
         v = redato.get(key)
         if isinstance(v, (int, float)):
@@ -702,10 +736,30 @@ def _detector_triggered(value: Any) -> bool:
 
 
 def _detectores_acionados_de(out: Optional[Dict[str, Any]]) -> List[str]:
-    """Lista códigos crus de detectores acionados num redato_output."""
+    """Lista códigos crus de detectores acionados num redato_output.
+
+    Aceita 2 formatos:
+    1. **Moderno (bot real)**: `redato["flags"]` é dict {nome: bool}.
+       Cada chave True vira detector acionado (sem prefixo).
+    2. **Legacy (seeds sintéticos M6/M7)**: keys top-level com prefixo
+       `flag_/detector_/alerta_/aviso_`.
+
+    Os 2 formatos coexistem — se ambos estiverem presentes, ambos são
+    coletados (sem dedupe estrito; `_coletar_top_detectores` faz a
+    contagem).
+    """
     if not out:
         return []
     codigos: List[str] = []
+
+    # 1. Formato moderno: out["flags"] é sub-dict
+    flags_dict = out.get("flags")
+    if isinstance(flags_dict, dict):
+        for k, v in flags_dict.items():
+            if isinstance(k, str) and _detector_triggered(v):
+                codigos.append(k)
+
+    # 2. Formato legacy: keys top-level com prefixo flag_/detector_/...
     for k, v in out.items():
         if not isinstance(k, str):
             continue
