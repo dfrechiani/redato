@@ -43,13 +43,16 @@ def _bootstrap_env() -> None:
 _bootstrap_env()
 
 # Bot setup: stub se REDATO_DEV_OFFLINE=1, senão usa Anthropic real.
-# Em Railway de produção, REDATO_DEV_OFFLINE=0 (ANTHROPIC_API_KEY
-# obrigatória).
-from redato_backend.dev_offline import apply_patches  # noqa: E402
-apply_patches()
+# Em Railway de produção, REDATO_DEV_OFFLINE=0 e o módulo `dev_offline`
+# nem é importado — evita carregar 4k linhas de stub e qualquer
+# top-level que dependa do layout do repo de dev.
+if os.environ.get("REDATO_DEV_OFFLINE") == "1":
+    from redato_backend.dev_offline import apply_patches  # noqa: E402
+    apply_patches()
 
+# Log level configurável via env. Default INFO.
 logging.basicConfig(
-    level=logging.INFO,
+    level=os.environ.get("LOG_LEVEL", "INFO").upper(),
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 

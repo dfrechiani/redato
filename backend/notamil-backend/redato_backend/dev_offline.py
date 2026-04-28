@@ -1168,18 +1168,42 @@ def _fake_tutor_reply(data: Dict[str, Any]) -> str:
 
 
 # dev_offline.py lives at redato_hash/backend/notamil-backend/redato_backend/dev_offline.py;
-# the v2 rubric lives at redato_hash/docs/redato/v2/rubrica_v2.md (4 dirs up).
-_REPO_ROOT = __import__("pathlib").Path(__file__).resolve().parents[3]
-_RUBRIC_V2_PATH = _REPO_ROOT / "docs" / "redato" / "v2" / "rubrica_v2.md"
-# Legacy v1 rubric — only loaded as fallback if v2 is missing.
-_RUBRIC_V1_PATH = _REPO_ROOT / "docs" / "redato" / "redato_system_prompt.md"
+# the v2 rubric lives at redato_hash/docs/redato/v2/rubrica_v2.md (3 dirs up).
+#
+# Em prod (Docker), o módulo está em /app/redato_backend/dev_offline.py.
+# `parents[3]` estoura IndexError porque só há 2 níveis acima de /app.
+# Por isso `_get_repo_root()` é defensivo — fallback /app é seguro:
+# rubricas não existem no Docker (filtradas pelo .dockerignore via docs/),
+# loaders já têm try/except interno e caem no _FALLBACK_SYSTEM_PROMPT.
+def _get_repo_root() -> Path:
+    """Raiz do repo em dev local; `/app` (placeholder) em Docker."""
+    try:
+        return Path(__file__).resolve().parents[3]
+    except IndexError:
+        return Path("/app")
+
+
+# Path builders — lazy. Em Docker, calculados em runtime, não import-time.
+def _rubric_v2_path() -> Path:
+    return _get_repo_root() / "docs" / "redato" / "v2" / "rubrica_v2.md"
+
+
+def _rubric_v1_path() -> Path:
+    """Legacy v1 rubric — fallback if v2 missing."""
+    return _get_repo_root() / "docs" / "redato" / "redato_system_prompt.md"
+
+
 # v3 holística — REVERTIDA em 2026-04-26 (falha estrutural no eval, ver
 # docs/redato/v3/_failed/README_FAILURE.md). Arquivos movidos pra _failed/
 # pra preservação. Branch REDATO_RUBRICA=v3 continua funcional pra
 # reprodutibilidade do experimento. Quando v4 chegar com paradigma novo,
-# atualizar estas paths (ou adicionar _RUBRIC_V4_PATH/_SYSTEM_V4_PATH).
-_RUBRIC_V3_PATH = _REPO_ROOT / "docs" / "redato" / "v3" / "_failed" / "rubrica_v3.md"
-_SYSTEM_V3_PATH = _REPO_ROOT / "docs" / "redato" / "v3" / "_failed" / "system_prompt_v3.md"
+# adicionar _rubric_v4_path() / _system_v4_path() análogos.
+def _rubric_v3_path() -> Path:
+    return _get_repo_root() / "docs" / "redato" / "v3" / "_failed" / "rubrica_v3.md"
+
+
+def _system_v3_path() -> Path:
+    return _get_repo_root() / "docs" / "redato" / "v3" / "_failed" / "system_prompt_v3.md"
 
 
 _FALLBACK_SYSTEM_PROMPT = (
@@ -1223,14 +1247,21 @@ booleanos de threshold.
 
 
 def _load_rubric() -> str:
-    """Load the v2 authoritative rubric. Falls back to v1 Parte A if missing."""
-    for path in (_RUBRIC_V2_PATH, _RUBRIC_V1_PATH):
+    """Load the v2 authoritative rubric. Falls back to v1 Parte A if missing.
+
+    Em Docker, paths não existem — todas as tentativas falham e cai no
+    `_FALLBACK_SYSTEM_PROMPT`. Aceitável: dev_offline não é usado em
+    prod, mas o módulo precisa importar limpo pra que o guard de
+    `apply_patches()` faça seu papel.
+    """
+    v1 = _rubric_v1_path()
+    for path in (_rubric_v2_path(), v1):
         try:
             text = path.read_text(encoding="utf-8")
         except Exception:
             continue
         # v1 file has PARTE A/B/C; extract only Parte A.
-        if path == _RUBRIC_V1_PATH:
+        if path == v1:
             start = text.find("# PARTE A")
             end = text.find("# PARTE B")
             if start != -1 and end != -1 and end > start:
@@ -1254,9 +1285,9 @@ def _load_v3_system_prompt() -> str:
     """Constrói system prompt v3: persona Redato + system_prompt_v3.md
     (que internamente referencia rubrica_v3.md como fonte canônica)."""
     try:
-        sys_v3 = _SYSTEM_V3_PATH.read_text(encoding="utf-8").strip()
+        sys_v3 = _system_v3_path().read_text(encoding="utf-8").strip()
         # Anexa rubrica completa pra LLM ter referencial dos descritores.
-        rubrica_v3 = _RUBRIC_V3_PATH.read_text(encoding="utf-8").strip()
+        rubrica_v3 = _rubric_v3_path().read_text(encoding="utf-8").strip()
         return (
             _REDATO_PERSONA
             + sys_v3
@@ -3670,7 +3701,13 @@ def apply_patches() -> None:
     Works by installing synthetic modules into ``sys.modules`` BEFORE Python
     ever imports the real ones. This way the app runs even when the real
     ``google-cloud-*`` / ``firebase-admin`` packages are not installed.
+
+    No-op em produção (REDATO_DEV_OFFLINE != "1"). Importante: o módulo
+    pode até ser importado em prod (ex.: pelo unified_app antigo), mas
+    nada é stubado. Anthropic/Twilio/SendGrid reais continuam ativos.
     """
+    if os.getenv("REDATO_DEV_OFFLINE") != "1":
+        return
     if getattr(apply_patches, "_applied", False):
         return
 
