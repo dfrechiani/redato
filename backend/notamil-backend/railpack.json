@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.railpack.com/latest/railpack.json",
-  "_comment": "Railpack v0 (sucessor do Nixpacks). Railway prefere esse formato em deploys novos. Se Railway resolver Railpack, ignora nixpacks.toml. Se ainda usa Nixpacks, ele é fallback.",
+  "_comment": "Railpack v0 (sucessor do Nixpacks). Mesmo gotcha do Nixpacks: pip não vem garantido com a derivação Python. ensurepip faz o bootstrap pelo módulo embutido do CPython.",
   "provider": "python",
-  "buildCommand": "python -m pip install --upgrade pip && python -m pip install -r requirements.txt",
+  "buildCommand": "python -m ensurepip --upgrade && python -m pip install --upgrade pip && python -m pip install -r requirements.txt",
   "startCommand": "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port $PORT",
   "packages": {
     "python": "3.12"

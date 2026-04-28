@@ -11,24 +11,23 @@
 # MANUALMENTE via Railway shell — não no boot, pra evitar lock em
 # deploys concorrentes. Ver DEPLOY_RAILWAY.md.
 #
-# ⚠️ Sobre `pip`:
-#   No Nixpacks, `python312` instala apenas o interpretador Python.
-#   `pip` vem como pacote Nix separado: `python312Packages.pip`.
-#   Sem isso, `pip install -r requirements.txt` quebra com
-#   "command not found" (exit 127). Comando usa `python -m pip`
-#   por extra-safety — funciona mesmo se `pip` não está no PATH,
-#   desde que o módulo `pip` esteja instalado.
+# ⚠️ Sobre `pip` no Nixpacks com Python:
+#   `python312` instala só o interpretador. `python312Packages.pip`
+#   instala pip como derivação Nix standalone — fora do site-packages
+#   do interpretador, então `python -m pip` falha com
+#   "No module named pip".
+#
+#   Solução correta: `python -m ensurepip --upgrade` primeiro.
+#   `ensurepip` é módulo embutido do CPython que faz bootstrap do pip
+#   dentro do site-packages do próprio Python. Funciona sempre,
+#   independente da derivação Nix.
 
 [phases.setup]
-nixPkgs = [
-    "python312",
-    "python312Packages.pip",
-    "python312Packages.virtualenv",
-    "postgresql_16",
-]
+nixPkgs = ["python312", "postgresql_16"]
 
 [phases.install]
 cmds = [
+    "python -m ensurepip --upgrade",
     "python -m pip install --upgrade pip",
     "python -m pip install -r requirements.txt",
 ]
