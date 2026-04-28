@@ -50,6 +50,42 @@ def media_to_inep(media: float) -> int:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Foco C2 (RJ2·OF04·MF, RJ2·OF06·MF) — M9.1
+# ──────────────────────────────────────────────────────────────────────
+
+def rej_to_c2_score(rubrica: Dict[str, int], flags: Dict[str, bool]) -> int:
+    """Foco C2 0-200. Caps semânticos sobrescrevem a média.
+
+    Decisão Daniel 2026-04-28 (G.4): defesa em profundidade. O tool
+    emite a flag e tenta respeitar o cap declarado em description; o
+    Python aplica `min` aqui pra garantir. Idempotente — se o LLM já
+    capou, `min` preserva.
+
+    Hierarquia (em ordem, primeiro flag positivo no escopo manda):
+    1. fuga_tema → 0 (anula a redação inteira; rubrica oficial INEP)
+    2. tipo_textual_inadequado → 0 (anula; rubrica oficial)
+    3. tangenciamento_tema → ≤ 80 (cap rígido — Cartilha)
+    4. repertorio_de_bolso → ≤ 120 (cap suave — repertório legitimado
+       mas não pertinente, rubrica v2 nota 3)
+    5. copia_motivadores_recorrente → ≤ 160 (cap suave — produção
+       autoral comprometida; nota 4 mas não 5)
+    6. Senão, base = média(rubrica) traduzida pra ENEM
+    """
+    if flags.get("fuga_tema"):
+        return 0
+    if flags.get("tipo_textual_inadequado"):
+        return 0
+    base = media_to_inep(_media(rubrica))
+    if flags.get("tangenciamento_tema"):
+        base = min(base, 80)
+    if flags.get("repertorio_de_bolso"):
+        base = min(base, 120)
+    if flags.get("copia_motivadores_recorrente"):
+        base = min(base, 160)
+    return base
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Foco C3 (OF10)
 # ──────────────────────────────────────────────────────────────────────
 
@@ -200,6 +236,17 @@ def apply_override(mode: str, tool_args: Dict[str, Any]) -> Dict[str, Any]:
     """
     rubrica = tool_args.get("rubrica_rej") or {}
     flags = tool_args.get("flags") or {}
+
+    if mode == "foco_c2":
+        nota_calc = rej_to_c2_score(rubrica, flags)
+        emitida = tool_args.get("nota_c2_enem")
+        tool_args["nota_c2_enem"] = nota_calc
+        return {
+            "tool_args": tool_args,
+            "divergiu": emitida != nota_calc,
+            "nota_emitida_llm": emitida,
+            "nota_final_python": nota_calc,
+        }
 
     if mode == "foco_c3":
         nota_calc = rej_to_c3_score(rubrica, flags)

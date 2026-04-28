@@ -202,9 +202,21 @@ def detect_topico_e_pergunta(text: str) -> bool:
 
 def compute_pre_flags(mode: str, text: str) -> Dict[str, bool]:
     """Computa pre-flags Python pra um modo. Retorna dict só com as flags
-    que essa missão suporta (subset do schema flags)."""
+    que essa missão suporta (subset do schema flags).
+
+    Para foco_c2 (M9.1, 2S): NÃO há detectores Python heurísticos por
+    enquanto. Tangenciamento, fuga, tipo textual e repertório de bolso
+    exigem análise semântica (LLM). Detector regex de
+    `copia_motivadores_recorrente` depende de pipeline de motivadores
+    que ainda não existe — adiar até pipeline chegar.
+    """
     out: Dict[str, bool] = {}
-    if mode == "foco_c3":
+    if mode == "foco_c2":
+        # Sem pre-flags Python no MVP. Mantém branch explícito pra
+        # documentar o gap e pra render_pre_flags_block não imprimir
+        # "modo desconhecido".
+        pass
+    elif mode == "foco_c3":
         out["andaime_copiado"] = detect_andaime_copiado(text)
     elif mode == "foco_c4":
         out["conectivo_repetido"] = detect_conectivo_repetido(text)

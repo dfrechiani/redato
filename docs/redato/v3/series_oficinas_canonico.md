@@ -166,53 +166,55 @@ migration. Decisão final:
 Custo: precisa lembrar de manter doc + seed sincronizados. Aceitável
 porque seed é idempotente e roda em deploy.
 
-## Pendente: schemas foco_c1 + foco_c2
+## Status dos modos foco_c1 + foco_c2
 
-A migração `e9f1c8a2b4d5` (2026-04-27) liberou os modos `foco_c1` e
-`foco_c2` no `CHECK` de `missoes.modo_correcao`, e a migração
-`f0a1b2c3d4e5` (2026-04-28) seedou 7 missões da 2S — **2 delas usam
-`foco_c2`** (OF04 Fontes e Citações; OF06 Da Notícia ao Artigo).
+### `foco_c2` — **RESOLVIDO** em M9.1 (2026-04-28)
 
-Mas:
+`FOCO_C2_TOOL` implementado em `redato_backend/missions/schemas.py`
+(2026-04-28) seguindo proposta aprovada em
+`docs/redato/v3/proposta_flags_foco_c1_c2.md`. Cobertura:
 
-- `redato_backend/missions/schemas.py:TOOLS_BY_MODE` **só conhece**
-  `foco_c3`, `foco_c4`, `foco_c5`, `completo_parcial`.
-- Não existe tool/prompt definido para `foco_c1` nem `foco_c2`. Se um
-  professor ativasse uma atividade `foco_c2` agora, o `grade_mission`
-  daria `KeyError`.
+- 5 flags: `tangenciamento_tema`, `fuga_tema`, `tipo_textual_inadequado`,
+  `repertorio_de_bolso` (compartilhada com `completo_parcial`),
+  `copia_motivadores_recorrente`.
+- 3 critérios na rubrica REJ: `compreensao_tema`, `tipo_textual`,
+  `repertorio` (cada 0-100).
+- Caps semânticos aplicados em `scoring.py:rej_to_c2_score` com defesa
+  em profundidade (tool emite, Python força via `min`).
+- 2 missões 2S desbloqueadas: `RJ2·OF04·MF` (Fontes e Citações) e
+  `RJ2·OF06·MF` (Da Notícia ao Artigo).
+- Modelo default: `claude-sonnet-4-6` (mesmo padrão dos outros foco).
 
-**Bloqueio temporário no portal (Opção B) implementado em 2026-04-28**:
+`_modo_disponivel("foco_c2")` retorna `True` automaticamente — bloqueio
+do portal cai sem mais código. Frontend dropdown mostra OF04/OF06 como
+ativáveis. POST `/portal/atividades` aceita.
 
-- `GET /portal/missoes` retorna `disponivel_para_ativacao: bool` por
-  missão. `False` para qualquer modo fora de
-  `set(TOOLS_BY_MODE.keys()) | {"completo"}`.
-- `AtivarMissaoModal` (frontend) renderiza essas opções desabilitadas
-  no dropdown, com tooltip *"Rubrica em desenvolvimento. Disponível
-  em breve."*.
-- `POST /portal/atividades` rejeita com `409` se chegar `missao_id`
-  cujo modo está bloqueado (defesa em profundidade contra bypass via
-  curl).
+**Pendência menor (não bloqueia):** `copia_motivadores_recorrente`
+existe no schema mas detecção efetiva depende de pipeline de textos
+motivadores no contexto do LLM — pipeline ainda não implementado.
+LLM emite a flag apenas em casos óbvios. Tarefa separada futura.
 
-**Trabalho pendente — fora desta entrega**:
+### `foco_c1` — **ADIADO** (decisão Daniel 2026-04-28, G.5)
 
-- **C1 (norma culta)**: definir flags candidatas (ex.: regência,
-  concordância, ortografia grave) — pendente de validação pedagógica.
-- **C2 (compreensão da proposta)**: definir flags candidatas (ex.:
-  tangenciamento, fuga ao tema, abordagem incompleta) — pendente.
-- Implementar `FOCO_C1_TOOL` e `FOCO_C2_TOOL` em `missions/schemas.py`
-  + entradas em `TOOLS_BY_MODE` + `MissionMode` enum + roteamento por
-  `activity_id` em `missions/router.py`.
-- Adicionar prompts e few-shots (`missions/prompts.py`).
-- Validar com 1-2 cursinhos parceiros antes de remover bloqueio.
+`FOCO_C1_TOOL` continua não implementado. Razão: nenhuma missão atual
+(1S ou 2S) usa modo `foco_c1` isolado. Proposta com 6 flags candidatas
+preservada em `docs/redato/v3/proposta_flags_foco_c1_c2.md` Seção B
+para reativação futura.
 
-Quando ambos schemas chegarem, basta adicionar os modos a
-`TOOLS_BY_MODE` — o helper `_modo_disponivel` em `portal_api.py`
-recalcula automaticamente e o bloqueio cai.
+**Reativar quando:** oficina de revisão gramatical for criada
+(provavelmente 3ª série ou volume futuro). Roteiro de reativação em
+F.4 da proposta.
+
+**Bloqueio do portal continua ativo para `foco_c1`** porque o helper
+`_modo_disponivel` consulta `TOOLS_BY_MODE`, e `foco_c1` segue fora
+do dict. Não causa problema operacional — sem missão, sem dropdown
+afetado.
 
 ## Histórico de mudanças
 
 | Data | Mudança |
 |---|---|
+| 2026-04-28 | M9.1 — `FOCO_C2_TOOL` implementado (schemas/router/scoring/prompts/detectors). Caps semânticos com defesa em profundidade. 2 missões 2S desbloqueadas (OF04, OF06). Catálogo passa de 41 → 45 detectores. `foco_c1` mantido adiado (decisão G.5). |
 | 2026-04-28 | M9 — seed das 7 missões 2S (`f0a1b2c3d4e5`); endpoint `/portal/missoes` ganha `?serie=` + `disponivel_para_ativacao`; bloqueio temporário pra modos sem schema (foco_c1/c2). |
 | 2026-04-27 | M8 — adiciona `foco_c1`, `foco_c2` ao enum (migração e9f1c8a2b4d5). Documenta template pra 2S/3S. |
 | 2026-04-27 | M4 — cria tabela `missoes` com 5 missões REJ 1S (oficinas 10-14). |

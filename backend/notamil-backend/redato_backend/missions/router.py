@@ -1,13 +1,16 @@
-"""Roteamento por activity_id para os modos REJ 1S.
+"""Roteamento por activity_id para os modos REJ 1S + 2S.
 
-Spec: docs/redato/v3/redato_1S_criterios.md.
+Spec: docs/redato/v3/redato_1S_criterios.md (1S),
+docs/redato/v3/proposta_flags_foco_c1_c2.md (foco_c2 — 2026-04-28).
 
-Activity IDs no formato `RJ1·OFXX·MF·<modo>` (separador é U+00B7 MIDDLE DOT):
+Activity IDs no formato `RJ{N}·OFXX·MF·<modo>` (separador é U+00B7 MIDDLE DOT):
 - RJ1·OF10·MF·Foco C3        → foco_c3
 - RJ1·OF11·MF·Foco C4        → foco_c4
 - RJ1·OF12·MF·Foco C5        → foco_c5
 - RJ1·OF13·MF·Correção 5 comp. → completo_parcial
 - RJ1·OF14·MF·Correção 5 comp. → completo_integral (pipeline v2 padrão)
+- RJ2·OF04·MF·Foco C2        → foco_c2 (2S, M9.1)
+- RJ2·OF06·MF·Foco C2        → foco_c2 (2S, M9.1)
 
 Aceita também variantes com separador `_` ou `-` ou `.` para robustez de
 chamadas vindas do app.
@@ -32,6 +35,10 @@ from redato_backend.missions.detectors import (
 
 
 class MissionMode(str, Enum):
+    # foco_c1 ADIADO (Daniel, 2026-04-28). Quando ativar, adicionar
+    # FOCO_C1 = "foco_c1" + entrada em _MISSAO_TO_MODE +
+    # _DEFAULT_MODEL_BY_MODE + branch em scoring.apply_override.
+    FOCO_C2 = "foco_c2"
     FOCO_C3 = "foco_c3"
     FOCO_C4 = "foco_c4"
     FOCO_C5 = "foco_c5"
@@ -45,6 +52,9 @@ _MISSAO_TO_MODE: Dict[str, MissionMode] = {
     "RJ1_OF12_MF": MissionMode.FOCO_C5,
     "RJ1_OF13_MF": MissionMode.COMPLETO_PARCIAL,
     "RJ1_OF14_MF": MissionMode.COMPLETO_INTEGRAL,
+    # 2S — M9.1 (foco_c2 desbloqueado).
+    "RJ2_OF04_MF": MissionMode.FOCO_C2,    # Fontes e Citações
+    "RJ2_OF06_MF": MissionMode.FOCO_C2,    # Da Notícia ao Artigo
 }
 
 
@@ -54,6 +64,7 @@ _MISSAO_TO_MODE: Dict[str, MissionMode] = {
 # perto de redação completa). Override via REDATO_CLAUDE_MODEL afeta
 # todos os modos uniformemente — útil pra eval mas não pra produção.
 _DEFAULT_MODEL_BY_MODE: Dict[MissionMode, str] = {
+    MissionMode.FOCO_C2: "claude-sonnet-4-6",   # M9.1 — mesmo padrão dos foco
     MissionMode.FOCO_C3: "claude-sonnet-4-6",
     MissionMode.FOCO_C4: "claude-sonnet-4-6",
     MissionMode.FOCO_C5: "claude-sonnet-4-6",
@@ -90,7 +101,14 @@ def is_mission_activity(activity_id: Optional[str]) -> bool:
 
 
 def _missao_id_for(mode: MissionMode) -> str:
-    """Inverso do _MISSAO_TO_MODE — devolve o missao_id canônico."""
+    """Inverso do _MISSAO_TO_MODE — devolve o PRIMEIRO missao_id que
+    mapeia pro modo. Útil quando há relação 1:1 modo ↔ missão (foco_c3,
+    foco_c4, foco_c5, completo_parcial).
+
+    ATENÇÃO: para foco_c2 há 2 missões (RJ2_OF04_MF, RJ2_OF06_MF) —
+    use `_canonicalize(activity_id)` em vez disso pra preservar a
+    missão real. Manter esta função pra retrocompat (testes antigos
+    podem chamar)."""
     for missao, m in _MISSAO_TO_MODE.items():
         if m == mode:
             return missao
@@ -199,10 +217,13 @@ def grade_mission(data: Dict[str, Any]) -> Dict[str, Any]:
     if override_result["divergiu"]:
         _log_divergence(mode.value, activity_id, override_result, tool_args)
 
-    # Anexa metadata pra debug/auditoria
+    # Anexa metadata pra debug/auditoria. Usa o canonicalizado do
+    # activity_id (validado por resolve_mode acima) em vez de
+    # _missao_id_for(mode) — porque foco_c2 tem 2 missões e precisamos
+    # preservar qual delas foi de fato (OF04 vs OF06).
     tool_args["_mission"] = {
         "mode": mode.value,
-        "missao_id": _missao_id_for(mode),
+        "missao_id": _canonicalize(activity_id),
         "activity_id": activity_id,
         "pre_flags": pre_flags,
         "model": model,

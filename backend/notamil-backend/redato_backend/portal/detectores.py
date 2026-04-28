@@ -196,6 +196,32 @@ _CANONICOS: List[DetectorCanonico] = [
         "Proposta viola direitos humanos — zera C5 segundo INEP.",
     ),
 
+    # — foco_c2 (RJ2·OF04·MF, RJ2·OF06·MF) — submit_foco_c2.flags (M9.1, 2S) —
+    # `repertorio_de_bolso` é COMPARTILHADA com completo_parcial — só
+    # cadastrada uma vez (decisão Daniel 2026-04-28, G.2).
+    DetectorCanonico(
+        "tangenciamento_tema", "Tangenciamento do tema",
+        "argumentativo", "alta",
+        "Aborda o tema amplo mas não o recorte específico — cap C2 ≤ 80.",
+    ),
+    DetectorCanonico(
+        "fuga_tema", "Fuga ao tema",
+        "argumentativo", "alta",
+        "Não aborda o recorte temático — anula a redação inteira.",
+    ),
+    DetectorCanonico(
+        "tipo_textual_inadequado", "Tipo textual inadequado",
+        "argumentativo", "alta",
+        "Texto não é dissertativo-argumentativo (predomina narrativo, "
+        "descritivo ou expositivo puro) — anula a redação.",
+    ),
+    DetectorCanonico(
+        "copia_motivadores_recorrente", "Cópia recorrente dos motivadores",
+        "forma", "media",
+        "Cópia literal de trechos dos textos motivadores sem citação, "
+        "indicando ausência de produção autoral.",
+    ),
+
     # — completo_parcial (OF13) — submit_completo_parcial.flags —
     DetectorCanonico(
         "topico_e_pergunta", "Tópico e pergunta",

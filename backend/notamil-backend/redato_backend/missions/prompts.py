@@ -148,6 +148,126 @@ TODOS os campos obrigatórios preenchidos.
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Foco C2 (RJ2·OF04·MF, RJ2·OF06·MF) — 2S, M9.1
+# ──────────────────────────────────────────────────────────────────────
+
+_FOCO_C2_CONTEXT = """\
+## Missão — Foco C2 (2ª série, RJ2·OF04·MF ou RJ2·OF06·MF)
+
+**Enunciado (varia entre as 2 missões 2S que usam foco_c2):**
+- **OF04 (Fontes e Citações):** aluno escreveu parágrafo argumentativo
+  (~80-150 palavras) integrando **citação articulada** (direta ou
+  indireta) com fonte verificável. Foco: como o repertório dialoga
+  com o argumento.
+- **OF06 (Da Notícia ao Artigo):** aluno escreveu **introdução
+  dissertativa** (~80-150 palavras, 3 a 4 linhas) com contextualização
+  + repertório breve + tese fechando o parágrafo.
+
+**O que é C2 PURO (decisão Daniel 2026-04-28):**
+
+C2 cobre APENAS três dimensões oficiais (Cartilha INEP 2025):
+
+1. **Compreensão da proposta** — atender ao recorte temático específico
+   (não fugir, não tangenciar).
+2. **Tipo textual** — produzir dissertativo-argumentativo em prosa
+   (não narrativo, não descritivo, não expositivo puro).
+3. **Repertório sociocultural** — informações/citações relacionadas
+   ao tema, articuladas como argumento (não decorativas, não "de bolso").
+
+**REGRA RÍGIDA — NÃO PROPAGUE PROBLEMAS DE OUTRAS COMPETÊNCIAS PARA C2:**
+
+- Aluno tem tese fraca, projeto de texto inconsistente, autoria pobre?
+  → Isso é **C3**, NÃO rebaixe C2 por causa disso.
+- Aluno tem coesão ruim, conectivos repetitivos?
+  → Isso é **C4**, NÃO rebaixe C2 por causa disso.
+- Aluno tem proposta de intervenção fraca?
+  → Isso é **C5**, NÃO rebaixe C2 (ainda mais aqui — OF04/OF06 não
+  pedem proposta).
+- Aluno tem desvios gramaticais?
+  → Isso é **C1**, NÃO rebaixe C2 por causa disso.
+
+C2 = **só recorte do tema + dissertativo-argumentativo + repertório
+articulado**. Avalie isolado. Repertório bem ancorado ao próprio
+parágrafo conta integralmente como `productive`, mesmo se o resto do
+texto for fraco.
+
+**Rubrica REJ (3 critérios × bandas 0-100):**
+
+- **Compreensão do tema:** insuficiente (fuga/tangenciamento) | adequado
+  (recorte abordado, palavras-chave em maioria dos parágrafos) |
+  excelente (recorte trabalhado em profundidade, sem deslizar pra
+  generalização)
+- **Tipo textual:** insuficiente (narrativo/descritivo/expositivo puro,
+  sem tese) | adequado (defende ponto de vista, sem traços fortes de
+  outro tipo) | excelente (dissertativo-argumentativo claro, tese
+  visível, registro formal)
+- **Repertório:** insuficiente (ausente OU baseado só em motivadores)
+  | adequado (legitimado, identificável, mas pouco articulado) |
+  excelente (legitimado + pertinente + articulado ao argumento, com
+  fonte/autor citado)
+
+**Tradução REJ (0-300) → C2 ENEM (0-200):**
+
+| Total REJ | C2 ENEM |
+|-----------|---------|
+| 0-89      | 0       |
+| 90-149    | 40      |
+| 150-194   | 80      |
+| 195-239   | 120     |
+| 240-269   | 160     |
+| 270-300   | 200     |
+
+(Nota: heurística usa média dos 3 critérios via tabela determinística
+do scoring.py. Valores aqui são referência para o LLM se calibrar; o
+override Python é a verdade final.)
+
+**Caps semânticos** (Python aplica em scoring.py — você emite a flag
+no schema; respeite o cap declarado em description também):
+
+1. `fuga_tema` → C2 ENEM = 0 (anula a redação inteira; rubrica oficial)
+2. `tipo_textual_inadequado` → C2 ENEM = 0 (anula; rubrica oficial)
+3. `tangenciamento_tema` → C2 ENEM ≤ 80
+4. `repertorio_de_bolso` → C2 ENEM ≤ 120
+5. `copia_motivadores_recorrente` → C2 ENEM ≤ 160
+
+**Casos críticos:**
+
+1. **Tangenciamento típico** — Tema "Impactos das redes sociais na
+   saúde mental dos jovens"; aluno discute "tecnologia" ou "internet"
+   em geral. Tangenciamento_tema=true, C2 ≤ 80.
+2. **Repertório de bolso típico** — Aluno cita Utopia de Thomas More
+   ou "instituições zumbis de Bauman" como abertura, sem aprofundar
+   conexão com o tema específico. Repertorio_de_bolso=true, C2 ≤ 120.
+3. **Tipo textual inadequado** — Aluno narra cronologia ("primeiro,
+   depois, em seguida") sem tese, sem ponto de vista. Tipo_textual_
+   inadequado=true, C2 = 0 (anula).
+4. **Repertório legítimo desarticulado** — Aluno cita Maria Beatriz
+   Nascimento, mas não desenvolve. Repertório = adequado (não
+   excelente), C2 ≤ 120 mesmo sem flag, pela média da rubrica.
+5. **Fonte verificável bem ancorada** — Aluno cita IBGE com dado
+   específico que sustenta o argumento do próprio parágrafo.
+   Repertório = excelente, mesmo se o restante do texto for fraco.
+
+**Tamanho dos campos de feedback:**
+
+- `feedback_aluno.acertos` / `ajustes`: 1-3 itens, cada um 1-2 frases.
+- `feedback_professor.audit_completo`: **100-180 palavras** (~3-5 frases).
+
+**Termos PERMITIDOS no `feedback_aluno` (oficinas OF04/OF06 da 2S):**
+
+`tema`, `recorte`, `tese`, `repertório`, `citação`, `fonte`,
+`introdução dissertativa`, `contextualização`, `argumento`. Para
+qualquer outro termo da "lista proibida" do PERSONA, use o substituto.
+
+**ATENÇÃO especial — `copia_motivadores_recorrente`:** detecção efetiva
+desta flag depende de pipeline de textos motivadores no contexto do
+LLM, que ainda não foi implementado. Hoje você recebe APENAS o tema da
+missão, não os textos motivadores. Emita esta flag SOMENTE em casos
+óbvios (aluno menciona "conforme o texto motivador" sem produção
+autoral subsequente). Em dúvida, deixe `false`.
+"""
+
+# ──────────────────────────────────────────────────────────────────────
 # Foco C3 (OF10)
 # ──────────────────────────────────────────────────────────────────────
 
@@ -370,6 +490,7 @@ causal" (use "como isso acontece na prática").
 
 
 _CONTEXT_BY_MODE: Dict[str, str] = {
+    "foco_c2": _FOCO_C2_CONTEXT,        # M9.1 (2S)
     "foco_c3": _FOCO_C3_CONTEXT,
     "foco_c4": _FOCO_C4_CONTEXT,
     "foco_c5": _FOCO_C5_CONTEXT,

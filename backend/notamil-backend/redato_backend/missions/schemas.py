@@ -1,14 +1,18 @@
-"""Schemas tool_use para os 4 modos novos do livro REJ 1S.
+"""Schemas tool_use para os modos REJ 1S + 2S.
 
-Spec: docs/redato/v3/redato_1S_criterios.md.
+Spec: docs/redato/v3/redato_1S_criterios.md (1S),
+docs/redato/v3/proposta_flags_foco_c1_c2.md (foco_c2 — 2026-04-28).
 
+- foco_c2 (RJ2·OF04·MF, RJ2·OF06·MF): rubrica REJ 3 critérios → C2 ENEM
+  0-200. C2 PURO (compreensão da proposta + tipo textual + repertório).
 - foco_c3 (OF10): rubrica REJ 4 critérios → C3 ENEM 0-200.
 - foco_c4 (OF11): rubrica REJ 4 critérios → C4 ENEM 0-200.
 - foco_c5 (OF12): rubrica REJ 6 critérios → C5 ENEM 0-200.
 - completo_parcial (OF13): C1+C2+C3+C4 (0-800), C5 = "não_aplicável".
 
 Modo completo_integral (OF14) reutiliza o tool _SUBMIT_CORRECTION_FLAT_TOOL
-existente — não está aqui.
+existente — não está aqui. Modo foco_c1 ADIADO (decisão Daniel
+2026-04-28) — sem missão atribuída atualmente.
 """
 from __future__ import annotations
 from typing import Any, Dict, List
@@ -95,6 +99,162 @@ def _feedback_professor_schema(audit_target: str = "100-200 palavras") -> Dict[s
         },
         "required": ["padrao_falha", "transferencia_c1", "audit_completo"],
     }
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Modo Foco C2 (RJ2·OF04·MF, RJ2·OF06·MF) — 2S, M9.1
+# ──────────────────────────────────────────────────────────────────────
+# Decisão pedagógica (Daniel, 2026-04-28): C2 PURO. Cobre apenas
+# (a) compreensão da proposta — não fugiu/tangenciou; (b) tipo textual
+# dissertativo-argumentativo; (c) repertório articulado. NÃO inclui
+# aspectos de C3 (autoria, projeto de texto, profundidade argumentativa).
+# Spec completo: docs/redato/v3/proposta_flags_foco_c1_c2.md.
+
+FOCO_C2_TOOL: Dict[str, Any] = {
+    "name": "submit_foco_c2",
+    "description": (
+        "Avaliação Modo Foco C2 (compreensão da proposta + tipo textual "
+        "+ repertório). Aluno escreveu introdução dissertativa OU "
+        "parágrafo com citação articulada (~80-150 palavras). Avalie "
+        "APENAS C2 — não rebaixe por problemas de C3 (autoria, projeto "
+        "de texto, profundidade argumentativa). Caps semânticos: "
+        "fuga ao tema → 0 (anula); tipo textual inadequado → 0 (anula); "
+        "tangenciamento → ≤ 80; repertório de bolso → ≤ 120."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "modo": {"type": "string", "enum": ["foco_c2"]},
+            # 2 missões 2S usam foco_c2 (Fontes e Citações; Da Notícia
+            # ao Artigo). Nomes canonizados pelo router via
+            # _canonicalize (middle dots → underscore).
+            "missao_id": {
+                "type": "string",
+                "enum": ["RJ2_OF04_MF", "RJ2_OF06_MF"],
+            },
+            "rubrica_rej": {
+                "type": "object",
+                "properties": {
+                    "compreensao_tema": _score_0_100(),
+                    "tipo_textual": _score_0_100(),
+                    "repertorio": _score_0_100(),
+                },
+                "required": [
+                    "compreensao_tema", "tipo_textual", "repertorio",
+                ],
+            },
+            "confidences": {
+                "type": "object",
+                "description": "Opcional. Confiança 0-100 por critério.",
+                "properties": {
+                    "compreensao_tema": _confidence_0_100(),
+                    "tipo_textual": _confidence_0_100(),
+                    "repertorio": _confidence_0_100(),
+                },
+            },
+            "nota_rej_total": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 300,
+                "description": (
+                    "Soma dos 3 critérios (cada 0-100). Range 0-300."
+                ),
+            },
+            "nota_c2_enem": {
+                "type": "integer",
+                "enum": _NOTA_ENEM,
+                "description": (
+                    "C2 ENEM 0-200. Caps obrigatórios (Python aplica em "
+                    "scoring.py via defesa em profundidade — você pode "
+                    "emitir ou não, mas Python faz min): "
+                    "fuga_tema=true → 0; "
+                    "tipo_textual_inadequado=true → 0; "
+                    "tangenciamento_tema=true → ≤ 80; "
+                    "repertorio_de_bolso=true → ≤ 120."
+                ),
+            },
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "tangenciamento_tema": {
+                        "type": "boolean",
+                        "description": (
+                            "true se aborda assunto amplo do tema mas "
+                            "não o recorte específico definido na "
+                            "proposta. Cap C2 ≤ 80 quando true."
+                        ),
+                    },
+                    "fuga_tema": {
+                        "type": "boolean",
+                        "description": (
+                            "true se não aborda nem o assunto amplo nem "
+                            "o recorte específico — anula a redação "
+                            "(C2 = 0; rubrica oficial). Mutuamente "
+                            "exclusiva com tangenciamento_tema."
+                        ),
+                    },
+                    "tipo_textual_inadequado": {
+                        "type": "boolean",
+                        "description": (
+                            "true se predominam marcas de narrativo, "
+                            "descritivo ou expositivo puro em vez de "
+                            "dissertativo-argumentativo. Anula a redação "
+                            "(C2 = 0). Mutuamente exclusiva com "
+                            "tangenciamento e fuga."
+                        ),
+                    },
+                    "repertorio_de_bolso": {
+                        "type": "boolean",
+                        "description": (
+                            "true se referência citada é genérica/"
+                            "decorada, aplicável a qualquer tema, sem "
+                            "articulação específica ao recorte (ex.: "
+                            "Utopia de More, alegoria da caverna, "
+                            "instituições zumbis de Bauman sem "
+                            "aprofundamento). Cap C2 ≤ 120 quando true. "
+                            "Compartilhada com modo completo_parcial."
+                        ),
+                    },
+                    "copia_motivadores_recorrente": {
+                        "type": "boolean",
+                        "description": (
+                            "true se ≥ 2 sentenças completas são "
+                            "reproduzidas literalmente dos textos "
+                            "motivadores sem marcação de citação, "
+                            "indicando ausência de produção autoral. "
+                            "NOTA: detecção efetiva depende de pipeline "
+                            "de motivadores no contexto, ainda não "
+                            "implementado — emita apenas em casos "
+                            "óbvios (aluno menciona 'conforme o texto "
+                            "motivador' sem produção autoral)."
+                        ),
+                    },
+                },
+                "required": [
+                    "tangenciamento_tema",
+                    "fuga_tema",
+                    "tipo_textual_inadequado",
+                    "repertorio_de_bolso",
+                    "copia_motivadores_recorrente",
+                ],
+            },
+            "feedback_aluno": _feedback_aluno_schema(),
+            "feedback_professor": _feedback_professor_schema(
+                "100-180 palavras"
+            ),
+        },
+        "required": [
+            "modo",
+            "missao_id",
+            "rubrica_rej",
+            "nota_rej_total",
+            "nota_c2_enem",
+            "flags",
+            "feedback_aluno",
+            "feedback_professor",
+        ],
+    },
+}
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -490,6 +650,12 @@ COMPLETO_PARCIAL_TOOL: Dict[str, Any] = {
 
 
 TOOLS_BY_MODE: Dict[str, Dict[str, Any]] = {
+    # foco_c1 ADIADO (decisão Daniel 2026-04-28) — sem missão atual.
+    # Quando ativar: implementar FOCO_C1_TOOL conforme proposta em
+    # docs/redato/v3/proposta_flags_foco_c1_c2.md F.1, descomentar
+    # linha abaixo, atualizar router/detectors paralelo.
+    # "foco_c1": FOCO_C1_TOOL,
+    "foco_c2": FOCO_C2_TOOL,            # NOVO (M9.1, 2S)
     "foco_c3": FOCO_C3_TOOL,
     "foco_c4": FOCO_C4_TOOL,
     "foco_c5": FOCO_C5_TOOL,
