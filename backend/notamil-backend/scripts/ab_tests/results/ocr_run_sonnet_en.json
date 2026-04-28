@@ -1,0 +1,101 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-6",
+    "prompt_version": "en",
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "model": "claude-sonnet-4-6",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 1004.6,
+      "elapsed_s": 13.0,
+      "strict_would_fail": true,
+      "uncertain_count": 22,
+      "illegible_count": 0,
+      "total_words": 208,
+      "uncertain_pct": 10.6,
+      "theme": "Friedrich Nietzche diz que",
+      "transcription": "A <uncertain confidence='HIGH'>pressa</uncertain> em ser adulta pode <uncertain confidence='HIGH'>lesar</uncertain> a uma infância perdida e uma maturidade mal <uncertain confidence='HIGH'>vivida</uncertain>. A frase <uncertain confidence='HIGH'>do</uncertain> <uncertain confidence='HIGH'>filosofo</uncertain> <uncertain confidence='HIGH'>Friedrich</uncertain> <uncertain confidence='HIGH'>Nietzche</uncertain> destaca a importância da infância. Dessa forma, cabe <uncertain confidence='HIGH'>analisar</uncertain> o perigo do skincare infantil: entre a responsabilidade dos pais e mercado de <uncertain confidence='HIGH'>cosméticos</uncertain>.\n\nNesse sentido, cabe <uncertain confidence='HIGH'>observar</uncertain> a responsabilidade dos pais e indústria em relação ao problema, como também o impacto gerado na vida das crianças.\n\nEm primeira <uncertain confidence='HIGH'>análise</uncertain>, cabe analisar a responsabilidade das <uncertain confidence='HIGH'>pais</uncertain> e da indústria de cosméticos na <uncertain confidence='HIGH'>utilização</uncertain> de skincare em crianças. De acordo com o Estatuto da criança e adolescente, no artigo 4º, diz que o indivíduo precisa ter sua infância assegurada pelos pais e demais organizações. Contudo esse direito não é assegurado quando a criança é exposta a coisas que não são da idade dela.\n\nEm segunda análise, cabe observar que essa rotina de auto-cuidados <uncertain confidence='HIGH'>precose</uncertain> pode <uncertain confidence='HIGH'>trazer</uncertain> várias consequências como: Impactos na pele, <uncertain confidence='HIGH'>nce</uncertain> <uncertain confidence='HIGH'>psicológico</uncertain> (pode <uncertain confidence='HIGH'>distorce</uncertain> a autoimagem) e <uncertain confidence='HIGH'>nce</uncertain> <uncertain confidence='HIGH'>desenvolvimento</uncertain> cognitivo e emocional. Além de outras.\n\nEm síntese, o perigo do Skincare infantil e suas consequências. É necessário que o Conselho Tutelar com o auxílio das mídias sociais, <uncertain confidence='HIGH'>promova</uncertain> campanha sobre tal assunto, para combater essa prática que influência de forma <uncertain confidence='HIGH'>negativa</uncertain> na infância."
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "model": "claude-sonnet-4-6",
+      "ok": true,
+      "dims": [
+        960,
+        1280
+      ],
+      "size_kb": 272.7,
+      "elapsed_s": 15.6,
+      "strict_would_fail": true,
+      "uncertain_count": 23,
+      "illegible_count": 0,
+      "total_words": 281,
+      "uncertain_pct": 8.2,
+      "theme": "No ano de 2025, no Twitter, uma pessoa não pode opinar so-",
+      "transcription": "<uncertain confidence='HIGH'>bre</uncertain> <uncertain confidence='HIGH'>determinado</uncertain> <uncertain confidence='HIGH'>assunto</uncertain> <uncertain confidence='HIGH'>sem</uncertain> ser alvo de duras críticas. Esse é o <uncertain confidence='HIGH'>cancelamento</uncertain>, que <uncertain confidence='HIGH'>impossibilita</uncertain> indivíduos de se expressarem, e que <uncertain confidence='HIGH'>deve</uncertain> acabar. Dessa forma, é altamente <uncertain confidence='HIGH'>observável</uncertain> que o impacto da cultura do <uncertain confidence='HIGH'>cancelamento</uncertain> na liberdade de expressão se <uncertain confidence='HIGH'>desdobra</uncertain> no desrespeito ao discordar de uma opinião juntamente com a intolerância de pensamento contrário.\\n\\nDe modo geral, o <uncertain confidence='HIGH'>desrespeitoso</uncertain> ao discordar de uma opinião ocorre frequentemente no Brasil, em várias situações e âmbitos sociais, por causa da falta de empatia das pessoas, <uncertain confidence='HIGH'>barrando</uncertain> a liberdade de expressão. <uncertain confidence='HIGH'>Além</uncertain> disso, Voltaire disse: \"Posso não concordar com o que você diz, mas defenderei até a morte o seu direito de <uncertain confidence='HIGH'>dizê-lo</uncertain>\", nessa via, o respeito ao discordar do próximo é crucial para uma troca de ideias <uncertain confidence='HIGH'>proveitosa</uncertain>. Dessa forma, ao serem respeitados, as pessoas sentirão mais liberdade de se expressar, mesmo em discordância.\\n\\nNessa mesma lógica, a intolerância de pensamento contrário também é uma barreira para a liberdade de expressão, já que acarreta o preconceito e a exclusão social. <uncertain confidence='HIGH'>Dentro</uncertain> <uncertain confidence='HIGH'>desse</uncertain> <uncertain confidence='HIGH'>mesmo</uncertain> ponto de vista, <uncertain confidence='HIGH'>Luis</uncertain> Roberto Barroso diz: \"<uncertain confidence='HIGH'>Tenham</uncertain> respeito pela verdade alheia. Cultivem a tolerância, nunca a arrogância\", por isso é necessário respeitar a verdade do outro, mesmo que o que o foi ensinado tenha sido completamente diferente. Assim, uma <uncertain confidence='HIGH'>revisão</uncertain> de pensamento antes de ter preconceito com um pensamento contrário é essencial.\\n\\nPortanto, o cancelamento, que <uncertain confidence='HIGH'>impede</uncertain> as pessoas de se expressarem deve acabar. Além disso, é evidente e claro que tanto o desrespeito ao discordar de uma opinião concatenado à intolerância de pensamento contrário devem ser mitigados. A sociedade, juntamente com o governo, devem tomar medidas e exigir o que <uncertain confidence='HIGH'>falam</uncertain> e o que realmente como respeito."
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "model": "claude-sonnet-4-6",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 777.5,
+      "elapsed_s": 14.9,
+      "strict_would_fail": true,
+      "uncertain_count": 26,
+      "illegible_count": 0,
+      "total_words": 238,
+      "uncertain_pct": 10.9,
+      "theme": "Pessoas se tornam mais comunicativas",
+      "transcription": "após o <uncertain confidence='HIGH'>convívio</uncertain> com animais . <uncertain confidence='HIGH'>Nessa</uncertain> <uncertain confidence='HIGH'>perspe</uncertain>- tiva, estudos <uncertain confidence='HIGH'>afirmam</uncertain> que os <uncertain confidence='HIGH'>laços</uncertain> de <uncertain confidence='HIGH'>interação</uncertain> podem fazer milagres na cura de doenças. Assim, <uncertain confidence='HIGH'>mostra-se</uncertain> relevante pensar no tratamento de doenças com pets, chamado também de pet terapia, uma vez que o <uncertain confidence='HIGH'>convívio</uncertain> com animais é <uncertain confidence='MEDIUM'>breve</uncertain> <uncertain confidence='MEDIUM'>tempo</uncertain> <uncertain confidence='MEDIUM'>necessário</uncertain> para ver os resultados <uncertain confidence='HIGH'>configuraram</uncertain> os melhores resultados entre outros tipos de tratamentos mais demorados.\n\nDe início, é notório destacar a <uncertain confidence='HIGH'>comuni</uncertain>- cia com os animais. Isso porque a <uncertain confidence='HIGH'>zooterapia</uncertain> <uncertain confidence='HIGH'>vêm</uncertain> tendo resultados excelentes em várias doenças. <uncertain confidence='HIGH'>Prova</uncertain> <uncertain confidence='MEDIUM'>disso</uncertain> <uncertain confidence='MEDIUM'>necessária</uncertain> <uncertain confidence='HIGH'>reabilitação</uncertain> de soldados combatentes da <uncertain confidence='HIGH'>Segu</uncertain>- da Guerra Mundial, mas também, na década de 50, a introdução da terapia assistida por animais no tratamento de pessoas com <uncertain confidence='HIGH'>esquizofrenia</uncertain>.\n\nAdemais, cabe ressaltar o mínimo <uncertain confidence='HIGH'>quanto</uncertain> de tempo para os tratamentos terem bons resultados. Essa terapia já é bem conhecida no Brasil e no exterior, tendo inúmeras clínicas especializadas em grandes centros urbanos do mundo, sendo <uncertain confidence='HIGH'>assim</uncertain> torna-se urgente reconhecer que esse tratamento resultar hoje no auxílio de <uncertain confidence='HIGH'>milhares</uncertain> de pessoas a se recuperar de problemas físicos ou mentais.\n\nCom o objetivo de expandir a terapia com pet, é dever do governo financiar e tornar acessível o tratamento com animais à população por meio de palestras com especialistas a fim de demonstrar às pessoas que a pet terapia têm bons resultados. Somente assim, a área será alcançada com maior <uncertain confidence='HIGH'>possibilidade</uncertain> para os indivíduos sem boas <uncertain confidence='HIGH'>condições</uncertain> financeiras."
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "model": "claude-sonnet-4-6",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 803.5,
+      "elapsed_s": 13.7,
+      "strict_would_fail": true,
+      "uncertain_count": 31,
+      "illegible_count": 0,
+      "total_words": 182,
+      "uncertain_pct": 17.0,
+      "theme": "O preconceito linguístico e seus efeitos na sociedade brasileira",
+      "transcription": "<uncertain confidence='HIGH'>Segundo</uncertain> a <uncertain confidence='HIGH'>constituição</uncertain> de 1222 <uncertain confidence='LOW'>art.</uncertain> 5°, <uncertain confidence='HIGH'>todos</uncertain> são iguais <uncertain confidence='HIGH'>perante</uncertain> a lei, <uncertain confidence='MEDIUM'>todavia</uncertain> <uncertain confidence='HIGH'>mas</uncertain> é isso que <uncertain confidence='HIGH'>obtemos</uncertain> <uncertain confidence='LOW'>?</uncertain>\\n\\nOutrossim, a falta de educação cultural à <uncertain confidence='HIGH'>população</uncertain> <uncertain confidence='HIGH'>agrava</uncertain> o <uncertain confidence='HIGH'>contexto</uncertain>, <uncertain confidence='HIGH'>em</uncertain> virtude de <uncertain confidence='HIGH'>instituições</uncertain> de ensino <uncertain confidence='HIGH'>reforçarem</uncertain> a <uncertain confidence='HIGH'>noção</uncertain> de \" certo e errado\" com relação à língua portuguesa. A luz dessa perspectiva, Marcos <uncertain confidence='HIGH'>Bagno</uncertain>, em <uncertain confidence='HIGH'>seu</uncertain> livro Preconceito Linguístico, defende uma educação que valorize <uncertain confidence='HIGH'>a</uncertain> diversidade cultural do país, ou seja, encarar a língua pelo viés exclusivo <uncertain confidence='MEDIUM'>ao</uncertain> <uncertain confidence='HIGH'>ajuda</uncertain> a reforçar atos intolerantes desde a infância. Assim, é imprescindível realizar ações para mudar o cenário nacional.\\n\\nEm suma, faz-se <uncertain confidence='HIGH'>inequívoco</uncertain> que o preconceito linguístico é <uncertain confidence='HIGH'>prejudicial</uncertain>. Dessarte, compete só Ministério da <uncertain confidence='HIGH'>Educação</uncertain>, Cultura e da Educação promoverem campanhas de conscientização, por meio de viagens <uncertain confidence='HIGH'>aos</uncertain> povos <uncertain confidence='MEDIUM'>e inferiorizados</uncertain> <uncertain confidence='HIGH'>quilombolas</uncertain> e <uncertain confidence='MEDIUM'>ao</uncertain> interior, os quais <uncertain confidence='HIGH'>sensibilizar</uncertain> os estudantes que terão <uncertain confidence='HIGH'>convívio</uncertain> com as línguas <uncertain confidence='HIGH'>inferiorizadas</uncertain>, com a finalidade de encarar a língua pelo viés inclusivo. Com isso, finalmente Einstein terá cometido mais um erro por dizer que é mais fácil desintegrar um átomo do que um preconceito"
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "model": "claude-sonnet-4-6",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 857.5,
+      "elapsed_s": 14.2,
+      "strict_would_fail": true,
+      "uncertain_count": 18,
+      "illegible_count": 1,
+      "total_words": 192,
+      "uncertain_pct": 9.4,
+      "theme": "tenças de Desigualdade social",
+      "transcription": "<uncertain confidence='HIGH'>predisposições</uncertain> da nova <uncertain confidence='HIGH'>geração</uncertain> para o <illegible/>\\n\\n\"É mais fácil desintegrar um átomo que um <uncertain confidence='HIGH'>precon-</uncertain> ceito\" uma reflexão deixada por Einstein. Sob essa perspectiva, torne-se evidente que o problema do preconceito linguístico persiste na sociedade <uncertain confidence='HIGH'>brasileira</uncertain> e <uncertain confidence='HIGH'>reverbera</uncertain> a necessidade de sua redução para mudanças no contexto nacional. Dessa maneira, a intolerância linguística ocorre tanto pelo passado <uncertain confidence='HIGH'>do</uncertain> histórico do Brasil <uncertain confidence='HIGH'>quanto</uncertain> pela falta de educação cultural à população.\\n\\nCom efeito, o passado histórico do Brasil <uncertain confidence='HIGH'>gra-</uncertain> ve o contexto, em virtude <uncertain confidence='HIGH'>da</uncertain> de colonização portuguesa, pois a língua dos povos <uncertain confidence='HIGH'>originários</uncertain>, que <uncertain confidence='HIGH'>aqui</uncertain> viviam foi <uncertain confidence='HIGH'>tão</uncertain> viviam não só foi ignorada, mas também excluída. À luz <uncertain confidence='HIGH'>dessa</uncertain> perspectiva, o ensino como in a <uncertain confidence='LOW'>ge-</uncertain> ração <uncertain confidence='HIGH'>atual</uncertain> tem predisposições ao preconceito, uma vez que, a educação não é igualitária no Brasil, pelo contrário, é instrumento de <uncertain confidence='HIGH'>manutenção</uncertain> da desigualdade social. Dentro desse mesmo ponto de vista, destaca-se atitudes discriminatórios entre as pessoas, tendo como ele- <uncertain confidence='MEDIUM'>mento</uncertain> reforço a Mídia, por isso pode ser observado na Novela \"Êta Mundo Bom\" da Rede Globo, onde os personagens estão <uncertain confidence='HIGH'>embarreirados</uncertain> e ridicularizados. Logo, a necessidade de conter essa realidade tor- na-se urgente na sociedade brasileira."
+    }
+  ]
+}

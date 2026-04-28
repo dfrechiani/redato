@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redato — Painel de Revisão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181b25;
+  --surface-2: #1f2330;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --ink: #f5f5f7;
+  --ink-mut: #a8acba;
+  --ink-dim: #6a6f80;
+  --lime: #b9f01c;
+  --lime-soft: rgba(185, 240, 28, 0.12);
+  --warn-bg: #2a2412;
+  --warn-fg: #f0c674;
+  --warn-border: #4a3e1f;
+  --danger-bg: #2a1818;
+  --danger-fg: #ec7878;
+  --danger-border: #4a2828;
+  --ok-bg: #18261c;
+  --ok-fg: #74cc8a;
+  --ok-border: #1f4028;
+
+  --comp-c1: #c4a5ff;
+  --comp-c2: #94d0ff;
+  --comp-c3: #ffb585;
+  --comp-c4: #f7d76b;
+  --comp-c5: #87e0c0;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 32px 24px 80px;
+  min-height: 100vh;
+}
+
+.shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--lime);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--bg);
+  font-weight: 500;
+}
+
+.brand-name {
+  font-family: var(--serif);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
+.brand-context {
+  font-size: 12px;
+  color: var(--ink-mut);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-left: 6px;
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-mut);
+}
+
+.user-meta-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.page-head h1 {
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.page-head .subtitle {
+  font-size: 14px;
+  color: var(--ink-mut);
+}
+
+.page-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.btn-primary {
+  background: var(--lime);
+  color: var(--bg);
+  border-color: var(--lime);
+  font-weight: 500;
+}
+.btn-primary:hover { background: #c5fa3a; border-color: #c5fa3a; }
+.btn-ok { color: var(--ok-fg); border-color: var(--ok-border); }
+.btn-ok:hover { background: var(--ok-bg); }
+.btn-danger { color: var(--danger-fg); border-color: var(--danger-border); }
+.btn-danger:hover { background: var(--danger-bg); }
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--ink-mut);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-family: var(--serif);
+  font-size: 36px;
+  line-height: 1;
+}
+
+.metric-trend {
+  font-size: 12px;
+  color: var(--ink-mut);
+  margin-top: 6px;
+}
+.metric-trend.up { color: var(--ok-fg); }
+.metric-trend.down { color: var(--danger-fg); }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.section-meta {
+  font-size: 13px;
+  color: var(--ink-mut);
+}
+
+.review-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.review-card.priority {
+  border-color: var(--danger-border);
+  box-shadow: 0 0 0 1px var(--danger-border);
+}
+
+.review-card.compact { padding: 18px 20px; gap: 12px; opacity: 0.95; }
+.review-card.queued { opacity: 0.55; }
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.student-name { font-weight: 500; font-size: 15px; }
+.student-meta {
+  font-size: 12px;
+  color: var(--ink-mut);
+  font-family: var(--mono);
+  margin-top: 2px;
+}
+
+.flags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.flag {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.flag-low {
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-color: var(--danger-border);
+}
+.flag-medium {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  border-color: var(--warn-border);
+}
+.flag-info {
+  background: var(--surface-2);
+  color: var(--ink-mut);
+  border-color: var(--border);
+}
+
+.essay-excerpt {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  border-left: 2px solid var(--lime);
+}
+
+.excerpt-label {
+  font-size: 11px;
+  color: var(--ink-mut);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.excerpt-text {
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.scores-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.scores-row.compact .score-cell { padding: 10px 12px; }
+.scores-row.compact .score-value { font-size: 18px; }
+.scores-row.compact .score-runs { display: none; }
+
+.score-cell {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border-top: 2px solid;
+}
+
+.score-cell[data-comp="c1"] { border-top-color: var(--comp-c1); }
+.score-cell[data-comp="c2"] { border-top-color: var(--comp-c2); }
+.score-cell[data-comp="c3"] { border-top-color: var(--comp-c3); }
+.score-cell[data-comp="c4"] { border-top-color: var(--comp-c4); }
+.score-cell[data-comp="c5"] { border-top-color: var(--comp-c5); }
+
+.score-cell.divergent {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.score-cell.partial-divergent {
+  background: var(--warn-bg);
+  border-color: var(--warn-border);
+}
+
+.score-label {
+  font-size: 11px;
+  color: var(--ink-mut);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.score-value {
+  font-family: var(--serif);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.score-runs {
+  font-size: 11px;
+  color: var(--ink-dim);
+  margin-top: 6px;
+  font-family: var(--mono);
+}
+
+.score-runs.divergent { color: var(--danger-fg); }
+.score-runs.partial-divergent { color: var(--warn-fg); }
+
+.diagnostic {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+}
+
+.diagnostic-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger-fg);
+}
+
+.diagnostic ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.diagnostic li {
+  font-size: 13px;
+  color: var(--ink-mut);
+  padding-left: 14px;
+  position: relative;
+}
+.diagnostic li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 4px;
+  height: 4px;
+  background: var(--ink-dim);
+  border-radius: 50%;
+}
+.diagnostic li code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(255,255,255,0.04);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--lime);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions .btn { flex: 1; min-width: 130px; }
+
+.queued-card-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-mut);
+}
+
+.divider {
+  margin: 8px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div>
+        <div class="brand-name">Redato <span class="brand-context">painel do professor</span></div>
+      </div>
+    </div>
+    <div class="user-meta">
+      <span>Daniel Frechiani · MVT Educação</span>
+      <div class="user-meta-avatar">DF</div>
+    </div>
+  </div>
+
+  <div class="page-head">
+    <div>
+      <h1>Revisão de correções</h1>
+      <p class="subtitle">3ª A · Simulado 1 — Saúde Mental dos Jovens · 30 redações entregues</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn">Filtros</button>
+      <button class="btn">Exportar</button>
+      <button class="btn btn-primary">Ver tudo</button>
+    </div>
+  </div>
+
+  <div class="metrics-row">
+    <div class="metric-card">
+      <div class="metric-label">Pendentes</div>
+      <div class="metric-value">3</div>
+      <div class="metric-trend">10% do simulado</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Aprovadas hoje</div>
+      <div class="metric-value">27</div>
+      <div class="metric-trend up">90% auto-entregues</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Tempo médio</div>
+      <div class="metric-value">4 min</div>
+      <div class="metric-trend">por correção revisada</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Concordância 3/3</div>
+      <div class="metric-value">89%</div>
+      <div class="metric-trend up">+4% vs último simulado</div>
+    </div>
+  </div>
+
+  <div class="section-head">
+    <div class="section-title">Aguardando sua revisão</div>
+    <div class="section-meta">Por prioridade · ensemble N=3</div>
+  </div>
+
+  <div class="review-card priority">
+    <div class="card-head">
+      <div class="student-info">
+        <div class="avatar">MA</div>
+        <div>
+          <div class="student-name">Maria Andrade</div>
+          <div class="student-meta">RJ3·OF09·MF · entregue há 12 min</div>
+        </div>
+      </div>
+      <div class="flags">
+        <span class="flag flag-low">Confiança baixa</span>
+        <span class="flag flag-info">3/3 ensemble divergiram</span>
+      </div>
+    </div>
+
+    <div class="essay-excerpt">
+      <div class="excerpt-label">Trecho da redação</div>
+      <div class="excerpt-text">A saúde mental dos jovens brasileiros vem se tornando um problema cada vez mais grave nos últimos anos. Segundo dados da Organização Mundial da Saúde, o Brasil é o país com maior prevalência de transtornos de ansiedade no mundo. Essa realidade mostra como é urgente enfrentar essa situação. Um dos principais fatores que contribuem para essa crise é o uso excessivo de redes sociais...</div>
+    </div>
+
+    <div class="scores-row">
+      <div class="score-cell" data-comp="c1">
+        <div class="score-label">C1</div>
+        <div class="score-value">120</div>
+        <div class="score-runs">120·120·120</div>
+      </div>
+      <div class="score-cell" data-comp="c2">
+        <div class="score-label">C2</div>
+        <div class="score-value">120</div>
+        <div class="score-runs">120·120·120</div>
+      </div>
+      <div class="score-cell divergent" data-comp="c3">
+        <div class="score-label">C3</div>
+        <div class="score-value">120</div>
+        <div class="score-runs divergent">160·120·80</div>
+      </div>
+      <div class="score-cell" data-comp="c4">
+        <div class="score-label">C4</div>
+        <div class="score-value">160</div>
+        <div class="score-runs">160·160·160</div>
+      </div>
+      <div class="score-cell partial-divergent" data-comp="c5">
+        <div class="score-label">C5</div>
+        <div class="score-value">100</div>
+        <div class="score-runs partial-divergent">120·80·100</div>
+      </div>
+    </div>
+
+    <div class="diagnostic">
+      <div class="diagnostic-head">
+        <div class="dot"></div>
+        Por que está em revisão
+      </div>
+      <ul>
+        <li><code>disagreement_c3</code> · runs deram 160, 120, 80 — spread de 80 pontos em uma competência</li>
+        <li><code>high_total_spread</code> · totais entre 600 e 720 entre os 3 runs</li>
+        <li>Ação concreta presente em C5, mas elementos identificados oscilaram (4 vs 3 vs 4)</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button class="btn">Ver correção completa</button>
+      <button class="btn btn-ok">Aprovar como está</button>
+      <button class="btn">Editar e aprovar</button>
+      <button class="btn btn-danger">Rejeitar e refazer</button>
+    </div>
+  </div>
+
+  <div class="review-card compact">
+    <div class="card-head">
+      <div class="student-info">
+        <div class="avatar">JS</div>
+        <div>
+          <div class="student-name">João Silva</div>
+          <div class="student-meta">RJ3·OF09·MF · entregue há 18 min</div>
+        </div>
+      </div>
+      <div class="flags">
+        <span class="flag flag-medium">Confiança média · simulado</span>
+      </div>
+    </div>
+
+    <div class="scores-row compact">
+      <div class="score-cell" data-comp="c1"><div class="score-label">C1</div><div class="score-value">160</div></div>
+      <div class="score-cell" data-comp="c2"><div class="score-label">C2</div><div class="score-value">200</div></div>
+      <div class="score-cell partial-divergent" data-comp="c3"><div class="score-label">C3</div><div class="score-value">160</div></div>
+      <div class="score-cell" data-comp="c4"><div class="score-label">C4</div><div class="score-value">160</div></div>
+      <div class="score-cell" data-comp="c5"><div class="score-label">C5</div><div class="score-value">160</div></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn">Ver correção</button>
+      <button class="btn btn-ok">Aprovar</button>
+      <button class="btn">Editar</button>
+    </div>
+  </div>
+
+  <div class="review-card queued">
+    <div class="queued-card-line">
+      <div class="student-info">
+        <div class="avatar">PC</div>
+        <div>
+          <div class="student-name">Pedro Castro</div>
+          <div class="student-meta">RJ3·OF09·MF · entregue há 23 min · em fila</div>
+        </div>
+      </div>
+      <span style="font-family: var(--mono); font-size: 12px;">Total 720 · spread 60</span>
+    </div>
+  </div>
+
+  <div class="divider">— 27 correções já aprovadas auto-entregues abaixo —</div>
+
+</div>
+
+</body>
+</html>

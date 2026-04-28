@@ -1,0 +1,963 @@
+.container {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  height: 100%;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.middleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+}
+
+.rightSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 2;
+  min-width: 300px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* Selector Card */
+.selectorCard {
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+}
+
+.dropdown {
+  position: relative;
+  color: rgb(108, 108, 108);
+  width: 100%;
+}
+
+.dropdownButton {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #000000;
+  cursor: pointer;
+}
+
+.dropdownIcon {
+  margin-right: 8px;
+  color: #4a5568;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 4px;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dropdownItem {
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+.dropdownItem:hover {
+  background-color: #f7fafc;
+}
+
+.activeDropdownItem {
+  background-color: #f0f9ff;
+  font-weight: bold;
+  border-left: 3px solid #3498db;
+}
+
+/* Grade Card */
+.gradeCard {
+  background: rgb(188, 237, 72);
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  padding: 15px;
+  min-height: 160px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.gradeValue {
+  font-size: 85px;
+  font-weight: bolder;
+  color: #2d3748;
+  text-align: center;
+  line-height: 1;
+}
+
+.gradeMax {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #4a5568;
+}
+
+.gradeInfo {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 5px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.gradeTurma {
+  font-weight: bold;
+}
+
+.gradeId {
+  color: #999;
+  font-size: 0.7rem;
+}
+
+/* Students Card */
+.studentsCard {
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.studentsHeader {
+  display: flex;
+  padding: 0 16px;
+  margin-bottom: 8px;
+  color: #718096;
+  font-size: 14px;
+}
+
+.studentNameHeader {
+  flex: 1;
+  font-size: 10px;
+}
+
+.studentGradeHeader {
+  width: 100px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.studentReportHeader {
+  width: 80px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.studentsList {
+  display: flex;
+  margin-bottom: 20px;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.studentItem {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 0.2px solid #dadfe3;
+}
+
+.studentNumber {
+  width: 30px;
+  color: #b9c2cd;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.studentName {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studentGrade {
+  width: 80px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.reportButton {
+  width: 60px;
+  display: flex;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  cursor: pointer;
+}
+
+.reportButton:hover {
+  color: #4a5568;
+}
+
+.showMoreContainer {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+}
+
+.showMoreButton {
+  color: #3498db;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.showMoreButton:hover {
+  text-decoration: underline;
+}
+
+/* Competency Card */
+.competencyCard {
+  justify-content: space-between;
+  display: flex;
+  gap: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.competencyChart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+  position: relative;
+  flex: 1;
+  min-width: 250px;
+}
+
+.competencyChartContent {
+  position: relative;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.competencyGridLines {
+  position: absolute;
+  top: 0;
+  left: 30px;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  pointer-events: none;
+}
+
+.verticalLine {
+  position: absolute;
+  top: 0;
+  bottom: -10;
+  width: 0.1px;
+  background-color: #e2e8f0;
+}
+
+.competencyItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.competencyNumber {
+  width: 20px;
+  text-align: center;
+  font-weight: 500;
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+.competencyBarContainer {
+  flex: 1;
+  height: 33px;
+  background-color: #edf2f7;
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.competencyBar {
+  width: 60%;
+  padding: 7px;
+  display: flex;
+  color: black;
+  font-size: 13px;
+  background-color: rgb(67, 97, 238);
+  justify-content: flex-end;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.competencyValue {
+  font-weight: bold;
+  color: #fff;
+}
+
+.competencyScale {
+  margin-top: -10px;
+  margin-left: 25px;
+  margin-right: -18px;
+  display: flex;
+  justify-content: space-between;
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+.competencyLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 200px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendColor {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.legendText {
+  font-size: 14px;
+  color: #4a5568;
+  white-space: nowrap;
+}
+
+/* Performance Card */
+.performanceCard {
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  min-height: 350px;
+  max-height: 400px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.performanceContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+}
+
+.performanceHeader {
+  justify-content: flex-start;
+  display: flex;
+  color: #94a3b8;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.performanceChartWrapper {
+  padding: 5px 40px;
+  display: flex;
+  flex: 1;
+  position: relative;
+  margin-left: 40px;
+}
+
+.performanceGridLines {
+  padding: 5px 40px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #94a3b8;
+  font-size: 14px;
+  z-index: 1;
+}
+
+.gridLine {
+  font-size: 12px;
+  position: relative;
+  width: 100%;
+  text-align: left;
+  margin-left: -40px;
+}
+
+.gridLine::after {
+  content: "";
+  position: absolute;
+  left: 40px;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
+.performanceChartContainer {
+  display: flex;
+  gap: 5px;
+  justify-content: flex-start;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.studentBarColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  height: 91%;
+  position: relative;
+}
+
+.studentBarBackground {
+  position: absolute;
+  bottom: 30px;
+  top: -12px;
+  width: 40px;
+  background-color: #edf2f7;
+  border-radius: 8px;
+}
+
+.studentBar {
+  width: 40px;
+  border-radius: 8px;
+  position: absolute;
+  bottom: 9px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 5px;
+}
+
+.studentBarValue {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 0px 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 5;
+}
+
+.studentBarLabel {
+ justify-items: center;
+    position: absolute;
+    bottom: -30px !important;
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.performanceFooter {
+  display: flex;
+  justify-content: flex-start;
+  color: #94a3b8;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Loading */
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  background-color: #ffffff;
+}
+
+.loadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.loadingLogo {
+  width: 80px;
+  height: 80px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.loadingText {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #333;
+}
+
+.smallLoading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.7; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.7; }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Media Queries para responsividade */
+@media (max-width: 1200px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .middleSection, .rightSection {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .competencyCard {
+    flex-direction: column;
+  }
+
+  .competencyLegend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .legendItem {
+    flex: 0 0 auto;
+    min-width: 150px;
+  }
+
+  .gradeValue {
+    font-size: 4rem;
+  }
+
+  .performanceChartWrapper {
+    padding: 5px 20px;
+    margin-left: 30px;
+  }
+
+  .gridLine {
+    margin-left: -30px;
+  }
+  
+  .studentBarValue {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 576px) {
+  .container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .sectionTitle {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .studentsHeader {
+    padding: 0 8px;
+  }
+
+  .studentItem {
+    padding: 8px;
+  }
+
+  .studentName {
+    font-size: 14px;
+    max-width: 120px;
+  }
+
+  .studentGrade {
+    width: 60px;
+    font-size: 16px;
+  }
+
+  .reportButton {
+    width: 40px;
+  }
+
+  .competencyBarContainer {
+    height: 28px;
+  }
+
+  .competencyBar {
+    padding: 5px;
+    font-size: 11px;
+  }
+
+  .competencyValue {
+    font-size: 11px;
+  }
+
+  .gradeValue {
+    font-size: 3rem;
+  }
+
+  .gradeMax {
+    font-size: 1rem;
+  }
+
+  .competencyCard, .performanceCard, .studentsCard, .selectorCard, .gradeCard {
+    padding: 12px;
+    border-radius: 8px;
+  }
+}
+
+/* Adicionando os estilos específicos para a modal */
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal Content */
+.modalContent {
+  background-color: white;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Header */
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modalHeader h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: black;
+}
+
+/* Close Button */
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #334155;
+}
+
+/* Modal Body */
+.modalBody {
+  padding: 20px;
+}
+
+/* Modal Footer */
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.modalCancelButton {
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.modalCancelButton:hover {
+  background-color: #e2e8f0;
+}
+
+.modalCancelButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Essay Grid */
+.essayGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 600px) {
+  .essayGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Essay Button */
+.essayButton {
+  display: block;
+  width: 100%;
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  text-align: left;
+}
+
+.essayButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.essayButtonContent {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
+
+.essayButtonIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.essayButtonInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.essayButtonTitle {
+  font-weight: 500;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.essayButtonGrade {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.noEssaysMessage {
+  text-align: center;
+  color: #718096;
+  padding: 20px 0;
+}
+
+/* Adicionando estilos para melhorar a responsividade da modal */
+@media (max-width: 768px) {
+  .modalContent {
+    max-width: 100%;
+    width: 95%;
+  }
+  
+  .modalHeader h2 {
+    font-size: 1.1rem;
+  }
+  
+  .essayButtonIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
+  
+  .essayButtonTitle {
+    font-size: 0.9rem;
+  }
+}
+
+/* Para dispositivos muito pequenos */
+@media (max-width: 480px) {
+  .modalContent {
+    width: 100%;
+    max-height: 85vh;
+  }
+  
+  .modalBody {
+    padding: 12px;
+  }
+  
+  .modalHeader, .modalFooter {
+    padding: 12px 16px;
+  }
+  
+  .essayGrid {
+    gap: 10px;
+  }
+  
+  .essayButtonContent {
+    padding: 10px;
+  }
+  
+  .essayButtonIcon {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+  }
+  
+  .essayButtonTitle {
+    font-size: 0.85rem;
+  }
+  
+  .essayButtonGrade {
+    font-size: 0.75rem;
+  }
+}
+
+/* Botão de criar tema */
+.createThemeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background-color: #4361EE;
+  color: white;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  transition: background-color 0.2s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.createThemeButton:hover {
+  background-color: #3a56d4;
+}
+
+/* Checkbox para seleção de turmas */
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.checkboxContainer:hover {
+  background-color: #f1f5f9;
+}
+
+.checkbox {
+  margin-right: 10px;
+}
+
+.checkboxLabel {
+  font-size: 14px;
+  color: black;
+}
+
+/* Estilo para o resultado da submissão */
+.successMessage {
+  background-color: rgba(58, 218, 168, 0.2);
+  color: #0d9488;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.errorMessage {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 16px;
+  font-size: 14px;
+}

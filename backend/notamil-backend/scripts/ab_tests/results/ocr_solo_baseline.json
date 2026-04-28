@@ -1,0 +1,85 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-6",
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 1004.6,
+      "elapsed_s": 13.3,
+      "uncertain_count": 24,
+      "illegible_count": 0,
+      "total_words": 209,
+      "uncertain_pct": 11.5,
+      "theme": "Friedrich Nietzche diz que"
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "ok": true,
+      "dims": [
+        960,
+        1280
+      ],
+      "size_kb": 272.7,
+      "elapsed_s": 15.6,
+      "uncertain_count": 18,
+      "illegible_count": 0,
+      "total_words": 284,
+      "uncertain_pct": 6.3,
+      "theme": "No ano de 2025, no Twitter, uma pessoa não pode opinar so-"
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 777.5,
+      "elapsed_s": 15.1,
+      "uncertain_count": 30,
+      "illegible_count": 0,
+      "total_words": 240,
+      "uncertain_pct": 12.5,
+      "theme": "Pessoas se tornam mais comunicativas"
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 803.5,
+      "elapsed_s": 13.9,
+      "uncertain_count": 30,
+      "illegible_count": 0,
+      "total_words": 180,
+      "uncertain_pct": 16.7,
+      "theme": "O preconceito linguístico e seus efeitos na sociedade brasileira"
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 857.5,
+      "elapsed_s": 13.2,
+      "uncertain_count": 15,
+      "illegible_count": 1,
+      "total_words": 193,
+      "uncertain_pct": 7.8,
+      "theme": "tenças de desigualdade social"
+    }
+  ]
+}

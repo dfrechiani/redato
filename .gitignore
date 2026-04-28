@@ -1,0 +1,142 @@
+# Redato — .gitignore raiz
+#
+# Cobre o monorepo inteiro (backend Python + frontends Node.js +
+# docs). Subdiretórios podem ter .gitignore adicional pra regras
+# específicas (ex.: redato_frontend/.gitignore com regras Next.js).
+
+# ──────────────────────────────────────────────────────────────────────
+# Segredos — NUNCA commitar
+# ──────────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+*.pem
+*.key
+.gcp/
+*-credentials.json
+*-service-account*.json
+
+# ──────────────────────────────────────────────────────────────────────
+# Estado de runtime (banco, audit, PDFs, FSM bot)
+# ──────────────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Diretório data/ é todo runtime — só seeds vão pro Git
+backend/notamil-backend/data/portal/
+backend/notamil-backend/data/whatsapp/
+
+# Whitelist: fixtures de demo
+!backend/notamil-backend/data/seeds/
+
+# Logs e PIDs do orquestrador local (`make demo`)
+.demo-pids/
+*.log
+*.pid
+
+# ──────────────────────────────────────────────────────────────────────
+# Python
+# ──────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.venv/
+venv/
+env/
+.python-version
+
+# Backend conhece seu próprio cache
+backend/notamil-backend/.dev_offline_state.pkl
+
+# ──────────────────────────────────────────────────────────────────────
+# Node.js / Next.js (cobre redato_frontend e frontend/notamil-frontend)
+# ──────────────────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.npm/
+.pnp/
+.pnp.js
+.yarn/
+*.tsbuildinfo
+next-env.d.ts
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+blob-report/
+
+# ──────────────────────────────────────────────────────────────────────
+# Editores e SO
+# ──────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# LibreOffice/OpenOffice locks
+.~lock.*
+
+# ──────────────────────────────────────────────────────────────────────
+# Claude Code workspace (config local, não do projeto)
+# ──────────────────────────────────────────────────────────────────────
+.claude/
+CLAUDE.local.md
+
+# ──────────────────────────────────────────────────────────────────────
+# Conteúdo pessoal e/ou pesado — fora do escopo do código
+# ──────────────────────────────────────────────────────────────────────
+
+# Comprovantes/INPI (registro de marca — documentação pessoal)
+comprovantes_inpi/
+*_inpi_*.xlsx
+*_inpi_*.pdf
+pesquisa_marca_*.docx
+
+# Reembolso, trackers pessoais
+reembolso_*.xlsx
+*_tracker.xlsx
+
+# Imagens soltas tipo "WhatsApp Image..."
+WhatsApp Image*.jpeg
+WhatsApp Image*.jpg
+
+# Logos grandes (mantém referência só em docs/)
+logo_*.jpg
+logo_*.png
+
+# ──────────────────────────────────────────────────────────────────────
+# Datasets e ingestão (pesados — fora do Git, em storage separado)
+# ──────────────────────────────────────────────────────────────────────
+
+# 594 MB de raw data + scripts de ingestão de redações ENEM externas
+ingest/
+
+# 16 MB de cartilhas INEP (públicas, não precisam estar no repo)
+inep_cartilhas/
+
+# ──────────────────────────────────────────────────────────────────────
+# Outros
+# ──────────────────────────────────────────────────────────────────────
+*.tar.gz
+*.zip
+*.bak
+*.orig
+.cache/

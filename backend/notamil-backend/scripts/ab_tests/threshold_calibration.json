@@ -1,0 +1,455 @@
+{
+  "best_config": {
+    "min_occurrences": 6,
+    "ttr_max_for_suppress": null,
+    "tp": 4,
+    "fp": 5,
+    "tn": 6,
+    "fn": 1,
+    "precision": 0.444,
+    "recall": 0.8,
+    "f1": 0.571,
+    "flagged_rate": 0.562,
+    "detail": [
+      {
+        "id": "c1_frequent_diverse_errors",
+        "expected": false,
+        "flag": false,
+        "outcome": "TN"
+      },
+      {
+        "id": "c2_false_repertoire",
+        "expected": false,
+        "flag": false,
+        "outcome": "TN"
+      },
+      {
+        "id": "c3_no_project",
+        "expected": false,
+        "flag": false,
+        "outcome": "TN"
+      },
+      {
+        "id": "c4_mechanical_cohesion",
+        "expected": true,
+        "flag": true,
+        "outcome": "TP"
+      },
+      {
+        "id": "c5_three_elements",
+        "expected": false,
+        "flag": true,
+        "outcome": "FP"
+      },
+      {
+        "id": "control_nota_1000",
+        "expected": false,
+        "flag": true,
+        "outcome": "FP"
+      },
+      {
+        "id": "c1_and_c5_both_weak",
+        "expected": false,
+        "flag": true,
+        "outcome": "FP"
+      },
+      {
+        "id": "c3_weak_project_strong_repertoire",
+        "expected": false,
+        "flag": true,
+        "outcome": "FP"
+      },
+      {
+        "id": "c5_two_elements_only",
+        "expected": false,
+        "flag": true,
+        "outcome": "FP"
+      },
+      {
+        "id": "c2_tangenciamento",
+        "expected": false,
+        "flag": false,
+        "outcome": "TN"
+      },
+      {
+        "id": "c2_heavy_copy",
+        "expected": true,
+        "flag": true,
+        "outcome": "TP"
+      },
+      {
+        "id": "synth_low_rep",
+        "expected": false,
+        "flag": false,
+        "outcome": "TN"
+      },
+      {
+        "id": "synth_obvious_rep",
+        "expected": true,
+        "flag": true,
+        "outcome": "TP"
+      },
+      {
+        "id": "synth_borderline",
+        "expected": true,
+        "flag": false,
+        "outcome": "FN"
+      },
+      {
+        "id": "synth_high_ttr_no_flag",
+        "expected": false,
+        "flag": false,
+        "outcome": "TN"
+      },
+      {
+        "id": "synth_short_rep",
+        "expected": true,
+        "flag": true,
+        "outcome": "TP"
+      }
+    ]
+  },
+  "grid_search": [
+    {
+      "min_occurrences": 6,
+      "ttr_max_for_suppress": null,
+      "tp": 4,
+      "fp": 5,
+      "tn": 6,
+      "fn": 1,
+      "precision": 0.444,
+      "recall": 0.8,
+      "f1": 0.571,
+      "flagged_rate": 0.562,
+      "detail": [
+        {
+          "id": "c1_frequent_diverse_errors",
+          "expected": false,
+          "flag": false,
+          "outcome": "TN"
+        },
+        {
+          "id": "c2_false_repertoire",
+          "expected": false,
+          "flag": false,
+          "outcome": "TN"
+        },
+        {
+          "id": "c3_no_project",
+          "expected": false,
+          "flag": false,
+          "outcome": "TN"
+        },
+        {
+          "id": "c4_mechanical_cohesion",
+          "expected": true,
+          "flag": true,
+          "outcome": "TP"
+        },
+        {
+          "id": "c5_three_elements",
+          "expected": false,
+          "flag": true,
+          "outcome": "FP"
+        },
+        {
+          "id": "control_nota_1000",
+          "expected": false,
+          "flag": true,
+          "outcome": "FP"
+        },
+        {
+          "id": "c1_and_c5_both_weak",
+          "expected": false,
+          "flag": true,
+          "outcome": "FP"
+        },
+        {
+          "id": "c3_weak_project_strong_repertoire",
+          "expected": false,
+          "flag": true,
+          "outcome": "FP"
+        },
+        {
+          "id": "c5_two_elements_only",
+          "expected": false,
+          "flag": true,
+          "outcome": "FP"
+        },
+        {
+          "id": "c2_tangenciamento",
+          "expected": false,
+          "flag": false,
+          "outcome": "TN"
+        },
+        {
+          "id": "c2_heavy_copy",
+          "expected": true,
+          "flag": true,
+          "outcome": "TP"
+        },
+        {
+          "id": "synth_low_rep",
+          "expected": false,
+          "flag": false,
+          "outcome": "TN"
+        },
+        {
+          "id": "synth_obvious_rep",
+          "expected": true,
+          "flag": true,
+          "outcome": "TP"
+        },
+        {
+          "id": "synth_borderline",
+          "expected": true,
+          "flag": false,
+          "outcome": "FN"
+        },
+        {
+          "id": "synth_high_ttr_no_flag",
+          "expected": false,
+          "flag": false,
+          "outcome": "TN"
+        },
+        {
+          "id": "synth_short_rep",
+          "expected": true,
+          "flag": true,
+          "outcome": "TP"
+        }
+      ]
+    },
+    {
+      "min_occurrences": 3,
+      "ttr_max_for_suppress": null,
+      "tp": 5,
+      "fp": 9,
+      "tn": 2,
+      "fn": 0,
+      "precision": 0.357,
+      "recall": 1.0,
+      "f1": 0.526,
+      "flagged_rate": 0.875
+    },
+    {
+      "min_occurrences": 5,
+      "ttr_max_for_suppress": null,
+      "tp": 4,
+      "fp": 8,
+      "tn": 3,
+      "fn": 1,
+      "precision": 0.333,
+      "recall": 0.8,
+      "f1": 0.471,
+      "flagged_rate": 0.75
+    },
+    {
+      "min_occurrences": 4,
+      "ttr_max_for_suppress": null,
+      "tp": 4,
+      "fp": 9,
+      "tn": 2,
+      "fn": 1,
+      "precision": 0.308,
+      "recall": 0.8,
+      "f1": 0.444,
+      "flagged_rate": 0.812
+    },
+    {
+      "min_occurrences": 3,
+      "ttr_max_for_suppress": 0.55,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 3,
+      "ttr_max_for_suppress": 0.5,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 3,
+      "ttr_max_for_suppress": 0.45,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 3,
+      "ttr_max_for_suppress": 0.4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 4,
+      "ttr_max_for_suppress": 0.55,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 4,
+      "ttr_max_for_suppress": 0.5,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 4,
+      "ttr_max_for_suppress": 0.45,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 4,
+      "ttr_max_for_suppress": 0.4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 5,
+      "ttr_max_for_suppress": 0.55,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 5,
+      "ttr_max_for_suppress": 0.5,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 5,
+      "ttr_max_for_suppress": 0.45,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 5,
+      "ttr_max_for_suppress": 0.4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 6,
+      "ttr_max_for_suppress": 0.55,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 6,
+      "ttr_max_for_suppress": 0.5,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 6,
+      "ttr_max_for_suppress": 0.45,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    },
+    {
+      "min_occurrences": 6,
+      "ttr_max_for_suppress": 0.4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 11,
+      "fn": 5,
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_rate": 0.0
+    }
+  ],
+  "test_set_size": 16,
+  "canary_count": 11,
+  "synthetic_count": 5
+}

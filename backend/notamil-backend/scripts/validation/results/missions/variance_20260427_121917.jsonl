@@ -1,0 +1,1 @@
+{"mode": "foco_c3", "runs": 2, "notas": [120, 120], "media": 120, "variancia": 0, "stdev": 0.0, "threshold": 40, "ok": true, "elapsed_per_run": [16.7, 16.4], "rubricas": [{"conclusao": 58, "premissa": 78, "exemplo": 82, "fluencia": 92}, {"conclusao": 48, "premissa": 74, "exemplo": 82, "fluencia": 92}]}

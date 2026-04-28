@@ -1,0 +1,497 @@
+"""Schemas tool_use para os 4 modos novos do livro REJ 1S.
+
+Spec: docs/redato/v3/redato_1S_criterios.md.
+
+- foco_c3 (OF10): rubrica REJ 4 critérios → C3 ENEM 0-200.
+- foco_c4 (OF11): rubrica REJ 4 critérios → C4 ENEM 0-200.
+- foco_c5 (OF12): rubrica REJ 6 critérios → C5 ENEM 0-200.
+- completo_parcial (OF13): C1+C2+C3+C4 (0-800), C5 = "não_aplicável".
+
+Modo completo_integral (OF14) reutiliza o tool _SUBMIT_CORRECTION_FLAT_TOOL
+existente — não está aqui.
+"""
+from __future__ import annotations
+from typing import Any, Dict, List
+
+
+# Escala granular 0-100 por critério (FIX 2 — reduz oscilação em casos
+# fronteiriços). Bandas semânticas:
+#   0-30  / 31-50  → insuficiente
+#   51-70 / 71-85  → adequado
+#   86-100         → excelente
+def _score_0_100() -> Dict[str, Any]:
+    return {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 100,
+        "description": (
+            "Score 0-100. Bandas: 0-50 insuficiente, 51-79 adequado, "
+            "80-100 excelente. Use o continuum dentro da banda."
+        ),
+    }
+
+
+def _confidence_0_100() -> Dict[str, Any]:
+    return {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 100,
+        "description": (
+            "Quão confiante você está deste score (0-100). Valores baixos "
+            "(<60) sinalizam zona de fronteira — caso ambíguo entre bandas."
+        ),
+    }
+
+
+_NIVEL_REJ_4 = [0, 1, 2, 3]  # rubrica REJ 0-3 por critério (OF13)
+_NOTA_ENEM = [0, 40, 80, 120, 160, 200]
+
+
+def _feedback_aluno_schema() -> Dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "acertos": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "1-3 frases curtas em vocabulário REJ ('tópico frasal', "
+                               "'argumento', 'repertório', 'coesão') reconhecendo o que "
+                               "o aluno fez bem.",
+            },
+            "ajustes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "1-3 ações concretas e acionáveis para o próximo "
+                               "exercício, em vocabulário REJ.",
+            },
+        },
+        "required": ["acertos", "ajustes"],
+    }
+
+
+def _feedback_professor_schema(audit_target: str = "100-200 palavras") -> Dict[str, Any]:
+    return {
+        "type": "object",
+        "properties": {
+            "padrao_falha": {
+                "type": "string",
+                "description": "1 frase nomeando o padrão pedagógico observado (ex.: "
+                               "'tese genérica', 'salto lógico', 'proposta desarticulada'). "
+                               "Em terminologia INEP/oficina.",
+            },
+            "transferencia_c1": {
+                "type": "string",
+                "description": "1 frase apontando o que pode ser transferido para a "
+                               "competência ENEM correspondente em redação completa.",
+            },
+            "audit_completo": {
+                "type": "string",
+                "description": (
+                    f"Audit técnico em terminologia INEP. **Tamanho-alvo: "
+                    f"{audit_target}.** Contém o quê + porquê + impacto na nota. "
+                    f"Não exceda o limite — verbosidade não agrega informação."
+                ),
+            },
+        },
+        "required": ["padrao_falha", "transferencia_c1", "audit_completo"],
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Modo Foco C3 (OF10)
+# ──────────────────────────────────────────────────────────────────────
+
+FOCO_C3_TOOL: Dict[str, Any] = {
+    "name": "submit_foco_c3",
+    "description": (
+        "Avaliação Modo Foco C3 (OF10). Aluno escreveu UM parágrafo com "
+        "Conclusão + Premissa + Exemplo. Avalie cada critério da rubrica "
+        "REJ em score 0-100 (continuum granular dentro das bandas "
+        "insuficiente/adequado/excelente), traduza para C3 ENEM 0-200, e "
+        "produza feedback aluno + professor."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "modo": {"type": "string", "enum": ["foco_c3"]},
+            "missao_id": {"type": "string", "enum": ["RJ1_OF10_MF"]},
+            "rubrica_rej": {
+                "type": "object",
+                "properties": {
+                    "conclusao": _score_0_100(),
+                    "premissa": _score_0_100(),
+                    "exemplo": _score_0_100(),
+                    "fluencia": _score_0_100(),
+                },
+                "required": ["conclusao", "premissa", "exemplo", "fluencia"],
+            },
+            "confidences": {
+                "type": "object",
+                "description": "Opcional. Confiança 0-100 por critério; "
+                               "valores baixos sinalizam zona de fronteira.",
+                "properties": {
+                    "conclusao": _confidence_0_100(),
+                    "premissa": _confidence_0_100(),
+                    "exemplo": _confidence_0_100(),
+                    "fluencia": _confidence_0_100(),
+                },
+            },
+            "nota_rej_total": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 400,
+                "description": "Soma dos 4 critérios (cada 0-100). Range 0-400.",
+            },
+            "nota_c3_enem": {
+                "type": "integer",
+                "enum": _NOTA_ENEM,
+                "description": "C3 ENEM 0-200 derivada qualitativamente da rubrica REJ "
+                               "+ Cartilha INEP, usando a tabela de tradução da spec.",
+            },
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "andaime_copiado": {
+                        "type": "boolean",
+                        "description": "true se as palavras 'Conclusão:', 'Premissa:' "
+                                       "ou 'Exemplo:' aparecem no texto reescrito, "
+                                       "sinalizando falta de fluência argumentativa.",
+                    },
+                    "tese_generica": {
+                        "type": "boolean",
+                        "description": "true se a conclusão é frase clichê genérica "
+                                       "aplicável a qualquer tema.",
+                    },
+                    "exemplo_redundante": {
+                        "type": "boolean",
+                        "description": "true se o exemplo apenas paráfraseia a premissa "
+                                       "sem adicionar caso concreto.",
+                    },
+                },
+                "required": ["andaime_copiado", "tese_generica", "exemplo_redundante"],
+            },
+            "feedback_aluno": _feedback_aluno_schema(),
+            "feedback_professor": _feedback_professor_schema("100-200 palavras"),
+        },
+        "required": [
+            "modo",
+            "missao_id",
+            "rubrica_rej",
+            "nota_rej_total",
+            "nota_c3_enem",
+            "flags",
+            "feedback_aluno",
+            "feedback_professor",
+        ],
+    },
+}
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Modo Foco C4 (OF11)
+# ──────────────────────────────────────────────────────────────────────
+
+FOCO_C4_TOOL: Dict[str, Any] = {
+    "name": "submit_foco_c4",
+    "description": (
+        "Avaliação Modo Foco C4 (OF11). Aluno escreveu UM parágrafo "
+        "argumentativo (entrevista de emprego) com 4 peças e conectivos. "
+        "Avalie cada critério da rubrica REJ em score 0-100 (continuum), "
+        "traduza para C4 ENEM 0-200. NÃO conte conectivos — avalie "
+        "adequação semântica."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "modo": {"type": "string", "enum": ["foco_c4"]},
+            "missao_id": {"type": "string", "enum": ["RJ1_OF11_MF"]},
+            "rubrica_rej": {
+                "type": "object",
+                "properties": {
+                    "estrutura": _score_0_100(),
+                    "conectivos": _score_0_100(),
+                    "cadeia_logica": _score_0_100(),
+                    "palavra_dia": _score_0_100(),
+                },
+                "required": ["estrutura", "conectivos", "cadeia_logica", "palavra_dia"],
+            },
+            "confidences": {
+                "type": "object",
+                "description": "Opcional. Confiança 0-100 por critério.",
+                "properties": {
+                    "estrutura": _confidence_0_100(),
+                    "conectivos": _confidence_0_100(),
+                    "cadeia_logica": _confidence_0_100(),
+                    "palavra_dia": _confidence_0_100(),
+                },
+            },
+            "nota_rej_total": {"type": "integer", "minimum": 0, "maximum": 400},
+            "nota_c4_enem": {"type": "integer", "enum": _NOTA_ENEM},
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "conectivo_relacao_errada": {
+                        "type": "boolean",
+                        "description": "true se algum conectivo tem função lógica "
+                                       "errada (ex.: 'portanto' introduzindo causa).",
+                    },
+                    "conectivo_repetido": {
+                        "type": "boolean",
+                        "description": "true se o mesmo conectivo aparece 3+ vezes.",
+                    },
+                    "salto_logico": {
+                        "type": "boolean",
+                        "description": "true se a cadeia tem elos faltantes entre "
+                                       "premissa e conclusão.",
+                    },
+                    "palavra_dia_uso_errado": {
+                        "type": "boolean",
+                        "description": "true se 'premissa', 'mitigar' ou 'exacerbar' "
+                                       "está usada com sentido inadequado.",
+                    },
+                },
+                "required": [
+                    "conectivo_relacao_errada",
+                    "conectivo_repetido",
+                    "salto_logico",
+                    "palavra_dia_uso_errado",
+                ],
+            },
+            "feedback_aluno": _feedback_aluno_schema(),
+            "feedback_professor": _feedback_professor_schema("100-200 palavras"),
+        },
+        "required": [
+            "modo",
+            "missao_id",
+            "rubrica_rej",
+            "nota_rej_total",
+            "nota_c4_enem",
+            "flags",
+            "feedback_aluno",
+            "feedback_professor",
+        ],
+    },
+}
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Modo Foco C5 (OF12)
+# ──────────────────────────────────────────────────────────────────────
+
+FOCO_C5_TOOL: Dict[str, Any] = {
+    "name": "submit_foco_c5",
+    "description": (
+        "Avaliação Modo Foco C5 (OF12). Aluno escreveu UMA proposta de "
+        "intervenção. Avalie a rubrica REJ (6 critérios), aplique a regra "
+        "PRIMÁRIA de articulação à discussão (não conte 5 elementos), "
+        "traduza para C5 ENEM 0-200. Caps: desarticulada=80, "
+        "vaga/constatatória=40, viola DH=0."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "modo": {"type": "string", "enum": ["foco_c5"]},
+            "missao_id": {"type": "string", "enum": ["RJ1_OF12_MF"]},
+            "rubrica_rej": {
+                "type": "object",
+                "properties": {
+                    "agente": _score_0_100(),
+                    "acao_verbo": _score_0_100(),
+                    "meio": _score_0_100(),
+                    "finalidade": _score_0_100(),
+                    "detalhamento": _score_0_100(),
+                    "direitos_humanos": _score_0_100(),
+                },
+                "required": [
+                    "agente", "acao_verbo", "meio", "finalidade",
+                    "detalhamento", "direitos_humanos",
+                ],
+            },
+            "confidences": {
+                "type": "object",
+                "description": "Opcional. Confiança 0-100 por critério.",
+                "properties": {
+                    "agente": _confidence_0_100(),
+                    "acao_verbo": _confidence_0_100(),
+                    "meio": _confidence_0_100(),
+                    "finalidade": _confidence_0_100(),
+                    "detalhamento": _confidence_0_100(),
+                    "direitos_humanos": _confidence_0_100(),
+                },
+            },
+            "articulacao_a_discussao": {
+                "type": "string",
+                "enum": ["ausente", "fragil", "clara", "tematizada"],
+                "description": "Critério PRIMÁRIO. 'ausente' ou 'fragil' aplicam "
+                               "caps independentemente da rubrica REJ.",
+            },
+            "nota_rej_total": {"type": "integer", "minimum": 0, "maximum": 600},
+            "nota_c5_enem": {"type": "integer", "enum": _NOTA_ENEM},
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "proposta_vaga_constatatoria": {
+                        "type": "boolean",
+                        "description": "true se proposta limita-se a constatar "
+                                       "problema sem indicar solução concreta. "
+                                       "Aplica cap 40.",
+                    },
+                    "proposta_desarticulada": {
+                        "type": "boolean",
+                        "description": "true se a solução não responde aos problemas "
+                                       "específicos discutidos. Aplica cap 80.",
+                    },
+                    "agente_generico": {
+                        "type": "boolean",
+                        "description": "true se 'o governo', 'a sociedade', 'as pessoas' "
+                                       "sem especificação institucional.",
+                    },
+                    "verbo_fraco": {
+                        "type": "boolean",
+                        "description": "true se 'fazer', 'ter' ou 'ser' como verbo "
+                                       "principal da ação.",
+                    },
+                    "desrespeito_direitos_humanos": {
+                        "type": "boolean",
+                        "description": "true se proposta viola direitos humanos. "
+                                       "C5 vai a 0.",
+                    },
+                },
+                "required": [
+                    "proposta_vaga_constatatoria",
+                    "proposta_desarticulada",
+                    "agente_generico",
+                    "verbo_fraco",
+                    "desrespeito_direitos_humanos",
+                ],
+            },
+            "feedback_aluno": _feedback_aluno_schema(),
+            "feedback_professor": _feedback_professor_schema("100-200 palavras"),
+        },
+        "required": [
+            "modo",
+            "missao_id",
+            "rubrica_rej",
+            "articulacao_a_discussao",
+            "nota_rej_total",
+            "nota_c5_enem",
+            "flags",
+            "feedback_aluno",
+            "feedback_professor",
+        ],
+    },
+}
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Modo Completo Parcial (OF13) — parágrafo único, C5 = não_aplicável
+# ──────────────────────────────────────────────────────────────────────
+
+COMPLETO_PARCIAL_TOOL: Dict[str, Any] = {
+    "name": "submit_completo_parcial",
+    "description": (
+        "Avaliação Modo Completo Parcial (OF13). Aluno escreveu UM "
+        "parágrafo argumentativo (6-9 linhas). Avalie a rubrica REJ "
+        "(Tópico Frasal, Argumento, Repertório, Coesão — 0-3 cada) e "
+        "produza notas C1+C2+C3+C4 ENEM (0-200 cada). C5 é 'não_aplicável' "
+        "porque parágrafo único não tem proposta de intervenção. "
+        "nota_total_parcial = soma de C1+C2+C3+C4 (0-800)."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "modo": {"type": "string", "enum": ["completo_parcial"]},
+            "missao_id": {"type": "string", "enum": ["RJ1_OF13_MF"]},
+            "rubrica_rej": {
+                "type": "object",
+                "properties": {
+                    "topico_frasal": _score_0_100(),
+                    "argumento": _score_0_100(),
+                    "repertorio": _score_0_100(),
+                    "coesao": _score_0_100(),
+                },
+                "required": ["topico_frasal", "argumento", "repertorio", "coesao"],
+            },
+            "confidences": {
+                "type": "object",
+                "description": "Opcional. Confiança 0-100 por critério.",
+                "properties": {
+                    "topico_frasal": _confidence_0_100(),
+                    "argumento": _confidence_0_100(),
+                    "repertorio": _confidence_0_100(),
+                    "coesao": _confidence_0_100(),
+                },
+            },
+            "nota_rej_total": {"type": "integer", "minimum": 0, "maximum": 400},
+            "notas_enem": {
+                "type": "object",
+                "properties": {
+                    "c1": {"type": "integer", "enum": _NOTA_ENEM},
+                    "c2": {"type": "integer", "enum": _NOTA_ENEM},
+                    "c3": {"type": "integer", "enum": _NOTA_ENEM},
+                    "c4": {"type": "integer", "enum": _NOTA_ENEM},
+                    "c5": {"type": "string", "enum": ["não_aplicável"]},
+                },
+                "required": ["c1", "c2", "c3", "c4", "c5"],
+            },
+            "nota_total_parcial": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 800,
+                "description": "Soma C1+C2+C3+C4. C5 não entra na soma.",
+            },
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "topico_e_pergunta": {
+                        "type": "boolean",
+                        "description": "true se o tópico frasal é interrogativo "
+                                       "em vez de assertivo.",
+                    },
+                    "repertorio_de_bolso": {
+                        "type": "boolean",
+                        "description": "true se há repertório citado mas desarticulado "
+                                       "do argumento (Aristóteles colado).",
+                    },
+                    "argumento_superficial": {
+                        "type": "boolean",
+                        "description": "true se argumento é frase solta sem mecanismo "
+                                       "causal.",
+                    },
+                    "coesao_perfeita_sem_progressao": {
+                        "type": "boolean",
+                        "description": "true se conectivos OK mas parágrafo gira em "
+                                       "torno da mesma ideia.",
+                    },
+                },
+                "required": [
+                    "topico_e_pergunta",
+                    "repertorio_de_bolso",
+                    "argumento_superficial",
+                    "coesao_perfeita_sem_progressao",
+                ],
+            },
+            "feedback_aluno": _feedback_aluno_schema(),
+            "feedback_professor": _feedback_professor_schema("200-400 palavras"),
+        },
+        "required": [
+            "modo",
+            "missao_id",
+            "rubrica_rej",
+            "nota_rej_total",
+            "notas_enem",
+            "nota_total_parcial",
+            "flags",
+            "feedback_aluno",
+            "feedback_professor",
+        ],
+    },
+}
+
+
+TOOLS_BY_MODE: Dict[str, Dict[str, Any]] = {
+    "foco_c3": FOCO_C3_TOOL,
+    "foco_c4": FOCO_C4_TOOL,
+    "foco_c5": FOCO_C5_TOOL,
+    "completo_parcial": COMPLETO_PARCIAL_TOOL,
+}

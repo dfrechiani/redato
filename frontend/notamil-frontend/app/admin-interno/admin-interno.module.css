@@ -1,0 +1,646 @@
+.dashboardContainer {
+  padding: 2rem;
+  color: #333333;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.dashboardTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #1a73e8;
+}
+
+.welcomeText {
+  font-size: 1.1rem;
+  color: #5f6368;
+  margin-bottom: 2rem;
+}
+
+.cardsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  padding: 1.25rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a73e8;
+  margin: 0;
+}
+
+.cardIcon {
+  margin-right: 0.75rem;
+  color: #1a73e8;
+}
+
+.cardContent {
+  padding: 1.25rem;
+  min-height: 300px;
+  background-color: #ffffff;
+}
+
+.loadingSpinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 250px;
+  color: #5f6368;
+  font-size: 0.9rem;
+}
+
+.errorMessage {
+  color: #d93025;
+  padding: 1rem;
+  background-color: #fce8e6;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+  border: 1px solid #fad2cf;
+}
+
+.emptyState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 250px;
+  color: #5f6368;
+  font-style: italic;
+}
+
+.professorsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.professorItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  border: 1px solid #e0e0e0;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.professorMainInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+}
+
+.professorActions {
+  flex-shrink: 0;
+}
+
+.professorItem:hover {
+  background-color: #f1f3f4;
+  transform: translateY(-2px);
+}
+
+.professorAvatar {
+  flex-shrink: 0;
+  color: #1a73e8;
+}
+
+.professorInfo {
+  flex-grow: 1;
+}
+
+.professorName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #202124;
+  margin-bottom: 0.25rem;
+}
+
+.professorContact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #5f6368;
+}
+
+.contactItem svg {
+  color: #5f6368;
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #202124;
+  background-color: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+  .cardsContainer {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboardContainer {
+    padding: 1rem;
+  }
+}
+
+/* Formulário de criação de turma */
+.createClassForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formLabel {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.formInput,
+.formSelect {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  color: #202124;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.formInput:focus,
+.formSelect:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.formInput::placeholder {
+  color: #9aa0a6;
+}
+
+.formInput:disabled,
+.formSelect:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.submitButton {
+  background-color: #1a73e8;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #1557b0;
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #e0e0e0;
+}
+
+.resultMessage {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  gap: 0.5rem;
+}
+
+.successMessage {
+  background-color: #e6f4ea;
+  color: #137333;
+  border: 1px solid #b7e1cd;
+}
+
+.errorMessage {
+  background-color: #fce8e6;
+  color: #d93025;
+  border: 1px solid #fad2cf;
+}
+
+.resultIcon {
+  flex-shrink: 0;
+}
+
+/* Estilos para a lista de turmas */
+.classesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.classItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  border: 1px solid #e0e0e0;
+  transition: background-color 0.2s;
+}
+
+.classItem:hover {
+  background-color: #f1f3f4;
+}
+
+.classInfo {
+  flex-grow: 1;
+}
+
+.className {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #202124;
+  margin-bottom: 0.2rem;
+}
+
+.classProfessor {
+  font-size: 0.8rem;
+  color: #5f6368;
+}
+
+.classActions {
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.deleteButton {
+  background: none;
+  border: none;
+  color: #d93025;
+  padding: 0.25rem;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background-color: #fce8e6;
+  color: #d93025;
+}
+
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estilos para o Modal */
+.modalBackdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 450px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 2rem;
+  color: #202124;
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #202124;
+}
+
+.modalDescription {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  color: #5f6368;
+}
+
+.modalDescription strong {
+  color: #1a73e8;
+  font-weight: 600;
+}
+
+.modalError {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #fce8e6;
+  color: #d93025;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border: 1px solid #fad2cf;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.confirmButton,
+.cancelButton {
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s;
+  border: 1px solid transparent;
+}
+
+.confirmButton {
+  background-color: #d93025;
+  color: white;
+  border-color: #d93025;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background-color: #b31412;
+  border-color: #b31412;
+}
+
+.confirmButton:disabled {
+  opacity: 0.65;
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
+.cancelButton:disabled {
+  opacity: 0.65;
+}
+
+/* Estilo adicional para headers com botão */
+.cardHeaderWithButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.createButtonHeader {
+  background-color: #1a73e8 !important;
+  color: white !important;
+  padding: 0.3rem 0.8rem !important;
+  font-size: 0.8rem !important;
+  line-height: 1.2 !important;
+}
+
+.createButtonHeader:hover {
+  background-color: #1557b0 !important;
+}
+
+/* Estilo específico para o botão Criar dentro do Modal */
+.createButtonModal {
+  background-color: #1a73e8 !important;
+  color: white !important;
+  border-color: #1a73e8 !important;
+  padding: 0.6rem 1.2rem !important;
+  border-radius: 0.375rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s, border-color 0.2s, opacity 0.2s !important;
+  border: 1px solid transparent !important;
+}
+
+.createButtonModal:hover:not(:disabled) {
+  background-color: #1557b0 !important;
+  border-color: #1557b0 !important;
+}
+
+.createButtonModal:disabled {
+  opacity: 0.65 !important;
+}
+
+/* Estilos para Filtros */
+.filtersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+  min-width: 200px;
+}
+
+.filterLabel {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.filterSelect,
+.filterInput {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.375rem;
+  padding: 0.65rem 0.75rem;
+  color: #202124;
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.filterSelect:focus,
+.filterInput:focus {
+  outline: none;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+.filterInput::placeholder {
+  color: #9aa0a6;
+}
+
+.filterSelect:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #f8f9fa;
+}
+
+.searchInputContainer {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #5f6368;
+}
+
+.filterInput {
+  padding-left: 2.5rem;
+}
+
+/* Estilos para a Lista de Alunos */
+.studentsListContainer {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.studentsListContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.studentsListContainer::-webkit-scrollbar-track {
+  background: #f1f3f4;
+  border-radius: 3px;
+}
+
+.studentsListContainer::-webkit-scrollbar-thumb {
+  background: #dadce0;
+  border-radius: 3px;
+}
+
+.studentsListContainer::-webkit-scrollbar-thumb:hover {
+  background: #bdc1c6;
+}
+
+.studentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.studentItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  border: 1px solid #e0e0e0;
+}
+
+.studentInfo {
+  flex-grow: 1;
+}
+
+.studentName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #202124;
+  margin-bottom: 0.15rem;
+}
+
+.studentEmail,
+.studentClass {
+  font-size: 0.8rem;
+  color: #5f6368;
+  margin-bottom: 0.1rem;
+}
+
+.studentActions {
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+/* Estilos para Bulk Register Modal */
+.dropZone {
+  border: 2px dashed #dadce0;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f8f9fa;
+  color: #5f6368;
+  transition: background-color 0.2s, border-color 0.2s;
+  margin-bottom: 1rem;
+}
+
+.dropZone:hover {
+  background-color: #f1f3f4;
+  border-color: #1a73e8;
+}
+
+.dropZone p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.fileInputHidden {
+  display: none;
+}
+
+/* Ajuste para mensagem de resultado dentro do modal */
+.modalContent .resultMessage {
+  margin-top: 1rem;
+  margin-bottom: 0;
+} 

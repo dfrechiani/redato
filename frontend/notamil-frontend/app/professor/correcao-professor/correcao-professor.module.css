@@ -1,0 +1,798 @@
+/* Mantém todo o CSS original e adiciona as regras de responsividade no final */
+
+.feedback_container {
+    margin: 0 auto;
+    max-width: 1024px;
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  .flex {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .score_label {
+    background: rgb(29, 56, 46);
+    border: 1px solid rgba(0, 0, 0, 0.259);
+    padding: 15px;
+    height: 140px;
+    align-items: center;
+    text-align-last: center;
+    width: 120px;
+    margin-right: 10px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-bottom: 25px;
+    font-size: 22px;
+    color: white;
+  } 
+  
+  .gradeCard {
+    background: rgb(188, 237, 72);
+    border: 1px solid rgba(0, 0, 0, 0.259);
+    padding: 15px;
+    height: 140px;
+    max-width: 350px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+  
+  .gradeLabel {
+    font-weight: 600;
+    font-family: 'BlauerNue', Arial, sans-serif; 
+    font-size: 18px;
+    color: #1f2937e6;
+  }
+  
+  .gradeValue {
+    align-self: center;
+    font-family: 'BlauerNue', Arial, sans-serif; 
+    font-size: 100px;
+    font-weight: 600;
+    color: #1c5349;
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+  }
+  
+  .competencyDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+  }
+  
+  
+  .gradeMax {
+    font-size: 30px;
+    font-weight: normal;
+    color: rgba(31, 41, 55, 0.207);
+  }
+  
+    
+  .score_subtitle {
+    font-weight: 300;
+    padding: 20px;
+    text-align: center;
+    font-size: 15px;
+    color: #333;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid #e5e7eb;
+  }
+    
+  .criteria_container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 24px;
+  }
+    
+  .criteria_item {
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.1);
+    padding: 0px 20px 12px 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+    
+  .criteria_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    margin-top: 5px;
+    padding:5px;
+    transition: width 0.3s ease;
+  }
+  
+  .criteria_header:hover {
+    border-radius: 12px;
+    background: #ebebebbd;
+  }
+  
+  .criteria_title_wrapper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+    
+  .criteria_title {
+    font-size: 20px;
+    font-weight: 300;
+    color: rgb(29, 56, 46);
+  }
+    
+  .criteria_score {
+    font-size: 32px;
+    font-weight: 700;
+    color: rgb(29, 56, 46);
+  }
+  .criteria_total{
+    font-size: 16px;
+    color: #c4c4c4;
+  }
+    
+  .progress_bar {
+    width: 100%;
+    height: 5px;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+    
+  .progress_bar_fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+    
+  .progress_bar_fill.blue {
+    background-color: #3b82f6;
+  }
+  
+  .red {
+    background: hsl(0, 65%, 45%) !important;
+    color: white;
+  }
+    
+  .blue {
+    background: rgb(73, 73, 255) !important;
+    color: white;
+  }
+    
+  .green {
+    background: #8ad400 !important;
+    color: black;
+  }
+    
+    
+  .progress_bar_fill.green {
+    background-color: #22c55e;
+  }
+    
+  .feedback_content {
+    margin-top: 12px;
+    padding: 16px;
+    background-color: transparent;
+    border-radius: 8px;
+  }
+    
+  .feedback_text {
+    font-size: 15px;
+    font-weight: 300;
+    color: #949494;
+  }
+    
+  .progress_text {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #22a559;
+  }
+    
+  .feedback_button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 12px;
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+    background-color: #22a559;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+    
+  .feedback_button:hover {
+    background-color: #bdbdbd;
+  }
+    
+  .chevron {
+    width: 30px;
+    height: 30px;
+    color: rgb(29, 56, 46);
+  }
+    
+  .collapsible_content {
+    display: none;
+  }
+    
+  .collapsible_content.open {
+    display: block;
+  }
+    
+  .exerciseButton {
+    font-family: 'BlauerNue', Arial, sans-serif; 
+    font-size: 28px;
+    margin-top: 8px;
+    color: #1f2937d4;
+    border: 2px solid rgba(0, 0, 0, 0.248);
+    padding: 8px 30px;
+    background: #c5fd5e;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+    
+  .exerciseButton:hover {
+    opacity: 1;
+    color: #1f2937;
+    background: #a6ff00;
+  }
+  
+  .btnContainer {
+    display: flex;
+    justify-content: end;
+    margin: 0 auto;
+    max-width: 1024px;
+  }
+    
+  
+  /* Adicione estes estilos ao seu arquivo correcao.module.css */
+  
+  /* Modal de seleção de redações */
+  .modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modalContent {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  
+  .modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #edf2f7;
+  }
+  
+  .modalHeader h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: #2d3748;
+  }
+  
+  .closeButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #718096;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .closeButton:hover {
+    background-color: #f7fafc;
+    color: #2d3748;
+  }
+  
+  .modalBody {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  
+  .modalFooter {
+    padding: 16px 20px;
+    border-top: 1px solid #edf2f7;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .modalCancelButton {
+    padding: 8px 16px;
+    background-color: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .modalCancelButton:hover {
+    background-color: #cbd5e0;
+  }
+  
+  .essayGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  @media (min-width: 600px) {
+    .essayGrid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .essayButton {
+    display: block;
+    width: 100%;
+    background-color: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+    text-align: left;
+  }
+  
+  .essayButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .essayButtonContent {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+  }
+  
+  .essayButtonIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background-color: #4299e1;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  
+  .essayButtonInfo {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .essayButtonTitle {
+    font-weight: 500;
+    color: #2d3748;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  
+  .essayButtonGrade {
+    font-size: 0.875rem;
+    color: #718096;
+  }
+  
+  .noEssaysMessage {
+    text-align: center;
+    color: #718096;
+    padding: 20px 0;
+  }
+  
+  /* Estado de loading */
+  .loading_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    background-color: #fff;
+  }
+  
+  .loadingLogo {
+    margin-top: 20px;
+    margin-left: 40px;
+    width: 100px;
+    height: 160px;
+    margin-bottom: 1rem;
+    animation: zoomSpin 2s ease-in-out infinite;
+  }
+  
+  @keyframes zoomSpin {
+    0% {
+      transform: scale(0.8) rotate(0deg);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.2) rotate(180deg);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(0.8) rotate(360deg);
+      opacity: 0.5;
+    }
+  }
+  
+  /* Mensagem de nenhuma correção */
+  .no_correction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    min-height: 300px;
+  }
+  
+  .no_correction h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin-bottom: 20px;
+  }
+  
+  .select_essay_button {
+    background-color: #4361ee;
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .select_essay_button:hover {
+    background-color: #3a56e4;
+  }
+  
+  /* Botões de ação */
+  .action_buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  
+  .exerciseButton {
+    background-color: #c5fd5e;;
+    color: #1f2937d4;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-align: center;
+    width: 100%;
+    border: 1px solid rgba(0, 0, 0, 0.259);
+  }
+  
+  .exerciseButton:hover {
+    opacity: 1;
+    color: #1f2937;
+    background: #a6ff00;
+  }
+  
+  
+  .select_another_button {
+    border: 1px solid rgba(0, 0, 0, 0.259);
+    margin-top: 8px;
+    margin-right: 10px;
+    background-color: #f8f9fa;
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-align: center;
+  }
+  
+  .select_another_button:hover {
+    background-color: #edf2f7;
+  }
+  
+  @media (min-width: 768px) {
+    .action_buttons {
+      flex-direction: row;
+      justify-content: center;
+    }
+    
+    .exerciseButton, .select_another_button {
+      width: auto;
+    }
+  }
+  
+  /* =============== REGRAS DE RESPONSIVIDADE =============== */
+  
+  /* Tablets (601px - 992px) */
+  @media screen and (max-width: 992px) {
+    .feedback_container {
+      max-width: 90%;
+      padding: 30px;
+      margin: 20px auto;
+    }
+    
+    .criteria_container {
+      padding: 16px;
+    }
+    
+    .gradeValue {
+      font-size: 80px;
+    }
+    
+    .gradeMax {
+      font-size: 24px;
+    }
+    
+    .score_label {
+      font-size: 18px;
+      width: 100px;
+      height: 120px;
+    }
+    
+    .criteria_title {
+      font-size: 18px;
+    }
+    
+    .criteria_score {
+      font-size: 28px;
+    }
+    
+    .exerciseButton {
+      font-size: 22px;
+      padding: 8px 20px;
+    }
+    
+    .select_another_button {
+      font-size: 0.9rem;
+      padding: 10px 20px;
+    }
+    
+    .btnContainer {
+      max-width: 90%;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+  }
+  
+  /* Celulares (até 600px) */
+  @media screen and (max-width: 600px) {
+    .feedback_container {
+      max-width: 100%;
+      padding: 20px;
+      margin: 10px auto;
+    }
+    
+    .flex {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .score_label {
+      width: 100%;
+      height: auto;
+      padding: 10px;
+      margin-right: 0;
+      margin-bottom: 10px;
+      flex-direction: row;
+      justify-content: center;
+      gap: 5px;
+    }
+    
+    .score_label br {
+      display: none;
+    }
+    
+    .gradeCard {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      padding: 15px 10px;
+    }
+    
+    .gradeValue {
+      font-size: 60px;
+    }
+    
+    .gradeMax {
+      font-size: 20px;
+    }
+    
+    .score_subtitle {
+      padding: 15px;
+      font-size: 14px;
+    }
+    
+    .criteria_container {
+      padding: 10px;
+      gap: 10px;
+    }
+    
+    .criteria_item {
+      padding: 0px 15px 10px 15px;
+    }
+    
+    .criteria_title {
+      font-size: 16px;
+    }
+    
+    .criteria_score {
+      font-size: 24px;
+    }
+    
+    .criteria_total {
+      font-size: 14px;
+    }
+    
+    .chevron {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .feedback_text {
+      font-size: 14px;
+    }
+    
+    .btnContainer, .action_buttons {
+      max-width: 95%;
+      flex-direction: column;
+      padding: 10px;
+    }
+    
+    .exerciseButton {
+      font-size: 18px;
+      width: 100%;
+      margin-right: 0;
+      margin-top: 10px;
+      order: 2;
+    }
+    
+    .select_another_button {
+      width: 100%;
+      margin-right: 0;
+      font-size: 16px;
+      padding: 10px;
+      order: 1;
+    }
+    
+    .modalHeader h2 {
+      font-size: 1rem;
+    }
+    
+    .modalBody {
+      padding: 15px;
+    }
+    
+    .essayButtonIcon {
+      width: 30px;
+      height: 30px;
+      font-size: 0.75rem;
+    }
+    
+    .essayButtonTitle {
+      font-size: 0.875rem;
+    }
+    
+    .essayButtonGrade {
+      font-size: 0.75rem;
+    }
+    
+    .loadingLogo {
+      margin-top: -50px;
+      margin-left: -10px;
+      width: 60px;
+      height: 90px;
+    }
+  }
+  
+  /* Celulares pequenos (até 400px) */
+  @media screen and (max-width: 400px) {
+    .feedback_container {
+      padding: 15px;
+    }
+    
+    .criteria_container {
+      padding: 5px;
+    }
+    
+    .criteria_item {
+      padding: 0px 10px 8px 10px;
+    }
+    
+    .gradeValue {
+      font-size: 50px;
+    }
+    
+    .gradeMax {
+      font-size: 18px;
+    }
+    
+    .criteria_title {
+      font-size: 14px;
+    }
+    
+    .criteria_score {
+      font-size: 20px;
+    }
+    
+    .feedback_text {
+      font-size: 13px;
+    }
+    
+    .exerciseButton, .select_another_button {
+      font-size: 14px;
+      padding: 8px 15px;
+    }
+    
+    .no_correction h2 {
+      font-size: 1.25rem;
+    }
+    
+    .select_essay_button {
+      font-size: 0.875rem;
+      padding: 10px 16px;
+    }
+    
+    .loadingLogo {
+      margin-top: -50px;
+      margin-left: -10px;
+      width: 60px;
+      height: 90px;
+    }
+  }

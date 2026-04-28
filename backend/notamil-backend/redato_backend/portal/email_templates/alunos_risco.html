@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Redato — alunos em risco</title>
+</head>
+<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#1a1a1a; background:#f6f6f6;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f6;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="padding:32px 32px 16px 32px;">
+              <h1 style="margin:0; font-size:22px; color:#1a1a1a;">Olá, {primeiro_nome}.</h1>
+              <p style="font-size:15px; line-height:1.6; color:#444;">
+                Identificamos <strong>{n_alunos}</strong> aluno(s) em risco
+                na turma <strong>{turma_codigo}</strong> — alunos com 3+
+                missões na faixa "Insuficiente".
+              </p>
+              <table style="background:#fff7ed; border-left:4px solid #f59e0b; padding:12px; margin:16px 0; width:100%;">
+                <tr><td style="padding:12px;">
+                  <pre style="margin:0; font-family: 'SF Mono', Menlo, monospace; font-size:13px; color:#7c2d12; white-space:pre-wrap;">{lista_alunos}</pre>
+                </td></tr>
+              </table>
+              <p style="font-size:14px; line-height:1.6; color:#444;">
+                Considere uma conversa individual ou atividade de reforço.
+                A evolução de cada aluno está disponível no portal.
+              </p>
+              <p style="text-align:center; padding:16px 0;">
+                <a href="{link}" style="display:inline-block; padding:14px 28px; background:#0f1117; color:#b9f01c; text-decoration:none; border-radius:8px; font-weight:600; font-size:15px;">Abrir dashboard da turma</a>
+              </p>
+              <hr style="border:none; border-top:1px solid #eee; margin:24px 0;">
+              <p style="font-size:12px; color:#999; line-height:1.5; margin:0;">
+                Este alerta é disparado no máximo 1× por semana por turma
+                pra não inundar sua caixa. Próximo alerta possível em
+                ~7 dias.
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="font-size:12px; color:#999; margin:16px 0 0 0;">
+          © Redato — Projeto ATO (Agência Textual de Operação)
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

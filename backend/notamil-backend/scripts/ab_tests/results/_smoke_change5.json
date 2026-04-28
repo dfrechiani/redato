@@ -1,0 +1,47 @@
+{
+  "config": {
+    "model": "claude-opus-4-7",
+    "n_images": 1,
+    "n_reps": 1
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "config": "pipeline",
+      "ok": true,
+      "elapsed_s": 50.9,
+      "uncertain_count": 22,
+      "total_words": 211,
+      "uncertain_pct": 10.4,
+      "theme": "Friedrich Nietzche diz que",
+      "transcription": "A pressa em ser adulto pode levar a uma infância perdida e uma maturidade mal vivida, a frase <uncertain confidence='HIGH'>do</uncertain> <uncertain confidence='HIGH'>filosofo</uncertain> <uncertain confidence='HIGH'>Friedrich</uncertain> <uncertain confidence='HIGH'>Nietzche</uncertain>, destaca a importancia da infância. Dessa forma, cabe analisar o perigo do skincare infantil: entre a responsabilidade dos pais e mercado de <uncertain confidence='HIGH'>cosmético</uncertain>. Nesse sentido, cabe obeservar a responsabilidade dos pais e industria em relação ao problema, como tambem <uncertain confidence='MEDIUM'>o</uncertain> impacto <uncertain confidence='MEDIUM'>geradona</uncertain> vida das crianças.\n\nEm primeira <uncertain confidence='HIGH'>análise</uncertain>, cabe analisar a responsabilidade dos pais e da industria de cosméticos na <uncertain confidence='MEDIUM'>utilização</uncertain> de skincare em crianças. <uncertain confidence='HIGH'>Á luz dessa perspectiva</uncertain> De acordo com o Estatuto da criança é adolecente, no artigo 4°, diz que o <uncertain confidence='MEDIUM'>individuo</uncertain> precisa ter sua infancia assegurada pelos pais e demais organizações. Contudo esse direito não é <uncertain confidence='MEDIUM'>assegurado</uncertain> <uncertain confidence='MEDIUM'>quando</uncertain> a criança é <uncertain confidence='MEDIUM'>esposta</uncertain> a <uncertain confidence='MEDIUM'>coisas</uncertain> que não são da idade dela.\n\nEm segunda análise, cabe obeservar que essa rotina de auto-cuidados <uncertain confidence='MEDIUM'>precose</uncertain> pode trazer várias consequências como: Impactos na pele, no <uncertain confidence='MEDIUM'>psicologico</uncertain> (pode <uncertain confidence='MEDIUM'>distorce</uncertain> a autoimagem), e no desenvolvimento cognitivo e emocional. Além de outras.\n\nEm sintese, <uncertain confidence='MEDIUM'>o</uncertain> perigo do skincare infantil e suas consequências. É necessario que <uncertain confidence='MEDIUM'>o</uncertain> Conselho Tutelar com <uncertain confidence='MEDIUM'>o</uncertain> auxilio das midias sociais, promova <uncertain confidence='MEDIUM'>campanhas</uncertain> sobre tal assunto, para combater essa pratica que influência de forma negativa na infância.",
+      "rep": 1
+    },
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "config": "solo-orig",
+      "ok": true,
+      "elapsed_s": 15.9,
+      "stop_reason": "end_turn",
+      "uncertain_count": 5,
+      "total_words": 207,
+      "uncertain_pct": 2.4,
+      "theme": "Friedrich Nietzche diz que",
+      "transcription": "A pressa em ser adulta pode levar a uma infância perdida e uma maturidade mal vivida, a frase <uncertain confidence='HIGH'>do filosofo Friedrich Nietzche</uncertain>, destaca a importância da infância. Dessa forma, cabe analisar, o perigo do skincare infantil: entre a responsabilidade dos pais e mercado de cosméticos.\n\nNesse sentido, cabe observar a responsabilidade dos pais e indústria em relação ao problema, como também o impacto gerado na vida das crianças.\n\nEm primeira <uncertain confidence='MEDIUM'>análise</uncertain>, cabe analisar a responsabilidade dos pais e da indústria de cosméticos na <uncertain confidence='MEDIUM'>utilização</uncertain> de skincare em crianças. De acordo com o Estatuto da criança e adolecente, no artigo 4°, diz que o indivíduo precisa ter sua infância assegurada pelos pais e demais organizações. Contudo esse direito não é assegurado quando a criança é exposta a coisas que não são da idade dela.\n\nEm segunda análise, cabe observar que essa rotina de auto-cuidados <uncertain confidence='LOW'>precose</uncertain> pode trazer várias consequências como: Impactos na pele, no psicológico (pode <uncertain confidence='MEDIUM'>distorcer</uncertain> a autoimagem), e no desenvolvimento cognitivo e emocional. Além de outras.\n\nEm síntese, o perigo do skincare infantil e suas consequências. É necessário que o Conselho Tutelar com o auxílio das mídias sociais, promova campanhas sobre tal assunto, para combater essa prática que influência de forma negativa na infância.",
+      "rep": 1
+    },
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "config": "solo-clean",
+      "ok": true,
+      "elapsed_s": 46.6,
+      "stop_reason": "end_turn",
+      "uncertain_count": 9,
+      "total_words": 207,
+      "uncertain_pct": 4.3,
+      "theme": "Friedrich Nietzche diz que",
+      "transcription": "A pressa em ser adulta pode levar a uma infância perdida e uma maturidade mal vivida. A frase <uncertain confidence='HIGH'>do filósofo Friedrich Nietzche</uncertain> destaca a <uncertain confidence='HIGH'>importancia</uncertain> da infância. Dessa forma, cabe analisar o perigo do skincare infantil: entre a responsabilidade dos pais e mercado de cosméticos.\nNesse sentido, cabe observar a responsabilidade dos pais e <uncertain confidence='HIGH'>industria</uncertain> em relação ao problema, como também o impacto gerado na vida das crianças.\nEm primeira <uncertain confidence='MEDIUM'>plano</uncertain>, cabe analisar a responsabilidade dos pais e da indústria de cosméticos na <uncertain confidence='MEDIUM'>utilização</uncertain> de skincare em crianças. De acordo com o Estatuto da criança e <uncertain confidence='HIGH'>adolecente</uncertain>, no artigo 4°, diz que o indivíduo precisa ter sua infância assegurada pelos pais e demais organizações. Contudo esse direito não é assegurado quando a criança é exposta a coisas que não são da idade dela.\nEm segunda análise, cabe observar que essa rotina de auto-cuidados <uncertain confidence='MEDIUM'>precose</uncertain> pode trazer várias consequências como: Impactos na pele, no <uncertain confidence='HIGH'>psicologico</uncertain> (pode <uncertain confidence='MEDIUM'>distorce</uncertain> a autoimagem), e no desenvolvimento cognitivo e emocional. Além de outras.\nEm síntese, o perigo do skincare infantil e suas consequências. É necessário que o Conselho Tutelar com o auxílio das mídias sociais, promova campanhas sobre tal assunto, para combater essa pratica que influência de forma negativa na infância.",
+      "rep": 1
+    }
+  ]
+}

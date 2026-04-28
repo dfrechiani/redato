@@ -1,0 +1,4 @@
+{"mode": "foco_c3", "activity_id": "RJ1·OF10·MF·Foco C3", "elapsed_s": 0.01, "schema_valid": false, "schema_issues": ["exception: ImportError(\"cannot import name 'bigquery' from 'google.cloud' (unknown location)\")"], "tool_args": null}
+{"mode": "foco_c4", "activity_id": "RJ1·OF11·MF·Foco C4", "elapsed_s": 0.0, "schema_valid": false, "schema_issues": ["exception: ImportError(\"cannot import name 'bigquery' from 'google.cloud' (unknown location)\")"], "tool_args": null}
+{"mode": "foco_c5", "activity_id": "RJ1·OF12·MF·Foco C5", "elapsed_s": 0.0, "schema_valid": false, "schema_issues": ["exception: ImportError(\"cannot import name 'bigquery' from 'google.cloud' (unknown location)\")"], "tool_args": null}
+{"mode": "completo_parcial", "activity_id": "RJ1·OF13·MF·Correção 5 comp.", "elapsed_s": 0.0, "schema_valid": false, "schema_issues": ["exception: ImportError(\"cannot import name 'bigquery' from 'google.cloud' (unknown location)\")"], "tool_args": null}

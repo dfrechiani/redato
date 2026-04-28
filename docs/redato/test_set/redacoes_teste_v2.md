@@ -1,0 +1,150 @@
+# REDAÇÕES-TESTE — RODADA V2
+
+**Tema:** Os impactos das redes sociais na saúde mental dos jovens
+**Instruções:** Cole cada redação individualmente na Redato. Salve o output completo (JSON do tool call + feedback). Depois compare com o arquivo `gabarito_redacoes_teste_v2.md`.
+
+Cada redação está desenhada para testar **um tipo específico de viés da LLM**, mas o texto é novo — não é cópia dos canários do golden set. Isso garante que, mesmo que os canários sejam usados como few-shots no system prompt, o teste seja genuíno.
+
+---
+
+## REDAÇÃO TESTE 1
+
+**Título:** A prisão invisível: juventude refém das telas
+
+Na peça *Não Olhe para Cima*, do diretor Adam McKay, a humanidade ignora uma ameaça existencial porque esta não cabe no ritmo dos feeds de notícia. A alegoria, embora voltada à crise climática, ilumina outro fenômeno igualmente grave: a incapacidade contemporânea de proteger a juventude dos efeitos das redes sociais sobre sua saúde mental. No Brasil, o uso massivo dessas plataformas tem corroído o bem-estar psíquico dos jovens, tanto por meio da intensificação de quadros de ansiedade quanto pelo aprofundamento de uma cultura de autoexposição compulsória.
+
+Em primeiro lugar, é preciso observar que as redes sociais transformaram a adolescência num palco permanente. Isso porque plataformas como Instagram e TikTok recompensa com visibilidade o usuário que se expõe de forma contínua, o que cria nos jovem uma pressão silenciosa por performance. Como observou a psicanalista Maria Rita Kehl, em *O Tempo e o Cão*, a depressão contemporânea é fruto de uma exigência de desempenho que o sujeito internaliza até o esgotamento. Nas redes, essa exigência opera 24 horas por dia. Dados do Datafolha publicados em 2024 indicam que sete em cada dez adolescentes brasileiros relatam sintomas de ansiedade associados ao uso de mídias sociais, o que comprova a gravidade do problema.
+
+Ademais, o desenho das plataformas amplifica o sofrimento psíquico de forma deliberada. O documentário *The Social Dilemma*, produzido pela Netflix, revela que engenheiros do Vale do Silício projetaram sistemas de recompensa variável inspirados na psicologia das maquinas de cassino, com o objetivo explícito de maximizar o tempo de permanência. Tal arquitetura gera, nos usuários jovens, um ciclo de reforço que fragiliza o sono, a concentração e a capacidade de autorregulação emocional. O artigo 227 da Constituição Federal, que assegura à infância e a juventude proteção absoluta, é ignorado quando essa engenharia de atenção opera sem controle público.
+
+Portanto, medidas são urgentes para mitigar os danos causados pelas redes sociais à juventude brasileira. Cabe ao Ministério da Educação, em parceria com o Ministério da Saúde e as secretarias estaduais, implementar nas escolas públicas de Ensino Fundamental II e Médio um programa nacional de letramento socioemocional digital, por meio de oficinas mensais conduzidas por psicólogos e educadores treinados, com o objetivo de fortalecer a autonomia crítica dos estudantes diante das plataformas. Complementarmente, o Congresso Nacional deve aprovar legislação que obrigue as empresas de tecnologia a submeter seus algoritmos à auditoria pública independente, a fim de romper a lógica em que o lucro corporativo se sustenta no adoecimento coletivo.
+
+---
+
+## REDAÇÃO TESTE 2
+
+**Título:** O espelho deformado das telas
+
+Aristóteles já afirmava que o homem é um ser social por natureza, e nada retrata melhor essa natureza nos dias atuais do que as redes sociais. Desde tempos imemoriais, a busca por aceitação move a humanidade, mas nunca essa busca foi tão amplificada quanto agora. Nesse contexto, as redes sociais comprometem a saúde mental dos jovens brasileiros de maneira alarmante, tanto pela comparação constante quanto pela exposição a conteúdos nocivos.
+
+Em primeira análise, é preciso considerar que as redes sociais criam padrões inatingíveis de beleza e sucesso. Machado de Assis, em *Dom Casmurro*, já havia advertido sobre os perigos do ciúme e da comparação entre os seres humanos. Hoje, esses sentimentos são potencializados por filtros e edições que mostram realidades fabricadas. Estudos recentes apontam que a maioria esmagadora dos adolescentes apresentam algum sintoma de insatisfação corporal ligado ao consumo de conteúdo em redes sociais, fenômeno que se tornou uma epidemia silenciosa nos consultórios de psiquiatria infantil.
+
+Ademais, o próprio presidente dos Estados Unidos, Abraham Lincoln, dizia que "a melhor maneira de prever o futuro é criá-lo", e é justamente isso que as big techs fazem ao desenhar algoritmos viciantes. Os jovens são a principal matéria-prima desse modelo de negócio, pois têm seus dados coletados e monetizados sem consentimento informado. O artigo 5º da Constituição Federal, que garante direitos invioláveis à vida, privacidade e dignidade, é sistematicamente desrespeitado por essas corporações. Pesquisadores de diversas universidades do mundo vêm alertando sobre isso há anos, embora pouco se faça a respeito.
+
+Portanto, medidas precisam ser tomadas para reverter esse quadro preocupante. O Ministério da Educação deve criar programas de conscientização nas escolas, por meio de campanhas permanentes, com o objetivo de ensinar os jovens a usar as redes sociais com responsabilidade. O Congresso Nacional, por sua vez, precisa aprovar leis mais rígidas para as empresas de tecnologia, garantindo que os direitos dos adolescentes sejam respeitados. Somente assim será possível construir uma geração mentalmente saudável.
+
+---
+
+## REDAÇÃO TESTE 3
+
+**Título:** Entre o mundo digital e o real
+
+O filósofo Byung-Chul Han, em *Sociedade do Cansaço*, descreve o sujeito contemporâneo como alguém que se explora a si mesmo até o adoecimento. As redes sociais têm diversas facetas e afetam os jovens de muitas maneiras distintas. Este é um tema que merece ser debatido com profundidade por toda a sociedade.
+
+As redes sociais trazem benefícios inegáveis. Muitos adolescentes encontram nelas oportunidades de aprendizado, conexões com pessoas de outras culturas e espaços para expressão artística. Jovens LGBTQIAP+ relatam que comunidades digitais foram fundamentais em seus processos de autoaceitação, segundo pesquisa do Instituto Alana. Por outro lado, há também aspectos preocupantes. A psiquiatra Ana Beatriz Barbosa, em entrevista à Folha de São Paulo, alertou sobre o aumento de casos de automutilação relacionados ao uso excessivo de Instagram entre meninas adolescentes. O documentário *O Dilema das Redes* aborda o desenho dos algoritmos. Dados da OMS indicam aumento nos quadros de depressão juvenil.
+
+O cyberbullying é uma face cruel dessa realidade. Muitas vítimas chegam ao suicídio, como mostrou o caso da jovem britânica Molly Russell, cuja morte em 2017 tornou-se símbolo do debate sobre regulação de plataformas. A questão da privacidade também preocupa. Shoshana Zuboff, em *A Era do Capitalismo de Vigilância*, mostrou como dados pessoais viraram matéria-prima da nova economia. O artigo 227 da Constituição Federal garante proteção integral à juventude. O vício em telas pode afetar o desempenho escolar. Alguns estudos indicam que adolescentes passam oito horas diárias conectados.
+
+Portanto, medidas são urgentes para enfrentar essa situação complexa. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar nas escolas de Ensino Médio um programa permanente de educação midiática, por meio de oficinas quinzenais conduzidas por profissionais qualificados, com o objetivo de desenvolver nos estudantes a capacidade de leitura crítica das plataformas. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos dirigidos a menores de idade, exigindo transparência e auditoria independente das empresas de tecnologia, a fim de romper o ciclo em que o lucro corporativo se sustenta no sofrimento psíquico da juventude.
+
+---
+
+## REDAÇÃO TESTE 4
+
+**Título:** O custo invisível dos cliques
+
+Na obra *Sociedade do Cansaço*, de Byung-Chul Han, o filósofo analisa como o sujeito contemporâneo se transformou em algoz de si mesmo. O filósofo Byung-Chul Han descreve esse fenômeno em *Sociedade do Cansaço*. As redes sociais potencializam esse processo de autoexploração. As redes sociais comprometem a saúde mental dos jovens. A saúde mental dos jovens é afetada pela comparação constante. A saúde mental dos jovens é afetada pelos algoritmos viciantes.
+
+Além disso, é preciso considerar que as redes sociais consolidaram a cultura da exibição permanente. Além disso, plataformas como Instagram e TikTok priorizam corpos e vidas idealizadas. Os jovens acabam desenvolvendo distorções na autoimagem nessas plataformas. A comparação social é constante nessas plataformas. Os jovens comparam suas vidas reais com as vidas editadas dos influenciadores. Isso gera sentimentos de inadequação. Além disso, estudos da Fundação Oswaldo Cruz apontam aumento nos quadros de ansiedade juvenil. Isso coincide com a popularização das mídias sociais.
+
+Além disso, outro ponto fundamental é o desenho viciante das plataformas. Os algoritmos são projetados para prender a atenção. Os algoritmos usam técnicas da psicologia comportamental. Essas técnicas são semelhantes às usadas em cassinos. Isso fragiliza a concentração dos jovens. Isso altera o sono dos jovens. Isso compromete o rendimento escolar. Essa realidade desrespeita o artigo 227 da Constituição Federal. O artigo 227 da Constituição Federal protege a infância e juventude. O artigo 227 da Constituição Federal assegura prioridade absoluta nessa proteção.
+
+Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental dos jovens. Cabe ao Ministério da Educação implementar nas escolas um programa de letramento digital, por meio de oficinas conduzidas por psicólogos, com o objetivo de desenvolver o pensamento crítico dos estudantes. O Congresso Nacional deve regulamentar os algoritmos voltados a menores, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo de lucro baseado no adoecimento juvenil.
+
+---
+
+## REDAÇÃO TESTE 5
+
+**Título:** A geração ferida pelas telas
+
+Na obra *Sociedade do Cansaço*, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, torna-se algoz de si mesmo. Tal diagnóstico encontra terreno fértil nas redes sociais, ambientes em que jovens brasileiros se expõem e se medem continuamente. Nesse cenário, observa-se que o uso intensivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela pressão por validação estética, seja pelo adoecimento provocado por sistemas algorítmicos desenhados para capturar a atenção.
+
+Em primeira análise, cumpre destacar que as redes sociais consolidaram uma cultura da comparação compulsória. Isso porque plataformas como Instagram e TikTok priorizam conteúdos performáticos, em que corpos editados, rotinas idealizadas e conquistas ostentadas tornam-se parâmetro de normalidade. Como resultado, adolescentes em pleno processo de construção identitária passam a medir seu valor pela métrica de curtidas e seguidores, fenômeno que o sociólogo Zygmunt Bauman, em *Modernidade Líquida*, conectou à fragilidade dos vínculos e à busca constante por reconhecimento externo. Não por acaso, dados da Organização Mundial da Saúde indicam que episódios de ansiedade e depressão entre adolescentes cresceram mais de 30% na última década, no mesmo período em que o uso de redes se popularizou.
+
+Ademais, é preciso considerar que os próprios mecanismos de funcionamento das plataformas potencializam o sofrimento psíquico. O documentário *O Dilema das Redes*, dirigido por Jeff Orlowski, revela que os algoritmos são deliberadamente projetados para maximizar o tempo de tela, recorrendo a estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é submetido a um ciclo de recompensa imediata que, a longo prazo, fragiliza sua capacidade de concentração, altera padrões de sono e intensifica sentimentos de solidão. Tal arquitetura contraria o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência, inclusive as de natureza psicológica.
+
+Diante disso, algo precisa ser feito sobre esse problema. A sociedade deve se conscientizar da gravidade da situação. As famílias precisam monitorar o uso de telas por seus filhos. As escolas também têm um papel importante a desempenhar. Apenas com a participação de todos os atores envolvidos será possível construir uma juventude mais saudável e preparada para os desafios do mundo digital contemporâneo.
+
+---
+
+## REDAÇÃO TESTE 6
+
+**Título:** O sujeito cansado e as mídias da exaustão
+
+Na obra *Sociedade do Cansaço*, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, transforma-se em algoz de si mesmo. Tal diagnóstico encontra terreno particularmente fértil nas redes sociais, ambientes em que jovens brasileiros expõem e medem continuamente suas vidas contra padrões fabricados. Nesse cenário, o uso massivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela distorção estrutural da autoimagem, seja pelo adoecimento provocado por algoritmos que exploram vulnerabilidades emocionais em fase de formação.
+
+Em primeira análise, cumpre destacar que as redes sociais consolidaram uma cultura da comparação permanente como norma relacional. Isso porque plataformas como Instagram e TikTok priorizam conteúdos estéticos e performáticos, em que corpos editados, rotinas idealizadas e conquistas exibidas tornam-se parâmetro involuntário de autoavaliação. Como resultado, adolescentes em pleno processo de construção identitária passam a medir seu valor por métricas públicas de validação, fenômeno agravado pelo que o sociólogo Zygmunt Bauman classificou como "modernidade líquida", marcada pela fragilidade dos laços e pela busca incessante por reconhecimento externo. Não por acaso, pesquisas da Organização Mundial da Saúde apontam crescimento expressivo de quadros de ansiedade e depressão entre jovens na última década, coincidindo com a popularização dessas mídias.
+
+Ademais, é preciso considerar que os próprios mecanismos de funcionamento das redes potencializam o sofrimento psíquico de forma estrutural. O documentário *O Dilema das Redes*, dirigido por Jeff Orlowski, revela que os algoritmos são deliberadamente projetados para maximizar o tempo de tela, recorrendo a estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é exposto a um ciclo de recompensa imediata que, a longo prazo, fragiliza sua capacidade de concentração, altera padrões de sono e intensifica sentimentos de solidão. Tal realidade contraria o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência, incluindo aquelas de natureza psicológica.
+
+Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar, nas escolas de Ensino Médio, um programa permanente de letramento digital e socioemocional, por meio de oficinas quinzenais conduzidas por psicólogos escolares e professores capacitados em educação midiática, com o objetivo de desenvolver o uso crítico das plataformas e fortalecer o bem-estar psíquico dos estudantes. Complementarmente, o Congresso Nacional deve aprovar legislação específica que regulamente os algoritmos dirigidos a menores de idade, exigindo auditoria independente e transparência das empresas de tecnologia, a fim de romper o ciclo em que o lucro corporativo se sustenta no adoecimento juvenil descrito ao longo deste texto.
+
+---
+
+## REDAÇÃO TESTE 7
+
+**Título:** A juventude sitiada
+
+Na obra *Sociedade do Cansaço*, Byung-Chul Han descreve o sujeito contemporâneo como alguém que se explora até o esgotamento. Essa descrição se aplica diretamente as redes sociais, ambiente onde os jovens brasileiro se expõe cotidianamente à pressão algorítmica. Assim, o uso massivo dessas plataformas compromete a saúde mental da juventude, seja pela comparação compulsória, seja pelo adoecimento induzido pelos sistemas de recompensa.
+
+Em primeira análise, é fundamental observar que as redes sociais instituíram a autoexposição como norma. Isso por que plataformas como Instagram privilegia conteúdos performáticos, em que vidas editadas viram parâmetro. Como resultado, os adolescente medem seu valor por curtidas, fenômeno que o sociólogo Zygmunt Bauman chamou de "modernidade líquida". Pesquisas do IBGE apontam crescimento de quadros de ansiedade entre os jovem na última década. Isso é muito preocupante no contexto atual.
+
+Ademais, os algoritmos dessas plataformas potencializa o sofrimento psíquico. O documentário *O Dilema das Redes* mostra que tais sistemas são desenhados para maximizar o tempo de tela, recorrendo à estímulos típicos de cassinos. Dessa forma, o jovem fica preso à um ciclo que fragiliza sua atenção, seu sono e sua saúde emocional. Tal realidade mau respeita o artigo 227 da Constituição Federal, que assegura prioridade absoluta à proteção da juventude.
+
+Diante disso, algo precisa ser feito. A sociedade deve se mobilizar contra esse problema. As famílias precisam assumir seu papel na educação digital dos filhos. As escolas têm responsabilidade no enfrentamento da questão. Juntos, todos os setores podem construir um futuro mais saudável para a juventude brasileira.
+
+---
+
+## REDAÇÃO TESTE 8
+
+**Título:** Juventude no labirinto digital
+
+Na obra *Sociedade do Cansaço*, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, transforma-se em algoz de si mesmo. As redes sociais são um fenômeno amplo da contemporaneidade e merecem atenção cuidadosa da sociedade brasileira.
+
+A questão das redes sociais e da juventude é multifacetada. Zygmunt Bauman, em *Modernidade Líquida*, discute a fragilidade dos vínculos contemporâneos, algo que se manifesta no ambiente digital. Pesquisas da Organização Mundial da Saúde apontam crescimento de quadros de ansiedade entre jovens na última década. O documentário *O Dilema das Redes*, dirigido por Jeff Orlowski, expõe o funcionamento dos algoritmos. A psicanalista Maria Rita Kehl, em *O Tempo e o Cão*, analisa a depressão como sintoma contemporâneo. O cyberbullying representa outra face grave do problema, afetando especialmente meninas adolescentes, como apontou estudo da UNICEF de 2023.
+
+Há ainda a dimensão econômica a considerar. Shoshana Zuboff, em *A Era do Capitalismo de Vigilância*, demonstrou que dados pessoais tornaram-se a matéria-prima de um novo modelo econômico. O artigo 227 da Constituição Federal assegura prioridade absoluta à proteção da infância e juventude. A socióloga Sherry Turkle, em *Alone Together*, antecipou na década de 2010 como as conexões digitais paradoxalmente isolam. Segundo o PNAD Contínua de 2024, adolescentes brasileiros passam em média mais de seis horas por dia conectados. O filósofo Michel Foucault, em *Vigiar e Punir*, já havia discutido dispositivos de controle social, temática que dialoga com a vigilância algorítmica contemporânea.
+
+Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino e com o Ministério da Saúde, implementar nas escolas de Ensino Médio um programa permanente de letramento digital e socioemocional, por meio de oficinas quinzenais conduzidas por psicólogos escolares e professores capacitados, com o objetivo de desenvolver o uso crítico das plataformas e fortalecer o bem-estar psíquico dos estudantes. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos voltados a menores de idade, exigindo auditoria independente das empresas de tecnologia, a fim de romper o ciclo em que o lucro corporativo se sustenta no adoecimento juvenil.
+
+---
+
+## REDAÇÃO TESTE 9
+
+**Título:** A urgência do debate digital
+
+Na obra *Sociedade do Cansaço*, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, transforma-se em algoz de si mesmo. Tal diagnóstico encontra terreno fértil nas redes sociais, ambientes em que jovens brasileiros expõem e medem continuamente suas vidas. Nesse cenário, observa-se que o uso massivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela distorção da autoimagem, seja pelo adoecimento provocado por algoritmos que exploram vulnerabilidades emocionais.
+
+Em primeira análise, cumpre destacar que as redes sociais consolidaram uma cultura da comparação permanente. Isso porque plataformas como Instagram e TikTok priorizam conteúdos estéticos e performáticos, em que corpos editados, rotinas idealizadas e conquistas exibidas tornam-se parâmetro de normalidade. Como resultado, adolescentes em pleno processo de construção identitária passam a medir seu valor pela métrica de curtidas e seguidores, fenômeno agravado pelo que o sociólogo Zygmunt Bauman classificou como "modernidade líquida", marcada pela fragilidade dos laços e pela busca incessante por validação externa. Não por acaso, pesquisas da Organização Mundial da Saúde apontam crescimento expressivo de quadros de ansiedade e depressão entre jovens na última década.
+
+Ademais, é preciso considerar que os próprios mecanismos de funcionamento das redes potencializam o sofrimento psíquico. O documentário *O Dilema das Redes*, dirigido por Jeff Orlowski, revela que os algoritmos são deliberadamente projetados para maximizar o tempo de tela, recorrendo a estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é exposto a um ciclo de recompensa imediata que, a longo prazo, fragiliza sua capacidade de concentração, altera padrões de sono e intensifica sentimentos de solidão. Tal realidade contraria o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência.
+
+Portanto, medidas são urgentes para enfrentar essa situação. O Ministério da Educação deve atuar nesse problema. O Congresso Nacional também tem responsabilidade. Esse é um tema que exige a atenção das autoridades competentes do país.
+
+---
+
+## REDAÇÃO TESTE 10
+
+**Título:** O preço do progresso tecnológico
+
+A humanidade sempre conviveu com transformações profundas, desde a invenção da roda até a chegada da internet. Na contemporaneidade, a tecnologia digital ocupa lugar central na vida cotidiana, modificando relações humanas e processos cognitivos. Nesse contexto, o avanço tecnológico tem gerado consequências preocupantes para as novas gerações, tanto pela pressão por performance constante quanto pelos efeitos cognitivos do uso intensivo de dispositivos.
+
+Em primeira análise, é importante observar que os ambientes digitais consolidaram uma cultura da comparação permanente. Isso porque plataformas contemporâneas priorizam conteúdos estéticos e performáticos, em que corpos editados e rotinas idealizadas tornam-se parâmetro de normalidade. Como resultado, os adolescentes em pleno processo de construção identitária passam a medir seu valor pela validação alheia, fenômeno agravado pelo que Zygmunt Bauman classificou como "modernidade líquida". Não por acaso, pesquisas recentes apontam crescimento expressivo de problemas emocionais entre as novas gerações.
+
+Ademais, é preciso considerar que os mecanismos dos ambientes digitais potencializam o sofrimento psíquico. O documentário *O Dilema das Redes*, dirigido por Jeff Orlowski, revela que os sistemas algorítmicos são projetados para maximizar o tempo de permanência, recorrendo a estímulos semelhantes aos de jogos de azar. Dessa forma, o usuário é exposto a um ciclo de recompensa imediata que fragiliza sua concentração e altera padrões de sono. Tal realidade contraria o artigo 227 da Constituição Federal, que assegura proteção integral à infância.
+
+Portanto, medidas são urgentes para mitigar os impactos da tecnologia sobre o bem-estar contemporâneo. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar nas escolas de Ensino Médio um programa permanente de letramento digital e socioemocional, por meio de oficinas quinzenais conduzidas por profissionais capacitados, com o objetivo de desenvolver o uso crítico dos ambientes digitais. Complementarmente, o Congresso Nacional deve regulamentar o uso de plataformas digitais por menores de idade, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo de adoecimento descrito nesta redação.
+
+---
+
+**Fim do conjunto-teste. Compare com `gabarito_redacoes_teste_v2.md` após rodar.**

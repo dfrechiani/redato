@@ -1,0 +1,26 @@
+# Nixpacks config pra Railway — backend (portal + bot unificados).
+#
+# Volume persistente esperado em /app/data — configurar via Railway UI:
+#   Settings → Volumes → Mount Path: /app/data
+# Esse volume guarda:
+#   /app/data/portal/pdfs/   — PDFs gerados (M8)
+#   /app/data/portal/*.jsonl — audit, triggers_log, emails_pendentes
+#   /app/data/whatsapp/      — SQLite legado do bot (FSM state)
+#
+# Deploys de schema (`alembic upgrade head` + `seed_missoes`) rodam
+# MANUALMENTE via Railway shell — não no boot, pra evitar lock em
+# deploys concorrentes. Ver DEPLOY_RAILWAY.md.
+
+[phases.setup]
+nixPkgs = ["python312", "postgresql_16"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+cmds = []
+
+[start]
+# unified_app expõe portal + bot na mesma porta. Port é dinâmico:
+# Railway injeta $PORT.
+cmd = "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port $PORT"

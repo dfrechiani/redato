@@ -1,0 +1,188 @@
+{
+  "seed": 42,
+  "corpus_total": 18165,
+  "after_filters": 15287,
+  "filter_rejections": {
+    "nota_global <= 0 (provável draft/anulada)": 271,
+    "tema.titulo vazio": 47,
+    "nota_global ausente/null": 2496,
+    "texto_original < 100 chars": 14,
+    "soma comp. (500) ≠ nota_global (550)": 1,
+    "soma comp. (300) ≠ nota_global (350)": 2,
+    "soma comp. (450) ≠ nota_global (550)": 2,
+    "soma comp. (550) ≠ nota_global (500)": 4,
+    "soma comp. (250) ≠ nota_global (300)": 1,
+    "soma comp. (500) ≠ nota_global (650)": 1,
+    "soma comp. (0) ≠ nota_global (750)": 1,
+    "soma comp. (300) ≠ nota_global (500)": 1,
+    "soma comp. (1300) ≠ nota_global (400)": 1,
+    "soma comp. (350) ≠ nota_global (400)": 1,
+    "soma comp. (450) ≠ nota_global (400)": 2,
+    "soma comp. (800) ≠ nota_global (750)": 2,
+    "soma comp. (500) ≠ nota_global (400)": 2,
+    "soma comp. (300) ≠ nota_global (400)": 1,
+    "soma comp. (300) ≠ nota_global (250)": 1,
+    "soma comp. (150) ≠ nota_global (200)": 1,
+    "soma comp. (500) ≠ nota_global (900)": 1,
+    "soma comp. (250) ≠ nota_global (400)": 1,
+    "soma comp. (250) ≠ nota_global (200)": 2,
+    "notas_competencia.c1 ausente/null": 7,
+    "soma comp. (700) ≠ nota_global (750)": 1,
+    "soma comp. (250) ≠ nota_global (150)": 1,
+    "soma comp. (600) ≠ nota_global (650)": 4,
+    "soma comp. (200) ≠ nota_global (650)": 1,
+    "soma comp. (300) ≠ nota_global (600)": 1,
+    "soma comp. (500) ≠ nota_global (450)": 1,
+    "soma comp. (800) ≠ nota_global (400)": 1,
+    "soma comp. (300) ≠ nota_global (150)": 1,
+    "soma comp. (300) ≠ nota_global (450)": 1,
+    "soma comp. (650) ≠ nota_global (450)": 1,
+    "soma comp. (550) ≠ nota_global (600)": 1,
+    "soma comp. (300) ≠ nota_global (200)": 1
+  },
+  "excluded_inep": {
+    "count": 47,
+    "reason": "Todas as 47 redações INEP têm tema.titulo vazio no corpus (ausência genuína no scraping; cartilhas INEP têm tema na introdução do texto, não como campo separado). Filtro mantido estrito porque tema vazio polui avaliação de C2. Gold set é AES-ENEM (que inclui gradesThousand + PROPOR2024 + JBCS2025 — datasets acadêmicos com gabarito INEP-equivalente)."
+  },
+  "gold": {
+    "pool_size": 3717,
+    "selected": 200,
+    "by_band": {
+      "200-399": {
+        "target": 30,
+        "available": 96,
+        "chosen": 30,
+        "deficit": 0
+      },
+      "400-599": {
+        "target": 50,
+        "available": 474,
+        "chosen": 50,
+        "deficit": 0
+      },
+      "600-799": {
+        "target": 60,
+        "available": 1492,
+        "chosen": 60,
+        "deficit": 0
+      },
+      "800-999": {
+        "target": 40,
+        "available": 1444,
+        "chosen": 40,
+        "deficit": 0
+      },
+      "1000": {
+        "target": 20,
+        "available": 203,
+        "chosen": 20,
+        "deficit": 0
+      }
+    },
+    "by_fonte": {
+      "aes-enem": 200
+    },
+    "stratification": "single (band only)"
+  },
+  "realworld": {
+    "pool_size": 11570,
+    "selected": 200,
+    "by_fonte": {
+      "brasil-escola": 65,
+      "uol-xml": 68,
+      "essay-br": 67
+    },
+    "by_band": {
+      "200-399": 30,
+      "400-599": 51,
+      "600-799": 60,
+      "800-999": 39,
+      "1000": 20
+    },
+    "stratification": "dual (fonte × band)",
+    "targets": {
+      "brasil-escola": {
+        "200-399": 10,
+        "400-599": 17,
+        "600-799": 20,
+        "800-999": 13,
+        "1000": 7
+      },
+      "uol-xml": {
+        "200-399": 10,
+        "400-599": 17,
+        "600-799": 20,
+        "800-999": 13,
+        "1000": 7
+      },
+      "essay-br": {
+        "200-399": 10,
+        "400-599": 17,
+        "600-799": 20,
+        "800-999": 13,
+        "1000": 6
+      }
+    },
+    "pre_stratification_pool": {
+      "brasil-escola": {
+        "200-399": 195,
+        "400-599": 283,
+        "600-799": 418,
+        "800-999": 243,
+        "1000": 5
+      },
+      "uol-xml": {
+        "200-399": 603,
+        "400-599": 677,
+        "600-799": 467,
+        "800-999": 198,
+        "1000": 35
+      },
+      "essay-br": {
+        "200-399": 264,
+        "400-599": 1630,
+        "600-799": 2580,
+        "800-999": 1179,
+        "1000": 17
+      }
+    },
+    "chosen_per_combo": {
+      "brasil-escola|200-399": 10,
+      "brasil-escola|400-599": 17,
+      "brasil-escola|600-799": 20,
+      "brasil-escola|800-999": 13,
+      "brasil-escola|1000": 5,
+      "uol-xml|200-399": 10,
+      "uol-xml|400-599": 17,
+      "uol-xml|600-799": 20,
+      "uol-xml|800-999": 13,
+      "uol-xml|1000": 7,
+      "essay-br|200-399": 10,
+      "essay-br|400-599": 17,
+      "essay-br|600-799": 20,
+      "essay-br|800-999": 13,
+      "essay-br|1000": 6
+    },
+    "redistributions": [
+      {
+        "type": "deficit_detected",
+        "fonte": "brasil-escola",
+        "band": "1000",
+        "target": 7,
+        "available": 5,
+        "deficit": 2
+      },
+      {
+        "type": "redistribution",
+        "band": "1000",
+        "deficit_to_fill": 2,
+        "filled": 2,
+        "still_missing": 0,
+        "from_fontes": {
+          "uol-xml": 1,
+          "essay-br": 1
+        }
+      }
+    ]
+  }
+}

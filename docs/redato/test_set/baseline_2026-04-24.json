@@ -1,0 +1,319 @@
+{
+  "timestamp": "2026-04-24T20:32:57.146264",
+  "results": [
+    {
+      "id": "teste_01_controle_1000",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 160,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 960
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "drift": {
+        "c1": -40,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 144.13,
+      "error": null
+    },
+    {
+      "id": "teste_02_repertorio_falso",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 160,
+        "c2": 160,
+        "c3": 160,
+        "c4": 160,
+        "c5": 160,
+        "total": 800
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 120,
+        "c3": 160,
+        "c4": 200,
+        "c5": 160,
+        "total": 840
+      },
+      "drift": {
+        "c1": -40,
+        "c2": 40,
+        "c3": 0,
+        "c4": -40,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 165.72,
+      "error": null
+    },
+    {
+      "id": "teste_03_sem_projeto",
+      "passed": false,
+      "inep_passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 120,
+        "c4": 120,
+        "c5": 200,
+        "total": 840
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 160,
+        "c3": 80,
+        "c4": 160,
+        "c5": 200,
+        "total": 800
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 40,
+        "c3": 40,
+        "c4": -40,
+        "c5": 0
+      },
+      "structural_fails": [
+        "structural:c2_nota_max: c2.nota=200 (esperado <= 180)"
+      ],
+      "elapsed_s": 162.57,
+      "error": null
+    },
+    {
+      "id": "teste_04_coesao_mecanica",
+      "passed": false,
+      "inep_passed": false,
+      "notas": {
+        "c1": 160,
+        "c2": 160,
+        "c3": 120,
+        "c4": 120,
+        "c5": 200,
+        "total": 760
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 120,
+        "c5": 200,
+        "total": 920
+      },
+      "drift": {
+        "c1": -40,
+        "c2": -40,
+        "c3": -80,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [
+        "numeric:c3: got 120, expected 200 (drift -80)"
+      ],
+      "elapsed_s": 146.83,
+      "error": null
+    },
+    {
+      "id": "teste_05_proposta_vaga",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 120,
+        "total": 920
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 120,
+        "total": 920
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 143.54,
+      "error": null
+    },
+    {
+      "id": "teste_06_controle_1000_b",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 138.5,
+      "error": null
+    },
+    {
+      "id": "teste_07_c1_c5_weak",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 40,
+        "c2": 200,
+        "c3": 160,
+        "c4": 160,
+        "c5": 120,
+        "total": 680
+      },
+      "gabarito": {
+        "c1": 40,
+        "c2": 200,
+        "c3": 180,
+        "c4": 160,
+        "c5": 80,
+        "total": 660
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": -20,
+        "c4": 0,
+        "c5": 40
+      },
+      "structural_fails": [],
+      "elapsed_s": 161.41,
+      "error": null
+    },
+    {
+      "id": "teste_08_repertorio_sem_projeto",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 120,
+        "c4": 160,
+        "c5": 200,
+        "total": 880
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 80,
+        "c4": 160,
+        "c5": 200,
+        "total": 840
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 40,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 177.12,
+      "error": null
+    },
+    {
+      "id": "teste_09_c5_dois_elementos",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 80,
+        "total": 880
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 180,
+        "c5": 80,
+        "total": 860
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 20,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 142.06,
+      "error": null
+    },
+    {
+      "id": "teste_10_tangenciamento",
+      "passed": true,
+      "inep_passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 40,
+        "c3": 160,
+        "c4": 200,
+        "c5": 200,
+        "total": 800
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 40,
+        "c3": 160,
+        "c4": 200,
+        "c5": 200,
+        "total": 800
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 129.03,
+      "error": null
+    }
+  ]
+}

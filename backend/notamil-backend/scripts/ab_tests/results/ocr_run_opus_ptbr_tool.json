@@ -1,0 +1,107 @@
+{
+  "config": {
+    "model": "claude-opus-4-7",
+    "prompt_version": "ptbr",
+    "use_tool": true,
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 1004.6,
+      "elapsed_s": 22.9,
+      "strict_would_fail": false,
+      "tool_use_valid": true,
+      "uncertain_count": 15,
+      "illegible_count": 0,
+      "total_words": 205,
+      "uncertain_pct": 7.3,
+      "theme": "Friedrich Nietzche diz que",
+      "transcription": "A pressa em ser adulta pode levar a uma infância perdida e uma maturidade mal vivida, a frase<uncertain confidence='MEDIUM'>do filósofo Friedrich Nietzche</uncertain>destaca a importância da infância. Dessa forma, cabe analisar o perigo do skincare infantil: entre a responsabilidade dos pais e mercado de cosméticos.Nesse sentido, cabe observar a responsabilidade dos pais e indústria em relação ao problema, como<uncertain confidence='LOW'>tâmbem</uncertain><uncertain confidence='MEDIUM'>o</uncertain>impacto<uncertain confidence='LOW'>geradoena</uncertain>vida das crianças.\nEm primeira<uncertain confidence='MEDIUM'>plano</uncertain>, cabe analisar a responsabilidade dos pais e da indústria de cosméticos na utilização de skincare em crianças. De acordo com o Estatuto da criança e<uncertain confidence='HIGH'>adolecente</uncertain>, no artigo 4º, diz que o<uncertain confidence='MEDIUM'>individuo</uncertain>precisa ter sua infância assegurada pelos pais e demais organizações. Contudo, esse direito não é assegurado quando a criança é exposta a<uncertain confidence='MEDIUM'>coisa</uncertain>que não são da idade dela.\nEm segunda análise, cabe observar que essa rotina de auto-cuidados<uncertain confidence='LOW'>precose</uncertain>pode trazer várias consequências como: Impactos na pele, no<uncertain confidence='MEDIUM'>psicologico</uncertain>(pode<uncertain confidence='MEDIUM'>distorce</uncertain>a autoimagem), e no desenvolvimento cognitivo e emocional.<uncertain confidence='HIGH'>Alem</uncertain>de outras.\nEm síntese, o perigo do skincare infantil e suas consequências. É<uncertain confidence='HIGH'>necessario</uncertain>que o Conselho Tutelar com o auxílio das mídias sociais, promova<uncertain confidence='MEDIUM'>campanhas</uncertain>sobre tal assunto, para combater essa<uncertain confidence='HIGH'>pratica</uncertain>que influência de forma negativa na infância."
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        960,
+        1280
+      ],
+      "size_kb": 272.7,
+      "elapsed_s": 22.0,
+      "strict_would_fail": false,
+      "tool_use_valid": true,
+      "uncertain_count": 9,
+      "illegible_count": 0,
+      "total_words": 294,
+      "uncertain_pct": 3.1,
+      "theme": "O impacto da cultura do cancelamento na liberdade de expressão",
+      "transcription": "No ano de 2025, no<uncertain confidence='MEDIUM'>Twitter</uncertain>, uma pessoa não pode opinar sobre determinado assunto sem ser alvo de<uncertain confidence='MEDIUM'>duras</uncertain>críticas. Esse é o cancelamento, que impossibilita indivíduos de se expressarem, e que deve acabar. Dessa forma, é altamente observável que o impacto da cultura do cancelamento na liberdade de expressão se desdobra no desrespeito ao discordar de uma opinião juntamente com a intolerância de pensamento contrário.\nDe modo geral, o desrespeito ao discordar de uma opinião ocorre frequentemente no Brasil, em várias situações e âmbitos sociais, por causa da falta de empatia das pessoas, barrando a liberdade de expressão. Valendo-se disso, Voltaire disse: \"Posso não concordar com o que você diz, mas defenderei até a morte o seu direito de fazê-lo\", nessa via, o respeito ao discordar do próximo é crucial para uma troca de ideias proveitosa. Dessa forma, ao serem respeitadas, as pessoas sentirão mais liberdade ao se expressar, mesmo em discordância.\nNessa mesma lógica, a intolerância de pensamento contrário também é uma barreira para a liberdade de expressão, já que acarreta o preconceito e a exclusão social. Dentro desse mesmo ponto de vista,<uncertain confidence='MEDIUM'>Luís</uncertain>Roberto Barroso diz: \"<uncertain confidence='LOW'>Tenham</uncertain>respeito pela verdade alheia. Cultivem a tolerância, nunca a arrogância\", por isso é necessário respeitar a verdade do outro, mesmo que o que o foi ensinado tenha sido completamente diferente. Assim, uma revisão de pensamentos antes de ter preconceito com um pensamento contrário é essencial.\nPortanto, o cancelamento, que impede as pessoas de se expressarem, deve acabar. Além disto, é<uncertain confidence='LOW'>evidente</uncertain>que<uncertain confidence='LOW'>para</uncertain>que tanto o desrespeito ao discordar de uma opinião concatenado à intolerância de pensamento contrário<uncertain confidence='MEDIUM'>devam</uncertain>ser mitigados, a sociedade, juntamente com o governo, devem tomar medidas e vigiar o que falam e o que<uncertain confidence='LOW'>realam</uncertain>como<uncertain confidence='MEDIUM'>respeito</uncertain>."
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 777.5,
+      "elapsed_s": 37.0,
+      "strict_would_fail": false,
+      "tool_use_valid": true,
+      "uncertain_count": 0,
+      "illegible_count": 0,
+      "total_words": 0,
+      "uncertain_pct": 0.0,
+      "theme": "Pessoas se tornam mais comunicativas após o convívio com animais",
+      "transcription": ""
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 803.5,
+      "elapsed_s": 34.8,
+      "strict_would_fail": false,
+      "tool_use_valid": true,
+      "uncertain_count": 24,
+      "illegible_count": 1,
+      "total_words": 49,
+      "uncertain_pct": 49.0,
+      "theme": "O preconceito linguístico e seus efeitos na sociedade brasileira",
+      "transcription": "Segundoa<uncertain confidence='MEDIUM'>constituição</uncertain>de<uncertain confidence='MEDIUM'>1988,</uncertain><uncertain confidence='LOW'>art.</uncertain>5º,<uncertain confidence='MEDIUM'>todos</uncertain>sãoiguaisperanteaLei,<uncertain confidence='LOW'>todavia,</uncertain>nãoéissoque<uncertain confidence='LOW'>observa-se</uncertain>\nOutrossim,afaltadeeducaçãoculturalàpopulação<uncertain confidence='MEDIUM'>agrava</uncertain>ocontexto,emvirtudede<uncertain confidence='MEDIUM'>intituições</uncertain>deensino<uncertain confidence='MEDIUM'>reforçarem</uncertain>anoçãode\"certoe<uncertain confidence='MEDIUM'>errado\"</uncertain>comrelaçãoàlínguaportuguesa.Aluzdessaperspectiva,Marcos<uncertain confidence='MEDIUM'>Bagno,</uncertain>emseulivroPreconceitoLinguístico,defendeumaeducaçãoque<uncertain confidence='MEDIUM'>valorize</uncertain>adiversidadeculturaldopaís,ouseja,enxergaralínguapeloviésexclusivo<uncertain confidence='LOW'>ajuda</uncertain>areforçar<uncertain confidence='MEDIUM'>atos</uncertain><uncertain confidence='MEDIUM'>intolerantes</uncertain>desdeainfância.Assim,é<uncertain confidence='MEDIUM'>imprexindível</uncertain>realizar<uncertain confidence='MEDIUM'>ações</uncertain>para<uncertain confidence='LOW'>mudar</uncertain>ocenárionacional.\nEmsuma,faz-seinequívocoqueopreconceitolinguísticoé<uncertain confidence='MEDIUM'>prejudicial.</uncertain>Dessarte,competeaoMinistérioda<illegible/>CulturaedaEducaçãopromoverem<uncertain confidence='MEDIUM'>campanhas</uncertain>deconscientização,pormeiodeviagensaospovos<uncertain confidence='LOW'>inferiorizados</uncertain>quilombolasedointerior,osquaissensibilizarosestudantesqueterãoconvíviocomaslínguas<uncertain confidence='LOW'>inferiorizadas,</uncertain>comafinalidadedeenxergaralínguapeloviésinclusivo.Comisso,finalmenteEinsteinterácometidomaisumerro,pordizerqueémais<uncertain confidence='MEDIUM'>fácil</uncertain>desintegrarum<uncertain confidence='MEDIUM'>átomo</uncertain>doqueumpreconceito"
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 857.5,
+      "elapsed_s": 29.8,
+      "strict_would_fail": false,
+      "tool_use_valid": true,
+      "uncertain_count": 9,
+      "illegible_count": 0,
+      "total_words": 33,
+      "uncertain_pct": 27.3,
+      "theme": "Predisposição da nova geração para o preconceito",
+      "transcription": "\"Émaisfácildesintegrarumátomoqueumpreconceito\"umareflexãodeixadaporEinstein.Sobessaperspectiva,torna-seevidentequeoproblemadopreconceitolinguísticopersistenasociedadebrasileiraereverberaanecessidadedesuareduçãoparamudançasnocontextonacional.Dessamaneira,a<uncertain confidence='MEDIUM'>intolerância</uncertain>linguísticaocorretantopelopassadohistóricodoBrasilquantopelafaltadeeducaçãoculturalàpopulação.\nComefeito,<uncertain confidence='LOW'>o passado histórico do Brasil grava o contexto,</uncertain>emvirtudedacolonizaçãoportuguesa,poisalínguadospovosoriginários<uncertain confidence='LOW'>que aqui viviam foi</uncertain><uncertain confidence='LOW'>igual viviam não só</uncertain>foiignorada,mastambémexcluída.Àluz<uncertain confidence='LOW'>dessa perspectiva</uncertain><uncertain confidence='LOW'>o ensino</uncertain>como<uncertain confidence='LOW'>in</uncertain>ageração<uncertain confidence='MEDIUM'>atual</uncertain>tempredisposiçãoaopreconceito,umavezque,aeducaçãonãoéigualitárianoBrasil,pelocontrário,éinstrumentodemanutençãodadesigualdadesocial.Dentrodessemesmopontodevista,destaca-seatitudesdiscriminatóriasentreaspessoas,tendocomoelementodereforçoaMídia,<uncertain confidence='MEDIUM'>em</uncertain>issopodeserobservadonaNovela\"ÊtaMundoBom\"daRedeGlobo,ondeospersonagensestãoemburrecidoseridicularizados.Logo,anecessidadedeconteressarealidadetorna-seurgentenasociedadebrasileira."
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-6",
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 1004.6,
+      "elapsed_s": 11.5,
+      "strict_would_fail": true,
+      "uncertain_count": 4,
+      "illegible_count": 0,
+      "total_words": 206,
+      "uncertain_pct": 1.9,
+      "theme": "Friedrich Nietzche diz que"
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "ok": true,
+      "dims": [
+        960,
+        1280
+      ],
+      "size_kb": 272.7,
+      "elapsed_s": 17.5,
+      "strict_would_fail": true,
+      "uncertain_count": 14,
+      "illegible_count": 0,
+      "total_words": 281,
+      "uncertain_pct": 5.0,
+      "theme": "No ano de 2025, no Twitter, uma pessoa não pode opinar so-"
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 777.5,
+      "elapsed_s": 15.5,
+      "strict_would_fail": true,
+      "uncertain_count": 20,
+      "illegible_count": 0,
+      "total_words": 242,
+      "uncertain_pct": 8.3,
+      "theme": "Pessoas se tornam mais comunicativas após o convívio com animais"
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 803.5,
+      "elapsed_s": 12.5,
+      "strict_would_fail": true,
+      "uncertain_count": 12,
+      "illegible_count": 0,
+      "total_words": 177,
+      "uncertain_pct": 6.8,
+      "theme": "O preconceito linguístico e seus efeitos na sociedade brasileira"
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 857.5,
+      "elapsed_s": 13.1,
+      "strict_would_fail": true,
+      "uncertain_count": 13,
+      "illegible_count": 0,
+      "total_words": 183,
+      "uncertain_pct": 7.1,
+      "theme": "tenças de desigualdade social predisposições da nova geração para o P<illegible/"
+    }
+  ]
+}

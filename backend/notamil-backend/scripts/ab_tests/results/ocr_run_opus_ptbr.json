@@ -1,0 +1,101 @@
+{
+  "config": {
+    "model": "claude-opus-4-7",
+    "prompt_version": "ptbr",
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 1004.6,
+      "elapsed_s": 15.9,
+      "strict_would_fail": false,
+      "uncertain_count": 3,
+      "illegible_count": 0,
+      "total_words": 210,
+      "uncertain_pct": 1.4,
+      "theme": "Friedrich Nietzche diz que",
+      "transcription": "A pressa em ser adulta pode levar a uma infância perdida e uma maturidade mal vivida, A frase do filosofo Friedrich Nietzche destaca a importancia da infância. Dessa forma, cabe analisar o perigo do skincare infantil: entre a responsabilidade dos pais e mercado de cosméticos.\n\nNesse sentido, cabe observar a responsabilidade dos pais e industria em relação ao problema, como tambem o impacto gerado na vida das crianças.\n\nÁ luz dessa perspectiva Em primeira <uncertain confidence='HIGH'>análise</uncertain>, cabe analisar a responsabilidade dos pais e da industria de cosméticos na <uncertain confidence='MEDIUM'>utilização</uncertain> de skincare em crianças. De acordo com o Estatuto da criança e adolecente, no artigo 4°, diz que o individuo precisa ter sua infância assegurada pelos pais e demais organizações. Contudo esse direito não é assegurado quando a criança é exposta a coisas que não são da idade dela.\n\nEm segunda análise, cabe observar que essa rotina de auto-cuidados <uncertain confidence='MEDIUM'>precose</uncertain> pode trazer várias consequências como: Impactos na pele, no psicologico (pode distorcer a autoimagem), e no desenvolvimento cognitivo e emocional. Além de outras.\n\nEm sintese, o perigo do skincare infantil e suas consequências. É necessario que o Conselho Tutelar com o auxílio das mídias sociais, promova campanhas sobre tal assunto, para combater essa pratica que influência de forma negativa na infância."
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        960,
+        1280
+      ],
+      "size_kb": 272.7,
+      "elapsed_s": 18.3,
+      "strict_would_fail": false,
+      "uncertain_count": 4,
+      "illegible_count": 0,
+      "total_words": 292,
+      "uncertain_pct": 1.4,
+      "theme": "",
+      "transcription": "No ano de 2025, no Twitter, uma pessoa não pode opinar sobre determinado assunto sem ser alvo de duras críticas. Esse é o cancelamento, que impossibilita indivíduos de se expressarem, e que deve acabar. Dessa forma, é altamente observável que o impacto da cultura do cancelamento na liberdade de expressão se desdobra no desrespeito ao discordar de uma opinião juntamente com a intolerância de pensamento contrário.\n\nDe modo geral, o desrespeito ao discordar de uma opinião ocorre frequentemente no Brasil, em várias situações e âmbitos sociais, por causa da falta de empatia das pessoas, barrando a liberdade de expressão. Valendo-se disso, Voltaire disse: \"Posso não concordar com o que você diz, mas defenderei até a morte o seu direito de fazê-lo\", nessa via, o respeito ao discordar do próximo é crucial para uma troca de ideias proveitosa. Dessa forma, ao serem respeitadas, as pessoas sentirão mais liberdade ao se expressar, mesmo em discordância.\n\nNessa mesma lógica, a intolerância de pensamento contrário também é uma barreira para a liberdade de expressão, já que acarreta o preconceito e a exclusão social. Dentro desse mesmo ponto de vista, Luís Roberto Barroso diz: \"<uncertain confidence='LOW'>Tenham</uncertain> respeito pela verdade alheia. Cultivem a tolerância, nunca a arrogância\", por isso é necessário respeitar a verdade do outro, mesmo que o que o foi ensinado tenha sido completamente diferente. Assim, uma revisão de pensamento antes de ter preconceito com um pensamento contrário é essencial.\n\nPortanto, o cancelamento, que <uncertain confidence='MEDIUM'>impede</uncertain> as pessoas de se expressarem deve acabar. Além disto, é evidente que <uncertain confidence='MEDIUM'>para</uncertain> que tanto o desrespeito ao discordar de uma opinião concatenado à intolerância de pensamento contrário devem ser mitigados, a sociedade, juntamente com o governo, devem tomar medidas e vigiar o que falam e o que <uncertain confidence='MEDIUM'>realem</uncertain> como respeito."
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 777.5,
+      "elapsed_s": 17.2,
+      "strict_would_fail": false,
+      "uncertain_count": 6,
+      "illegible_count": 0,
+      "total_words": 227,
+      "uncertain_pct": 2.6,
+      "theme": "Pessoas se tornam mais comunicativas após o convívio com animais",
+      "transcription": "Nessa perspectiva, estudos <uncertain confidence='MEDIUM'>afirmam</uncertain> que os <uncertain confidence='MEDIUM'>bichinhos</uncertain> de estimação podem fazer milagres na cura de doenças. Assim, mostra-se relevante pensar no tratamento de doenças com pets, chamada também de pet terapia, uma vez que o convívio com animais é <uncertain confidence='MEDIUM'>baixo</uncertain> tempo necessário para ver os resultados <uncertain confidence='MEDIUM'>configuram</uncertain> os melhores resultados entre outros tipos de tratamentos mais demorados.\n\nDe início, é notório destacar a convivência com os animais. Isso porque a zooterapia vêm tendo resultados excelentes em várias doenças. Prova disso <uncertain confidence='LOW'>recai só na</uncertain> reabilitação de soldados combatentes da Segunda Guerra Mundial, mas também, na década de 50, a introdução da terapia assistida por animais no tratamento de pessoas com esquizofrenia.\n\nAdemais, cabe ressaltar a mínima quantidade de tempo para os tratamentos terem bons resultados. Essa terapia já é bem conhecida no Brasil e no exterior, tendo inúmeras clínicas especializadas em grandes centros urbanos do mundo. Sendo assim, torna-se urgente reconhecer que esse tratamento <uncertain confidence='MEDIUM'>resultou</uncertain> hoje no auxílio de milhares de pessoas a se recuperar de problemas físicos ou mentais.\n\nCom o objetivo de expandir a terapia com pet, é dever do governo financiar e tornar acessível o tratamento com animais à população por meio de palestras com especialistas a fim de demonstrar às pessoas que o pet terapia têm bons resultados. Somente assim, a cura será alcançada com maior acessibilidade para os indivíduos sem boas condições financeiras."
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 803.5,
+      "elapsed_s": 17.5,
+      "strict_would_fail": false,
+      "uncertain_count": 9,
+      "illegible_count": 0,
+      "total_words": 176,
+      "uncertain_pct": 5.1,
+      "theme": "O preconceito linguístico e seus efeitos na sociedade brasileira",
+      "transcription": "Segundo a constituição de 1988, art. 5º, <uncertain confidence='HIGH'>todos</uncertain> são iguais perante a Lei, todavia, não é isso que <uncertain confidence='HIGH'>observa-se</uncertain>.\n\nOutrossim, a falta de educação cultural à população agrava o contexto, em virtude de <uncertain confidence='HIGH'>instituições</uncertain> de ensino reforçarem a noção de \"certo e errado\" com relação à língua portuguesa. À luz dessa perspectiva, Marcos Bagno, em seu livro Preconceito Linguístico, defende uma educação que valorize a diversidade cultural do país, ou seja, enxergar a língua pelo viés exclusivo <uncertain confidence='LOW'>e</uncertain> ajuda a reforçar atos intolerantes desde a infância. Assim, é <uncertain confidence='HIGH'>imprescindível</uncertain> realizar ações para mudar o cenário nacional.\n\nEm suma, faz-se inequívoco que o preconceito linguístico é prejudicial. Dessarte, compete ao Ministério da <uncertain confidence='LOW'>Cultura</uncertain> Cultura e da Educação promoverem campanhas de conscientização, por meio de viagens aos povos <uncertain confidence='MEDIUM'>inferiorizados</uncertain> quilombolas e <uncertain confidence='MEDIUM'>do</uncertain> interior, os quais sensibilizar os estudantes que terão convívio com as línguas inferiorizadas, com a finalidade de enxergar a língua pelo viés inclusivo. Com isso, finalmente <uncertain confidence='MEDIUM'>Einstein</uncertain> terá cometido mais um erro por dizer que é mais fácil desintegrar um átomo do que um preconceito."
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 857.5,
+      "elapsed_s": 17.1,
+      "strict_would_fail": false,
+      "uncertain_count": 12,
+      "illegible_count": 0,
+      "total_words": 186,
+      "uncertain_pct": 6.5,
+      "theme": "<uncertain confidence='MEDIUM'>tenção da desigualdade social</uncertain> <uncertain confidence='LOW'>predisposição da nova geração para o preconceito</uncertain>",
+      "transcription": "\"É mais fácil desintegrar um átomo que um preconceito\" uma reflexão deixada por Einstein. Sob essa perspectiva, torna-se evidente que o problema do preconceito linguístico persiste na sociedade brasileira e reverbera a necessidade de sua redução para mudanças no contexto nacional. Dessa maneira, a <uncertain confidence='HIGH'>intolerância</uncertain> linguística ocorre tanto pelo passado <uncertain confidence='LOW'>do</uncertain> histórico do Brasil quanto pela falta de educação cultural à população.\n\nCom efeito, <uncertain confidence='LOW'>o passado histórico do Brasil agrava o contexto</uncertain>, em virtude da <uncertain confidence='MEDIUM'>de colonização portuguesa, pois a língua dos povos originários que aqui viviam foi igual viviam não só foi ignorada, mas também excluída</uncertain>. A luz <uncertain confidence='LOW'>dessa perspectiva o ensino como</uncertain> in a <uncertain confidence='LOW'>geração</uncertain> <uncertain confidence='LOW'>atual</uncertain> tem <uncertain confidence='HIGH'>predisposição</uncertain> ao preconceito, uma vez que, a educação não é igualitária no Brasil, pelo contrário, é instrumento de manutenção da desigualdade social. Dentro desse mesmo ponto de vista, destaca-se atitudes discriminatórias entre as pessoas, tendo como elemento <uncertain confidence='MEDIUM'>de reforço</uncertain> a Mídia, <uncertain confidence='LOW'>em</uncertain> isso pode ser observado na Novela \"<uncertain confidence='HIGH'>Êta Mundo Bom</uncertain>\" da Rede Globo, onde os personagens estão emburrecidos e ridicularizados. Logo, a necessidade de <uncertain confidence='HIGH'>combater essa realidade</uncertain> torna-se urgente na sociedade brasileira."
+    }
+  ]
+}

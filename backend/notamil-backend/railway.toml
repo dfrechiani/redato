@@ -1,0 +1,20 @@
+# Railway config — backend (portal + bot unificados).
+#
+# Caso prefira sobrepor a auto-detecção do Railway, este arquivo
+# explicita builder, comando, healthcheck e restart policy.
+#
+# Pra deploy múltiplo (frontend + backend + Postgres), prefere-se 1
+# arquivo por serviço (cada com seu railway.toml na pasta raiz do
+# serviço). Railway lê esse arquivo do diretório que você apontar como
+# "Root Directory" do serviço.
+
+[build]
+builder = "NIXPACKS"
+nixpacksConfigPath = "nixpacks.toml"
+
+[deploy]
+startCommand = "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/admin/health/full"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

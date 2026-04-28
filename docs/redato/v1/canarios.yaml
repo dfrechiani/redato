@@ -1,0 +1,267 @@
+# ============================================================
+# REDATO — GOLDEN SET DE CALIBRAÇÃO
+# ============================================================
+# Conjunto de 8 redações-canário sobre "Impactos das redes sociais
+# na saúde mental dos jovens" com gabarito fechado.
+#
+# Uso: regression eval. Cada canário detecta um viés específico
+# da LLM corretora. Tolerância padrão: ±1 nível (40 pontos) por
+# competência. Falha em 2+ canários bloqueia deploy.
+# ============================================================
+
+metadata:
+  version: "1.0"
+  theme: "Impactos das redes sociais na saúde mental dos jovens"
+  tolerance_per_competency: 40
+  deploy_block_threshold: 2
+  created_at: "2026-04-24"
+
+canarios:
+
+  # ------------------------------------------------------------
+  # CANÁRIO 1 — Inflação de C1 quando demais competências são fortes
+  # ------------------------------------------------------------
+  - id: c1_seven_graves
+    function: "Detecta tendência da LLM a perdoar desvios graves de C1 quando o texto demonstra sofisticação argumentativa nas demais competências."
+    bias_detected: "Halo effect entre C2-C5 e C1 (nota alta em projeto/repertório contamina leitura de C1)."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo transforma-se em algoz de si mesmo. Esse diagnóstico se aplica as redes sociais, onde os jovens brasileiro expõe suas vidas diariamente. Nesse sentido, o uso massivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela distorção da autoimagem, seja pelo adoecimento provocado por algoritmos.
+
+      Em primeira análise, as redes sociais consolidaram uma cultura de comparação permanente. Isso por que plataformas como Instagram e TikTok priorizam conteúdos estéticos, em que corpos editados e rotinas idealizadas tornam-se parâmetro de normalidade. Como resultado, adolescentes em processo de construção identitária passam a medir seu valor pela métrica de curtidas, fenômeno que o sociólogo Zygmunt Bauman chamou de "modernidade líquida". Pesquisas da OMS apontam crescimento expressivo de quadros de ansiedade entre os jovem na última década, coincidindo com a popularização dessas mídias. Tipo assim, a gente vê isso claramente no dia a dia escolar.
+
+      Ademais, os próprios mecanismos de funcionamento das redes potencializa o sofrimento psíquico. O documentário O Dilema das Redes revela que os algoritmos são projetados para maximizar o tempo de tela, recorrendo à estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é exposto à um ciclo de recompensa imediata que, à longo prazo, fragiliza sua capacidade de concentração. Tal realidade mau respeita o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência.
+
+      Portanto, medidas são urgentes para mitigar esses impactos. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais, implementar nas escolas um programa permanente de letramento digital, por meio de oficinas quinzenais conduzidas por psicólogos, com o objetivo de desenvolver o uso crítico das plataformas. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos voltados pra menores de idade, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo entre lucro digital e adoecimento juvenil.
+    gabarito:
+      c1: 80
+      c2: 200
+      c3: 200
+      c4: 200
+      c5: 200
+      total: 880
+    structural_checks:
+      - kind: min_grave_count
+        value: 6
+      - kind: c1_nota_max
+        value: 120
+      - kind: priority_1_target
+        value: c1
+
+  # ------------------------------------------------------------
+  # CANÁRIO 2 — Aceitação de repertório falso ou fabricado
+  # ------------------------------------------------------------
+  - id: c2_false_repertoire
+    function: "Detecta tendência da LLM a aceitar citações falsamente atribuídas, dados sem fonte e artigos constitucionais errados como repertório legítimo."
+    bias_detected: "Falta de verificação factual; aceitação de 'forma de repertório' como equivalente a repertório legítimo."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a saúde mental da juventude
+
+      Desde os primórdios da humanidade, as relações sociais sempre foram importantes para o ser humano. Na atualidade, com o avanço da tecnologia, essas relações passaram a ocorrer majoritariamente no ambiente virtual, o que trouxe consequências graves. Nesse sentido, o uso massivo das redes sociais tem comprometido a saúde mental da juventude, seja pela distorção da autoimagem, seja pelo adoecimento provocado pelo uso excessivo.
+
+      Em primeira análise, cumpre destacar que as redes sociais consolidaram uma cultura da comparação permanente. Isso porque plataformas como Instagram e TikTok priorizam conteúdos estéticos e performáticos, em que corpos editados, rotinas idealizadas e conquistas exibidas tornam-se parâmetro de normalidade. Como resultado, adolescentes em pleno processo de construção identitária passam a medir seu valor pela métrica de curtidas e seguidores. Einstein já dizia que "a tecnologia superou nossa humanidade", e é exatamente isso que observamos hoje. Segundo pesquisas recentes, a maioria dos jovens apresenta algum nível de ansiedade relacionado ao uso dessas plataformas.
+
+      Ademais, é preciso considerar que os próprios mecanismos de funcionamento das redes potencializam o sofrimento psíquico. Os algoritmos são projetados para maximizar o tempo de tela, recorrendo a estímulos que viciam o usuário. Dessa forma, o jovem é exposto a um ciclo de recompensa imediata que, a longo prazo, fragiliza sua capacidade de concentração, altera padrões de sono e intensifica sentimentos de solidão. O artigo 5º da Constituição Federal, que trata da proteção à infância, é claramente desrespeitado nesse contexto, já que os jovens não têm sua saúde mental garantida. Filósofos antigos já discutiam a importância do equilíbrio emocional, algo que se perdeu na era digital.
+
+      Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar nas escolas de Ensino Médio um programa permanente de letramento digital e emocional, por meio de oficinas quinzenais conduzidas por psicólogos e professores capacitados, com o objetivo de desenvolver o uso crítico das plataformas. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos voltados a menores de idade, a fim de romper o ciclo entre lucro digital e adoecimento juvenil.
+    gabarito:
+      c1: 200
+      c2: 80
+      c3: 200
+      c4: 200
+      c5: 200
+      total: 880
+    structural_checks:
+      - kind: c2_has_false_attribution
+        value: true
+      - kind: c2_has_wrong_legal_article
+        value: true
+      - kind: c2_nota_max
+        value: 120
+
+  # ------------------------------------------------------------
+  # CANÁRIO 3 — Aceitação de justaposição como projeto de texto
+  # ------------------------------------------------------------
+  - id: c3_no_project
+    function: "Detecta tendência da LLM a aceitar sucessão temática sem ordenação argumentativa como projeto de texto."
+    bias_detected: "Confusão entre 'texto com parágrafos sobre o tema' e 'texto com projeto argumentativo'."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a saúde mental da juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo transforma-se em algoz de si mesmo. As redes sociais são um fenômeno complexo da contemporaneidade e afetam os jovens de muitas formas diferentes. É importante discutir esse tema.
+
+      As redes sociais possuem muitos pontos positivos, como facilitar a comunicação entre pessoas distantes e permitir o acesso à informação. Muitos jovens conseguem se conectar com amigos, descobrir novos interesses e até mesmo encontrar oportunidades de trabalho por meio dessas plataformas. O sociólogo Zygmunt Bauman, em Modernidade Líquida, já discutia a fragilidade dos vínculos contemporâneos. Por outro lado, o uso excessivo pode gerar problemas. A ansiedade tem aumentado entre os jovens, segundo a OMS. Isso é preocupante. O documentário O Dilema das Redes mostra como os algoritmos funcionam.
+
+      O cyberbullying também é um problema sério nas redes sociais. Muitos jovens sofrem com ataques virtuais e isso afeta sua autoestima. Além disso, existe a questão da privacidade, já que as plataformas coletam dados pessoais dos usuários. O artigo 227 da Constituição garante direitos às crianças e adolescentes. A dependência digital também é preocupante e pode levar ao isolamento social. Alguns jovens passam mais de oito horas por dia conectados.
+
+      Portanto, medidas são urgentes. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar nas escolas de Ensino Médio um programa permanente de letramento digital e emocional, por meio de oficinas quinzenais conduzidas por psicólogos e professores capacitados, com o objetivo de desenvolver o uso crítico das plataformas e fortalecer o bem-estar psíquico dos estudantes. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos voltados a menores de idade, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo entre lucro digital e adoecimento juvenil.
+    gabarito:
+      c1: 200
+      c2: 160
+      c3: 80
+      c4: 200
+      c5: 200
+      total: 840
+    structural_checks:
+      - kind: c3_has_explicit_thesis
+        value: false
+      - kind: c3_nota_max
+        value: 120
+
+  # ------------------------------------------------------------
+  # CANÁRIO 4 — Aceitação de coesão mecânica como coesão funcional
+  # ------------------------------------------------------------
+  - id: c4_mechanical_cohesion
+    function: "Detecta tendência da LLM a aceitar repetição mecânica de 'além disso' como coesão adequada, ignorando ausência de variedade e de coesão referencial."
+    bias_detected: "Contagem de conectivos sem análise qualitativa; ausência de penalização por repetição lexical."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a saúde mental da juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo transforma-se em algoz de si mesmo. O diagnóstico de Han encontra terreno fértil nas redes sociais. Jovens brasileiros expõem e medem continuamente suas vidas nas redes sociais. O uso massivo das redes sociais tem comprometido a saúde mental da juventude. A saúde mental é afetada pela distorção da autoimagem. A saúde mental também é afetada pelo adoecimento provocado por algoritmos.
+
+      Além disso, as redes sociais consolidaram uma cultura da comparação permanente. Além disso, plataformas como Instagram e TikTok priorizam conteúdos estéticos e performáticos. Corpos editados, rotinas idealizadas e conquistas exibidas tornam-se parâmetro de normalidade nessas plataformas. Adolescentes em pleno processo de construção identitária passam a medir seu valor pela métrica de curtidas. Isso é um fenômeno que o sociólogo Zygmunt Bauman classificou como "modernidade líquida". Além disso, pesquisas da OMS apontam crescimento expressivo de quadros de ansiedade e depressão entre jovens. Aquilo coincide com a popularização dessas mídias.
+
+      Além disso, é preciso considerar os mecanismos de funcionamento das redes. Eles potencializam o sofrimento psíquico. O documentário O Dilema das Redes revela que os algoritmos são projetados para maximizar o tempo de tela. Os algoritmos recorrem a estímulos semelhantes aos de jogos de azar. Isso fragiliza a capacidade de concentração do jovem usuário. Isso altera padrões de sono. Isso intensifica sentimentos de solidão. Essa realidade contraria o artigo 227 da Constituição Federal. O artigo 227 da Constituição Federal assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência.
+
+      Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. Cabe ao Ministério da Educação implementar nas escolas de Ensino Médio um programa permanente de letramento digital, por meio de oficinas quinzenais conduzidas por psicólogos, com o objetivo de desenvolver o uso crítico das plataformas. O Congresso Nacional deve regulamentar os algoritmos voltados a menores de idade, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo entre lucro digital e adoecimento juvenil.
+    gabarito:
+      c1: 200
+      c2: 200
+      c3: 200
+      c4: 80
+      c5: 200
+      total: 880
+    structural_checks:
+      - kind: c4_most_used_connector_min_count
+        value: 4
+      - kind: c4_has_mechanical_repetition
+        value: true
+      - kind: c4_nota_max
+        value: 120
+
+  # ------------------------------------------------------------
+  # CANÁRIO 5 — Aceitação de proposta genérica como intervenção
+  # ------------------------------------------------------------
+  - id: c5_vague_intervention
+    function: "Detecta tendência da LLM a aceitar 'governo deve tomar providências' + 'sociedade deve se conscientizar' como proposta de intervenção válida."
+    bias_detected: "Premiação de boas intenções em vez de concretude operacional."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a saúde mental da juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, transforma-se em algoz de si mesmo. Tal diagnóstico encontra terreno fértil nas redes sociais, ambientes em que jovens brasileiros expõem e medem continuamente suas vidas. Nesse cenário, observa-se que o uso massivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela distorção da autoimagem, seja pelo adoecimento provocado por algoritmos que exploram vulnerabilidades emocionais.
+
+      Em primeira análise, cumpre destacar que as redes sociais consolidaram uma cultura da comparação permanente. Isso porque plataformas como Instagram e TikTok priorizam conteúdos estéticos e performáticos, em que corpos editados, rotinas idealizadas e conquistas exibidas tornam-se parâmetro de normalidade. Como resultado, adolescentes em pleno processo de construção identitária passam a medir seu valor pela métrica de curtidas e seguidores, fenômeno agravado pelo que o sociólogo Zygmunt Bauman classificou como "modernidade líquida", marcada pela fragilidade dos laços e pela busca incessante por validação externa. Não por acaso, pesquisas da Organização Mundial da Saúde apontam crescimento expressivo de quadros de ansiedade e depressão entre jovens na última década.
+
+      Ademais, é preciso considerar que os próprios mecanismos de funcionamento das redes potencializam o sofrimento psíquico. O documentário O Dilema das Redes, dirigido por Jeff Orlowski, revela que os algoritmos são deliberadamente projetados para maximizar o tempo de tela, recorrendo a estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é exposto a um ciclo de recompensa imediata que, a longo prazo, fragiliza sua capacidade de concentração, altera padrões de sono e intensifica sentimentos de solidão. Tal realidade contraria o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência.
+
+      Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. É necessário que o governo tome providências sobre o assunto, criando políticas públicas eficientes para combater esse problema que afeta tantos jovens. A sociedade também deve se conscientizar e as famílias precisam acompanhar de perto o uso que seus filhos fazem das redes sociais. Somente com a união de todos será possível resolver essa questão de forma adequada, garantindo um futuro melhor para a juventude brasileira.
+    gabarito:
+      c1: 200
+      c2: 200
+      c3: 200
+      c4: 200
+      c5: 40
+      total: 840
+    structural_checks:
+      - kind: c5_has_non_operationalizable_agent
+        value: true
+      - kind: c5_action_concrete
+        value: false
+      - kind: c5_nota_max
+        value: 80
+
+  # ------------------------------------------------------------
+  # CANÁRIO 6 — Controle: texto nota 1000
+  # ------------------------------------------------------------
+  - id: control_nota_1000
+    function: "Controle — detecta tendência da LLM a punir textos impecáveis em busca de 'algo para criticar'."
+    bias_detected: "Criticismo obrigatório; incapacidade de atribuir nível 5 em todas as competências simultaneamente."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a saúde mental da juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, transforma-se em algoz de si mesmo. Tal diagnóstico encontra terreno fértil nas redes sociais, ambientes em que jovens brasileiros expõem e medem continuamente suas vidas. Nesse cenário, observa-se que o uso massivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela distorção da autoimagem, seja pelo adoecimento provocado por algoritmos que exploram vulnerabilidades emocionais.
+
+      Em primeira análise, cumpre destacar que as redes sociais consolidaram uma cultura da comparação permanente. Isso porque plataformas como Instagram e TikTok priorizam conteúdos estéticos e performáticos, em que corpos editados, rotinas idealizadas e conquistas exibidas tornam-se parâmetro de normalidade. Como resultado, adolescentes em pleno processo de construção identitária passam a medir seu valor pela métrica de curtidas e seguidores, fenômeno agravado pelo que o sociólogo Zygmunt Bauman classificou como "modernidade líquida", marcada pela fragilidade dos laços e pela busca incessante por validação externa. Não por acaso, pesquisas da Organização Mundial da Saúde apontam crescimento expressivo de quadros de ansiedade e depressão entre jovens na última década, coincidindo com a popularização dessas mídias.
+
+      Ademais, é preciso considerar que os próprios mecanismos de funcionamento das redes potencializam o sofrimento psíquico. O documentário O Dilema das Redes, dirigido por Jeff Orlowski, revela que os algoritmos são deliberadamente projetados para maximizar o tempo de tela, recorrendo a estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é exposto a um ciclo de recompensa imediata que, a longo prazo, fragiliza sua capacidade de concentração, altera padrões de sono e intensifica sentimentos de solidão. Tal realidade contraria o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência, incluindo aquelas de natureza psicológica.
+
+      Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar, nas escolas de Ensino Médio, um programa permanente de letramento digital e emocional, por meio de oficinas quinzenais conduzidas por psicólogos e professores capacitados, com o objetivo de desenvolver o uso crítico das plataformas e fortalecer o bem-estar psíquico dos estudantes. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos voltados a menores de idade, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo entre lucro digital e adoecimento juvenil.
+    gabarito:
+      c1: 200
+      c2: 200
+      c3: 200
+      c4: 200
+      c5: 200
+      total: 1000
+    structural_checks:
+      - kind: total_min
+        value: 960
+      - kind: max_one_competency_below_200
+
+  # ------------------------------------------------------------
+  # CANÁRIO 7 — Casos-limite: C1 e C5 simultaneamente fracas
+  # ------------------------------------------------------------
+  - id: c1_and_c5_both_weak
+    function: "Detecta propagação indevida de notas baixas entre competências. Testa capacidade de isolamento."
+    bias_detected: "Propagação: uma competência fraca puxa as demais para baixo, ou (inverso) duas fracas são 'compensadas' mentalmente e acabam inflacionadas."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo transforma-se em algoz de si mesmo. Esse diagnóstico se aplica as redes sociais, onde os jovens brasileiro expõe suas vidas diariamente. Nesse sentido, o uso massivo dessas plataformas tem comprometido a saúde mental da juventude, seja pela distorção da autoimagem, seja pelo adoecimento provocado por algoritmos.
+
+      Em primeira análise, as redes sociais consolidaram uma cultura da comparação permanente. Isso porque plataformas como Instagram e TikTok priorizam conteúdos estéticos, em que corpos editados e rotinas idealizadas tornam-se parâmetro de normalidade. Como resultado, adolescentes em processo de construção identitária passam a medir seu valor pela métrica de curtidas, fenômeno que o sociólogo Zygmunt Bauman classificou como "modernidade líquida". Pesquisas da OMS apontam crescimento expressivo de quadros de ansiedade entre os jovem na última década.
+
+      Ademais, os próprios mecanismos de funcionamento das redes potencializa o sofrimento psíquico. O documentário O Dilema das Redes revela que os algoritmos são projetados para maximizar o tempo de tela, recorrendo à estímulos semelhantes aos de jogos de azar. Dessa forma, o jovem usuário é exposto à um ciclo de recompensa imediata que, à longo prazo, fragiliza sua capacidade de concentração. Tal realidade mau respeita o artigo 227 da Constituição Federal, o qual assegura à infância e à juventude prioridade absoluta na proteção contra toda forma de negligência.
+
+      Portanto, medidas são urgentes para mitigar esses impactos. É necessário que o governo tome providências sobre o assunto, criando políticas públicas eficientes. A sociedade também deve se conscientizar e as famílias precisam acompanhar de perto o uso que seus filhos fazem das redes sociais. Somente com a união de todos será possível resolver essa questão de forma adequada.
+    gabarito:
+      c1: 80
+      c2: 200
+      c3: 200
+      c4: 160
+      c5: 40
+      total: 680
+    structural_checks:
+      - kind: c1_nota_max
+        value: 120
+      - kind: c5_nota_max
+        value: 80
+      - kind: c2_nota_min
+        value: 180
+      - kind: c3_nota_min
+        value: 180
+
+  # ------------------------------------------------------------
+  # CANÁRIO 8 — Repertório forte não compensa projeto fraco
+  # ------------------------------------------------------------
+  - id: c3_with_strong_repertoire
+    function: "Detecta confusão entre C2 e C3. Texto com 8 referências legítimas mas sem projeto de texto."
+    bias_detected: "Inflação de C3 por presença de repertório denso; incapacidade de distinguir 'muitas referências' de 'argumentação organizada'."
+    essay: |
+      A vitrine do sofrimento: redes sociais e a saúde mental da juventude
+
+      Na obra Sociedade do Cansaço, o filósofo sul-coreano Byung-Chul Han argumenta que o sujeito contemporâneo, imerso em uma lógica de desempenho permanente, transforma-se em algoz de si mesmo. As redes sociais são um tema complexo da contemporaneidade e merecem discussão aprofundada.
+
+      As redes sociais possuem diversos aspectos. Zygmunt Bauman, em Modernidade Líquida, analisa a fragilidade dos vínculos contemporâneos, algo que se manifesta no ambiente digital. Pesquisas da Organização Mundial da Saúde apontam crescimento de quadros de ansiedade entre jovens na última década. O documentário O Dilema das Redes, dirigido por Jeff Orlowski, mostra o funcionamento dos algoritmos. O cyberbullying é outro problema sério nas redes sociais e afeta a autoestima de muitos adolescentes.
+
+      A questão da privacidade também é relevante. As plataformas coletam dados pessoais dos usuários, o que foi discutido por Shoshana Zuboff em A Era do Capitalismo de Vigilância. O artigo 227 da Constituição Federal garante prioridade absoluta à proteção da infância e juventude. A dependência digital pode levar ao isolamento social, fenômeno que Sherry Turkle, em Alone Together, já havia antecipado nos anos 2010. Muitos jovens passam mais de oito horas por dia conectados, segundo dados do IBGE.
+
+      Portanto, medidas são urgentes para mitigar os impactos das redes sociais sobre a saúde mental da juventude. Cabe ao Ministério da Educação, em parceria com as secretarias estaduais de ensino, implementar nas escolas de Ensino Médio um programa permanente de letramento digital e emocional, por meio de oficinas quinzenais conduzidas por psicólogos e professores capacitados, com o objetivo de desenvolver o uso crítico das plataformas e fortalecer o bem-estar psíquico dos estudantes. Complementarmente, o Congresso Nacional deve regulamentar os algoritmos voltados a menores de idade, exigindo transparência das empresas de tecnologia, a fim de romper o ciclo entre lucro digital e adoecimento juvenil.
+    gabarito:
+      c1: 200
+      c2: 200
+      c3: 120
+      c4: 180
+      c5: 200
+      total: 900
+    structural_checks:
+      # Nota: não checamos productive_count_min porque o schema classifica
+      # repertório decorativo (por ausência de projeto) como não-produtivo,
+      # e o canário deliberadamente tem repertório decorative + C2 alto.
+      - kind: c2_nota_min
+        value: 180
+      - kind: c3_has_explicit_thesis
+        value: false
+      - kind: c3_nota_max
+        value: 140

@@ -1,0 +1,258 @@
+/* Sidebar.module.css */
+.sidebar {
+  min-width: 220px;
+  width: 250px;
+  min-height: 95vh;
+  height: 100%;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.155);
+  padding: 24px 16px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: "BlauerNue", Arial, sans-serif;
+  color: black;
+  transition: all 0.3s ease;
+  z-index: 100;
+}
+
+/* Em mobile, posiciona a sidebar de forma fixa */
+@media (max-width: 1100px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    height: 100vh;
+    margin: 0;
+    padding-top: 60px; /* Espaço para o botão hamburger */
+    border-radius: 0;
+    z-index: 1000;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Para melhor experiência no iOS */
+  }
+}
+
+/* Quando fechada, a sidebar é transladada para fora da tela */
+.closed {
+  transform: translateX(-100%);
+}
+
+/* Overlay para quando a sidebar está aberta em dispositivos móveis */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+.sidebarContent {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.logoContainer {
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 1100px) {
+  .logoContainer {
+    justify-content: flex-start;
+  }
+}
+
+.mainNav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.navItem {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.navItem:hover {
+  background: #f1f5f9;
+}
+
+.navItem.active {
+  background: #eff6ff;
+  color: #2e7bf3;
+}
+
+.navItem.active .navIcon {
+  color: #2e7bf3;
+  opacity: 1;
+}
+
+.navIcon {
+  opacity: 0.7;
+  min-width: 20px; /* Garante que os ícones fiquem alinhados */
+}
+
+.userSection {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.userInfo {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.userRole {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.userName {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.userName:hover {
+  background-color: #f1f5f9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.userNameText {
+  font-size: 0.875rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  min-width: 40px; /* Garante que o avatar não encolha */
+}
+
+.bottomNav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  width: 100%;
+  text-decoration: none;
+}
+
+/* Estilo para o botão de Envio de Redação */
+.redactionButton {
+  background-color: #bced48;
+  color: #000000;
+  padding: 10px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.redactionButton:hover,
+.redactionButton:active {
+  background-color: #d8ff7b;
+}
+
+/* Linha divisória */
+.divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 12px 0;
+  width: 100%;
+}
+
+/* Botão Hamburger para mobile */
+.hamburgerButton {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  color: black;
+  background: white;
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1100;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.hamburgerButton:hover {
+  background-color: #f5f5f5;
+}
+
+/* Estilo para o botão quando a sidebar está aberta */
+.hamburgerButtonActive {
+  left: 270px;
+  background-color: #eff6ff;
+  color: #2e7bf3;
+}
+
+/* Safe area para dispositivos iOS */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .sidebar {
+    padding-top: calc(24px + env(safe-area-inset-top));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+  
+  .hamburgerButton {
+    top: calc(16px + env(safe-area-inset-top));
+  }
+}
+
+/* Suporte para webkit em navegadores mais antigos */
+@supports (-webkit-backdrop-filter: none) {
+  .overlay {
+    -webkit-backdrop-filter: blur(3px);
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "comparison": "Sonnet 4.6 EN vs Sonnet 4.6 PT-BR vs Opus 4.7 PT-BR",
+  "config": {
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "rows": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "sonnet_en_pct": 10.6,
+      "sonnet_ptbr_pct": 4.9,
+      "opus_ptbr_pct": 1.4,
+      "sonnet_en_s": 13.0,
+      "sonnet_ptbr_s": 12.6,
+      "opus_ptbr_s": 15.9
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "sonnet_en_pct": 8.2,
+      "sonnet_ptbr_pct": 4.0,
+      "opus_ptbr_pct": 1.4,
+      "sonnet_en_s": 15.6,
+      "sonnet_ptbr_s": 15.6,
+      "opus_ptbr_s": 18.3
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "sonnet_en_pct": 10.9,
+      "sonnet_ptbr_pct": 8.8,
+      "opus_ptbr_pct": 2.6,
+      "sonnet_en_s": 14.9,
+      "sonnet_ptbr_s": 15.6,
+      "opus_ptbr_s": 17.2
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "sonnet_en_pct": 17.0,
+      "sonnet_ptbr_pct": 8.0,
+      "opus_ptbr_pct": 5.1,
+      "sonnet_en_s": 13.7,
+      "sonnet_ptbr_s": 12.7,
+      "opus_ptbr_s": 17.5
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "sonnet_en_pct": 9.4,
+      "sonnet_ptbr_pct": 7.1,
+      "opus_ptbr_pct": 6.5,
+      "sonnet_en_s": 14.2,
+      "sonnet_ptbr_s": 12.9,
+      "opus_ptbr_s": 17.1
+    }
+  ],
+  "averages": {
+    "sonnet_en_pct": 11.2,
+    "sonnet_ptbr_pct": 6.6,
+    "opus_ptbr_pct": 3.4,
+    "sonnet_en_s": 14.3,
+    "sonnet_ptbr_s": 13.9,
+    "opus_ptbr_s": 17.2
+  }
+}

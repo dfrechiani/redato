@@ -1,0 +1,259 @@
+{
+  "per_image": {
+    "Aluna Júlia -1.jpg": {
+      "Sonnet PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 1.63,
+        "uncertain_pct_std": 2.83,
+        "uncertain_pct_runs": [
+          4.9,
+          0.0,
+          0.0
+        ],
+        "words_mean": 616,
+        "words_runs": [
+          206,
+          415,
+          1227
+        ]
+      },
+      "Opus PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 0.47,
+        "uncertain_pct_std": 0.81,
+        "uncertain_pct_runs": [
+          1.4,
+          0.0,
+          0.0
+        ],
+        "words_mean": 70,
+        "words_runs": [
+          210,
+          0,
+          0
+        ]
+      },
+      "Opus PT-BR (tool, M4 v2)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 2.57,
+        "uncertain_pct_std": 1.66,
+        "uncertain_pct_runs": [
+          2.4,
+          1.0,
+          4.3
+        ],
+        "words_mean": 208,
+        "words_runs": [
+          210,
+          206,
+          208
+        ]
+      }
+    },
+    "Arthur José 26_02.jpg": {
+      "Sonnet PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 1.33,
+        "uncertain_pct_std": 2.31,
+        "uncertain_pct_runs": [
+          4.0,
+          0.0,
+          0.0
+        ],
+        "words_mean": 580.3,
+        "words_runs": [
+          278,
+          363,
+          1100
+        ]
+      },
+      "Opus PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 0.47,
+        "uncertain_pct_std": 0.81,
+        "uncertain_pct_runs": [
+          1.4,
+          0.0,
+          0.0
+        ],
+        "words_mean": 97.3,
+        "words_runs": [
+          292,
+          0,
+          0
+        ]
+      },
+      "Opus PT-BR (tool, M4 v2)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 4.5,
+        "uncertain_pct_std": 1.35,
+        "uncertain_pct_runs": [
+          6.0,
+          4.1,
+          3.4
+        ],
+        "words_mean": 297,
+        "words_runs": [
+          298,
+          296,
+          297
+        ]
+      }
+    },
+    "Carlos 02_08-1.jpg": {
+      "Sonnet PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 2.93,
+        "uncertain_pct_std": 5.08,
+        "uncertain_pct_runs": [
+          8.8,
+          0.0,
+          0.0
+        ],
+        "words_mean": 419,
+        "words_runs": [
+          240,
+          1017,
+          0
+        ]
+      },
+      "Opus PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 0.87,
+        "uncertain_pct_std": 1.5,
+        "uncertain_pct_runs": [
+          2.6,
+          0.0,
+          0.0
+        ],
+        "words_mean": 75.7,
+        "words_runs": [
+          227,
+          0,
+          0
+        ]
+      },
+      "Opus PT-BR (tool, M4 v2)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 6.73,
+        "uncertain_pct_std": 2.95,
+        "uncertain_pct_runs": [
+          9.7,
+          6.7,
+          3.8
+        ],
+        "words_mean": 238.3,
+        "words_runs": [
+          237,
+          238,
+          240
+        ]
+      }
+    },
+    "Carlos 05_12-1.jpg": {
+      "Sonnet PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 2.67,
+        "uncertain_pct_std": 4.62,
+        "uncertain_pct_runs": [
+          8.0,
+          0.0,
+          0.0
+        ],
+        "words_mean": 152,
+        "words_runs": [
+          176,
+          280,
+          0
+        ]
+      },
+      "Opus PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 1.7,
+        "uncertain_pct_std": 2.94,
+        "uncertain_pct_runs": [
+          5.1,
+          0.0,
+          0.0
+        ],
+        "words_mean": 58.7,
+        "words_runs": [
+          176,
+          0,
+          0
+        ]
+      },
+      "Opus PT-BR (tool, M4 v2)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 11.1,
+        "uncertain_pct_std": 5.51,
+        "uncertain_pct_runs": [
+          5.8,
+          16.8,
+          10.7
+        ],
+        "words_mean": 174.3,
+        "words_runs": [
+          173,
+          173,
+          177
+        ]
+      }
+    },
+    "Carlos 05_12-2.jpg": {
+      "Sonnet PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 2.37,
+        "uncertain_pct_std": 4.1,
+        "uncertain_pct_runs": [
+          7.1,
+          0.0,
+          0.0
+        ],
+        "words_mean": 516.7,
+        "words_runs": [
+          183,
+          729,
+          638
+        ]
+      },
+      "Opus PT-BR (no tool)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 2.17,
+        "uncertain_pct_std": 3.75,
+        "uncertain_pct_runs": [
+          6.5,
+          0.0,
+          0.0
+        ],
+        "words_mean": 62,
+        "words_runs": [
+          186,
+          0,
+          0
+        ]
+      },
+      "Opus PT-BR (tool, M4 v2)": {
+        "n_runs": 3,
+        "uncertain_pct_mean": 6.17,
+        "uncertain_pct_std": 0.64,
+        "uncertain_pct_runs": [
+          5.8,
+          6.9,
+          5.8
+        ],
+        "words_mean": 175.3,
+        "words_runs": [
+          191,
+          145,
+          190
+        ]
+      }
+    }
+  },
+  "configs": [
+    "Sonnet PT-BR (no tool)",
+    "Opus PT-BR (no tool)",
+    "Opus PT-BR (tool, M4 v2)"
+  ]
+}

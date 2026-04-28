@@ -1,0 +1,17 @@
+# Railway config — frontend Next.js.
+#
+# `next start` por padrão escuta em 0.0.0.0:3000. Override via $PORT
+# no comando.
+
+[build]
+builder = "NIXPACKS"
+nixpacksConfigPath = "nixpacks.toml"
+
+[deploy]
+startCommand = "npm run start -- --port $PORT --hostname 0.0.0.0"
+# Frontend não tem endpoint dedicado de health; / responde 200 no
+# /login (após middleware redirecionar). Railway aceita.
+healthcheckPath = "/login"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

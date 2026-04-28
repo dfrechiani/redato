@@ -1,0 +1,221 @@
+/* Estilos padrão (Desktop) */
+.logo {
+  width: 30%;
+  margin: 0 auto; /* tamanho da logo no desktop */
+  height: auto;
+}
+
+.formContainer {
+  background-color: #000;
+  height: 55%; /* exemplo: container preto ocupando 50% da largura do viewport no desktop */
+  margin: 0 auto;
+  position: absolute;
+  bottom: 0;
+  background-color: #1a1a1a;
+  width: 100%;
+  border-top-left-radius: 2.5rem;
+  border-top-right-radius: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  flex-direction: column;
+  background-color: #2a2a5a; /* Alterando para um tom mais escuro de azul para professor */
+}
+
+.topSection {
+  width: 40%;
+  margin: 0 auto;
+  background-color: #FF6B6B; /* Vermelho para se destacar como professor */
+  color: black;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 500;
+  border-bottom-left-radius: 9999px;
+  border-bottom-right-radius: 9999px;
+}
+
+.logoSection {
+  width: 100%;
+  padding-top: 10%;
+  padding-bottom: 5%;
+}
+
+.formWrapper {
+  margin-top: -100px;
+  max-width: 400px;
+  width: 100%;
+  padding: 1rem;
+}
+
+.formGroup {
+  margin-bottom: 1rem;
+  background-color: transparent !important;
+  height: 56px;
+  font-size: 1rem;
+  font-weight: 500;
+  width: 100%;
+}
+
+.customTextField { 
+  border: 1.5px solid #FF6B6B; /* Bordas vermelhas para os campos */
+  border-radius: 20px;
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
+  padding: 15px;
+  color: white;
+  font-size: 18px;
+}
+
+input.middle:focus {
+  outline-width: 0;
+}
+
+/* Estilos para o botão */
+.submitButton {
+  background-color: #FF6B6B !important; /* Botão vermelho */
+  color: black !important;
+  height: 56px;
+  font-size: 1.0rem !important;
+  font-weight: 500 !important;
+  border-radius: 20px !important;
+  width: 100%;
+}
+
+.submitButton:hover {
+  background-color: #FF5252 !important; /* Um vermelho mais escuro ao passar o mouse */
+}
+
+/* Link para registro */
+.registerLinkContainer {
+  text-align: center;
+  padding-top: 0.75rem;
+}
+
+.registerLink {
+  color: white;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.registerLink:hover {
+  text-decoration: underline;
+}
+
+.errorMessage {
+  color: #FF6B6B;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Estilos do popup */
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background-color: #1a1a1a;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  border: 2px solid #FF6B6B;
+}
+
+.popupContent {
+  padding: 2rem;
+  text-align: center;
+}
+
+.popupContent h3 {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.popupContent p {
+  color: #e0e0e0;
+  margin-bottom: 1.5rem;
+}
+
+.popupButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.popupButtonCancel, 
+.popupButtonConfirm {
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  flex: 1;
+  border: none;
+  outline: none;
+}
+
+.popupButtonCancel {
+  background-color: #444;
+  color: white;
+}
+
+.popupButtonConfirm {
+  background-color: #FF6B6B;
+  color: black;
+}
+
+.popupButtonCancel:hover {
+  background-color: #555;
+}
+
+.popupButtonConfirm:hover {
+  background-color: #FF5252;
+}
+
+/* Tablet (máx 768px) */
+@media (max-width: 768px) {
+  .logo {
+    margin-top: 40px;
+    width: 70%; /* aumenta a porcentagem para a logo ficar menor na tela menor */
+  }
+  
+  .formContainer {
+    height: 60%;
+    width: 100%; /* container mais estreito para tablet */
+  }
+}
+
+/* Mobile (máx 480px) */
+@media (max-width: 480px) {
+  .logo {
+    width: 70%; /* logo ainda menor para se adequar à tela pequena */
+    margin-top: 60px;
+  }
+  
+  .formContainer {
+    width: 100%; /* container quase a largura total da tela no mobile */
+  }
+
+  .topSection {
+    width: 60%;
+  }
+} 

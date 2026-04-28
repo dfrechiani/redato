@@ -1,0 +1,16 @@
+# Nixpacks config pra Railway — frontend Next.js.
+#
+# Railway injeta $PORT. Next.js standalone build é a forma recomendada
+# pra container fino. Em produção rodamos `next start` (não `next dev`).
+
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start -- --port $PORT --hostname 0.0.0.0"

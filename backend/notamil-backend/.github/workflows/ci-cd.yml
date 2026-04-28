@@ -1,0 +1,134 @@
+name: Deploy Redato Services
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry and dependencies
+        run: |
+          sudo apt-get update
+          pip install poetry==1.8.2
+          poetry config virtualenvs.create true
+          poetry install
+
+      - name: Run checks
+        run: |
+          poetry run make checks
+
+  deploy:
+    needs: checks
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Poetry and dependencies
+        run: |
+          sudo apt-get update
+          pip install poetry==1.8.2
+          poetry config virtualenvs.create true
+          poetry install
+
+      - name: Export poetry install
+        run: |
+          poetry export --without-hashes -f requirements.txt --output requirements.txt
+
+      - name: Download and copy spaCy model
+        run: |
+          poetry run python -m spacy download pt_core_news_sm
+          
+          # Get the model path and package version from within the virtualenv
+          MODEL_INFO=$(poetry run python -c "import pt_core_news_sm; import os; print(f'{pt_core_news_sm.__path__[0]},{pt_core_news_sm.__version__}')")
+          MODEL_PATH=$(echo $MODEL_INFO | cut -d',' -f1)
+          VERSION=$(echo $MODEL_INFO | cut -d',' -f2)
+          
+          echo "Model path: $MODEL_PATH"
+          echo "Version: $VERSION"
+          
+          # Create models directory
+          mkdir -p models/pt_core_news_sm
+          
+          # Copy the contents of the versioned directory
+          cp -r $MODEL_PATH/pt_core_news_sm-$VERSION/* models/pt_core_news_sm/
+          
+          # Verify the copy - should see config.cfg and other files directly in this directory
+          echo "Contents of models/pt_core_news_sm:"
+          ls -la models/pt_core_news_sm/
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Deploy Base API
+        env:
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          gcloud run deploy "${{ secrets.API_CLOUD_RUN_SERVICE }}" \
+            --source=. \
+            --region us-east1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 2Gi \
+            --timeout 3600 \
+            --update-env-vars="FIREBASE_SERVICE_ACCOUNT=$FIREBASE_SERVICE_ACCOUNT,FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID,GUNICORN_CMD_ARGS='--workers 4 --timeout 300'"
+
+      - name: Deploy Essay Function
+        run: |
+          gcloud functions deploy essay_handler \
+            --runtime python39 \
+            --trigger-http \
+            --region us-east1 \
+            --source=. \
+            --timeout 3600 \
+            --memory=1GB \
+            --update-env-vars FIREBASE_SERVICE_ACCOUNT="${{ secrets.FIREBASE_SERVICE_ACCOUNT }}",FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}",OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}",ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}",GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
+
+      - name: Deploy OCR Function
+        run: |
+          gcloud functions deploy ocr_handler \
+            --runtime python39 \
+            --trigger-http \
+            --region us-east1 \
+            --source=. \
+            --memory=1GB \
+            --timeout 3600 \
+            --update-env-vars FIREBASE_SERVICE_ACCOUNT="${{ secrets.FIREBASE_SERVICE_ACCOUNT }}",FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}",OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}",ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}",GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
+
+      - name: Deploy Tutor Function
+        run: |
+          gcloud functions deploy chat_tutor \
+            --runtime python39 \
+            --trigger-http \
+            --region us-east1 \
+            --source=. \
+            --memory=1GB \
+            --timeout 3600 \
+            --update-env-vars FIREBASE_SERVICE_ACCOUNT="${{ secrets.FIREBASE_SERVICE_ACCOUNT }}",FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}",OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}",ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}",GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"

@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-24T09:30:36.161251",
+  "results": [
+    {
+      "id": "control_nota_1000",
+      "passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 56.12,
+      "error": null
+    }
+  ]
+}

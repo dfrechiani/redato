@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-04-24T11:47:07.064293",
+  "results": [
+    {
+      "id": "teste_01_controle_1000",
+      "passed": true,
+      "notas": {
+        "c1": 160,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 960
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "drift": {
+        "c1": -40,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 115.33,
+      "error": null
+    }
+  ]
+}

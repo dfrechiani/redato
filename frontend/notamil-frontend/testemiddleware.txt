@@ -1,0 +1,15 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(req: NextRequest) {
+  // se a URL começar com /dashboard
+  if (req.nextUrl.pathname.startsWith('/dashboard')) {
+    // Agora a gente precisa do cookie "accessToken"
+    const token = req.cookies.get('accessToken')?.value
+    if (!token) {
+      // Se não tiver, redireciona pra /login
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+  }
+  return NextResponse.next()
+}

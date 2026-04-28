@@ -1,0 +1,188 @@
+/* Competency Card Styles (adaptado de professor.module.css) */
+.competencyCard {
+  background: white;
+  border-radius: 12px;
+  padding: 15px 15px 0px 15px;
+  margin-bottom: 15px;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin-bottom: 16px;
+}
+
+.averageContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 12px;
+  background-color: #f7fafc;
+  border-radius: 8px;
+}
+
+.averageLabel {
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.averageValue {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 1.125rem;
+}
+
+.competencyChart {
+  position: relative;
+  margin-bottom: 24px;
+  max-height: 180px;
+}
+
+.competencyChartContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.competencyGridLines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.verticalLine {
+  width: 1px;
+  background-color: #e2e8f0;
+  height: 100%;
+}
+
+.competencyItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.competencyNumber {
+  width: 20px;
+  text-align: center;
+  font-weight: 500;
+  color: #a0aec0;
+  font-size: 12px;
+}
+
+.competencyInfo {
+  flex: 1;
+  min-width: 200px;
+}
+
+.competencyName {
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.competencyDescription {
+  font-size: 0.75rem;
+  color: #718096;
+  line-height: 1.4;
+}
+
+.competencyBarContainer {
+  flex: 1;
+  height: 28px;
+  background-color: #edf2f7;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.competencyBar {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  transition: width 0.5s ease-in-out;
+}
+
+.competencyValue {
+  font-weight: bold;
+  color: #fff;
+  font-size: 12px;
+  text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.competencyScale {
+  margin-top: 8px;
+  margin-left: 30px;
+  display: flex;
+  justify-content: space-between;
+  color: #a0aec0;
+  font-size: 12px;
+  padding-right: 5px;
+}
+
+.legend {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.legendTitle {
+  font-weight: 500;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.legendItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.legendItem:hover {
+  background-color: #f7fafc;
+}
+
+.legendColor {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.legendText {
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+/* Estilo para quando a barra está destacada */
+.competencyBarContainer.highlighted {
+  transform: scaleY(1.2);
+  z-index: 3;
+}
+
+/* Estilos adicionais para interatividade (opcional) */
+.competencyItem:hover .competencyBar {
+  filter: brightness(1.1); /* Efeito ao passar o mouse */
+}

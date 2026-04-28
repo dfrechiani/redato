@@ -1,0 +1,1341 @@
+.studyPlanContainer {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* Impede a rolagem horizontal */
+  margin: 0 auto;
+  background: white;
+  color: hsl(240 10% 3.9%);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.06), 0px 4px 6px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box; /* Garante que padding não seja adicionado à largura */
+}
+
+.studyPlanContainer h2 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: hsl(240 6% 10%);
+}
+
+/* Header com botão de selecionar */
+.studyHeader, .headerSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.studyHeader h2, .headerSection h2 {
+  margin: 0;
+}
+
+.selectAnotherButton {
+  background-color: #f8f9fa;
+  color: #4a5568;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.selectAnotherButton:hover {
+  background-color: #edf2f7;
+}
+
+.competencyList {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 15px;
+  flex-wrap: wrap;
+}
+
+.competencyList::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: hsl(220 13% 90%);
+  margin-top: 1.5rem;
+}
+
+.competencyButton {
+  font-family: "BlauerNue", Arial, sans-serif;
+  color: black;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 300;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  height: 2.5rem;
+  transform: scale(1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.competencyButton span {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+.red {
+  background: hsl(0 65% 45%) !important;
+  color: white;
+}
+
+.yellow {
+  background: hsl(45, 87%, 50%) !important;
+  color: black;
+}
+
+.green {
+  background: #c5fd5e !important;
+  color: black;
+}
+
+.competencyButton:hover {
+  transform: translateY(-2px);
+  background: hsl(124, 20%, 42%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.competencyButton.active {
+  transform: scale(1.05);
+  opacity: 3;
+  border: 3px solid #c5fd5e;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.mainContent {
+  font-family: "BlauerNue", Arial, sans-serif !important;
+  display: grid;
+  grid-template-columns: 0.8fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.errorSection,
+.essaySection {
+  background: white;
+  padding: 1rem;
+}
+
+.errorSection h3,
+.essaySection h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: hsl(240 6% 10%);
+}
+
+.errorList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.errorItem {
+  font-weight: 300;
+  background: hsl(0, 0%, 100%);
+  padding: 10px 15px;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  border: 1px solid hsl(240 5.9% 90%);
+}
+
+.titleDetails {
+  font-weight: 700;
+}
+
+.errorItem:hover {
+  background: hsl(240 5.9% 90%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.selectedError {
+  background: hsl(0, 0%, 0%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.selectedError:hover {
+  background: hsl(220 13% 20%);
+}
+
+.line {
+  display: block;      
+  width: 100%;         
+  height: 1px;         
+  background-color: #000000;  
+  margin: 16px 0;      
+}
+
+.errorDetails {
+  font-weight: 300;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: hsla(0, 0%, 96%, 0.928);
+}
+
+.errorCont {
+  margin-top: 20px;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1), 0px 1px 2px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.066);
+}
+
+.errorDetails h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: hsl(0, 0%, 0%);
+}
+
+.errorDetails p {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.errorDetails p:last-child {
+  margin-bottom: 0;
+}
+
+.essayContent {
+  background-color: #fff;
+  background-image: linear-gradient(#0000 29px, #d1d5db 30px);
+  background-size: 100% 30px;
+  background-attachment: local;
+  padding: 0px 15px;
+  font-weight: 300;
+  border-radius: .5rem;
+  line-height: 30px;
+  height: 400px;
+  margin-top: 25px;
+  overflow-y: auto;
+  font-size: .9375rem;
+  border: 1px solid #e4e4e7;
+}
+
+.essayContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.essayContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.essayContent::-webkit-scrollbar-thumb {
+  background: hsl(240 5.9% 90%);
+  border-radius: 4px;
+}
+
+.essayContent::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 5.9% 80%);
+}
+
+.navigationSteps {
+  height: 80px;
+  background: hsl(220 13% 95%);
+  padding: 15px;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.step,
+.stepNumber,
+.stepText,
+.navigationSteps::before {
+  display: none;
+}
+
+.interactButton {
+  width: 240px;
+  height: 40px;
+  background-image: url(/redator.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.interactButton:hover {
+  background-image: url(/redator-hover.png);
+  transform: scale(1.1);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Estilos para o modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.modalHeader h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #2d3748;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #718096;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.closeButton:hover {
+  background-color: #f7fafc;
+  color: #2d3748;
+}
+
+.modalBody {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalFooter {
+  padding: 16px 20px;
+  border-top: 1px solid #edf2f7;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modalCancelButton {
+  padding: 8px 16px;
+  background-color: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.modalCancelButton:hover {
+  background-color: #cbd5e0;
+}
+
+.essayGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 600px) {
+  .essayGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.essayButton {
+  display: block;
+  width: 100%;
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  text-align: left;
+}
+
+.essayButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.essayButtonContent {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+}
+
+.essayButtonIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background-color: #4299e1;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.essayButtonInfo {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.essayButtonTitle {
+  font-weight: 500;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.essayButtonGrade {
+  font-size: 0.875rem;
+  color: #718096;
+}
+
+.noEssaysMessage {
+  text-align: center;
+  color: #718096;
+  padding: 20px 0;
+}
+
+/* Estilos para quando não há dados */
+.noDataContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  min-height: 300px;
+}
+
+.noDataContainer h2 {
+  font-size: 1.5rem;
+  color: #2d3748;
+  margin-bottom: 20px;
+}
+
+.selectEssayButton {
+  background-color: #4361ee;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.selectEssayButton:hover {
+  background-color: #3a56e4;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #fff;
+}
+
+.loadingLogo {
+  margin-top: 20px;
+  margin-left: 40px;
+  width: 100px;
+  height: 160px;
+  margin-bottom: 1rem;
+  animation: zoomSpin 2s ease-in-out infinite;
+}
+
+@keyframes zoomSpin {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) rotate(360deg);
+    opacity: 0.5;
+  }
+}
+
+/* Highlight para trechos selecionados */
+.highlight {
+  background-color: #ffff00;
+  font-weight: bold;
+  padding: 0 2px;
+}
+
+/* Overlay que cobre toda a tela */
+.chatOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.842);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+/* Animação para entrada (slide in da direita) */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Animação para saída (slide out para a direita) */
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Container do chat com animação de entrada */
+.chatOverlay.exit {
+  animation: slideOut 0.5s ease-in forwards;
+}
+
+/* ChatWidget ocupa 35% da largura e 100% da altura */
+.chatWidget {
+  width: 35vw;
+  height: 100vh;
+  background-color: #c1f664;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* Cabeçalho */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerTitle {
+  background: #1a1a1a;
+  color: #fff;
+  padding: 0px 20px;
+  border-radius: 12px;
+  margin: 5px auto 20px;
+  font-size: 30px;
+  font-weight: 500;
+  font-family: 'BlauerNue', Arial, sans-serif;
+}
+
+.closeButton {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  background: none;
+  border: none;
+  color: #000;
+  font-weight: bolder;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* Container de mensagens */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px;
+}
+
+.messageTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: white; 
+}
+
+.messageText {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Esconder scrollbar */
+.messages::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+/* Cada mensagem */
+.messageContainer {
+  padding: 12px;
+}
+
+.borderCtn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.392);
+  border-radius: 12px;
+  padding: 12px;
+  height: 100%;
+}
+
+/* Cabeçalho da mensagem */
+.messageHeader {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Mensagem do usuário alinhada à direita */
+.userMessage {
+  align-self: flex-end;
+  background-color: #0070f3;
+  color: #cdcdcd;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 70%;
+  min-width: 100px;
+  text-align: right;
+}
+
+/* Mensagem do tutor alinhada à esquerda */
+.tutorMessage {
+  align-self: flex-start;
+  background-color: #1a1a1a;
+  color: #cdcdcd;
+  padding: 8px 12px;
+  border-radius: 12px;
+  max-width: 70%;
+  min-width: 100px;
+  text-align: left;
+}
+
+/* Container de opções recomendadas */
+.optionsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 60%;
+  justify-content: center;
+  margin: 15px auto;
+}
+
+.optionButton {
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.711);
+  background-color: #edf0e3;
+  font-weight: 600;
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 18px;
+  color: #1f2937e6;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* Container de entrada */
+.inputContainer {
+  margin-top: 15px;
+  display: flex;
+  gap: 8px;
+}
+
+.inputContainer textarea {
+  color: black;
+  border: 1px solid rgba(0, 0, 0, 0.711);
+  background-color: #edf0e3;
+  flex: 1;
+  min-height: 80px;
+  padding: 8px;
+  border: none;
+  border-radius: 12px;
+  resize: none;
+  font-size: 0.9rem;
+}
+
+.inputContainer button {
+  padding: 0px 8px;
+  border: none;
+  height: 40px;
+  align-self: center;
+  background-color: #000000;
+  color: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* Typing indicator */
+.typingIndicator {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.typingIndicator span {
+  height: 10px;
+  width: 10px;
+  margin: 0 2px;
+  background-color: #cdcdcd;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typingIndicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typingIndicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* =============== REGRAS DE RESPONSIVIDADE APRIMORADAS =============== */
+
+/* Tablets grandes (993px - 1200px) */
+@media screen and (max-width: 1200px) {
+  .studyPlanContainer {
+    max-width: 95%;
+    margin: 0 auto;
+  }
+  
+  .chatWidget {
+    width: 40vw;
+    padding: 16px;
+  }
+  
+  .headerTitle {
+    font-size: 26px;
+  }
+  
+  .interactButton {
+    width: 220px;
+  }
+}
+
+/* Tablets (768px - 992px) */
+@media screen and (max-width: 992px) {
+  
+  .studyPlanContainer {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .studyPlanContainer h2 {
+    font-size: 1.5rem;
+  }
+  
+  .competencyButton {
+    font-size: 12px;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .competencyButton span {
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  
+  .errorSection h3,
+  .essaySection h3 {
+    font-size: 1.125rem;
+  }
+  
+  .essayContent {
+    height: 350px;
+  }
+  
+  .chatWidget {
+    width: 50vw;
+    padding: 16px;
+  }
+  
+  .headerTitle {
+    font-size: 24px;
+    margin: 5px auto 16px;
+  }
+  
+  .messageContainer {
+    padding: 10px;
+  }
+  
+  .interactButton {
+    width: 180px;
+    height: 36px;
+  }
+  
+  .errorItem {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .errorDetails {
+    padding: 0.9rem;
+  }
+  
+  .errorDetails p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Tablets pequenos e celulares grandes (601px - 767px) */
+@media screen and (max-width: 767px) {
+  .studyPlanContainer {
+    padding: 1.25rem;
+  }
+  
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+  
+  .errorSection,
+  .essaySection {
+    padding: 0.75rem;
+  }
+  
+  .studyHeader, .headerSection {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .studyHeader h2, .headerSection h2 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+  }
+  
+  .selectAnotherButton {
+    width: 100%;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+  
+  .competencyList {
+    gap: 5px;
+    margin: 10px 0;
+  }
+  
+  .competencyButton {
+    flex: 0 0 auto;
+    font-size: 11px;
+    height: 2.2rem;
+  }
+  
+  .chatWidget {
+    width: 75vw;
+  }
+  
+  .headerTitle {
+    font-size: 22px;
+  }
+  
+  .closeButton {
+    top: 25px;
+    right: 25px;
+    font-size: 1.2rem;
+  }
+  
+  .messageText {
+    font-size: 0.85rem;
+  }
+  
+  .optionsContainer {
+    width: 90%;
+  }
+  
+  .optionButton {
+    font-size: 16px;
+  }
+  
+  .inputContainer textarea {
+    min-height: 60px;
+  }
+  
+  .interactButton {
+    width: 160px;
+    height: 33px;
+  }
+  
+  .errorDetails {
+    font-size: 0.8rem;
+  }
+  
+  .essayContent {
+    height: 300px;
+    font-size: 0.875rem;
+  }
+  
+  .modalContent {
+    width: 95%;
+  }
+  
+  .modalHeader h2 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Celulares (481px - 600px) */
+@media screen and (max-width: 600px) {
+  .studyPlanContainer {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .studyPlanContainer h2 {
+    font-size: 1.25rem;
+  }
+  
+  .studyHeader h2, .headerSection h2 {
+    font-size: 1.2rem;
+  }
+  
+  .competencyButton {
+    padding: 0.3rem 0.7rem;
+    font-size: 10px;
+  }
+  
+  .competencyButton span {
+    font-size: 9px;
+    padding: 1px 5px;
+    margin-left: 5px;
+  }
+  
+  .errorSection h3,
+  .essaySection h3 {
+    font-size: 1rem;
+  }
+  
+  .errorItem {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  
+  .errorDetails p {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  
+  .titleDetails {
+    font-size: 0.8rem;
+  }
+  
+  .chatWidget {
+    width: 85vw;
+    padding: 12px;
+  }
+  
+  .headerTitle {
+    font-size: 20px;
+    padding: 0 15px;
+  }
+  
+  .closeButton {
+    top: 20px;
+    right: 20px;
+    font-size: 1.1rem;
+  }
+  
+  .userMessage, .tutorMessage {
+    max-width: 80%;
+    padding: 7px 10px;
+  }
+  
+  .interactButton {
+    width: 140px;
+    height: 30px;
+  }
+  
+  .modalHeader {
+    padding: 12px 16px;
+  }
+  
+  .modalBody {
+    padding: 16px;
+  }
+  
+  .essayButtonContent {
+    padding: 10px;
+  }
+  
+  .essayButtonIcon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.75rem;
+    margin-right: 8px;
+  }
+  
+  .essayContent {
+    height: 250px;
+    font-size: 0.8rem;
+  }
+  .loadingLogo {
+    margin-top: -50px;
+    margin-left: -10px;
+    width: 60px;
+    height: 90px;
+  }
+}
+
+/* Celulares pequenos (até 480px) */
+@media screen and (max-width: 480px) {
+  .studyPlanContainer {
+    padding: 0.75rem;
+  }
+  
+  .competencyButton {
+    height: 2rem;
+    font-size: 9px;
+    padding: 0.3rem 0.6rem;
+  }
+  
+  .competencyButton span {
+    font-size: 8px;
+    padding: 1px 4px;
+  }
+  
+  .errorItem {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  
+  .errorCont {
+    padding: 0.75rem;
+    margin-top: 8px;
+  }
+  
+  .errorDetails {
+    padding: 0.75rem;
+  }
+  
+  .chatWidget {
+    width: 100vw;
+    padding: 10px;
+  }
+  
+  .headerTitle {
+    font-size: 18px;
+    padding: 0 12px;
+    margin: 5px auto 12px;
+  }
+  
+  .closeButton {
+    top: 15px;
+    right: 15px;
+    font-size: 1rem;
+  }
+  
+  .userMessage, .tutorMessage {
+    max-width: 90%;
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .optionButton {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  
+  .inputContainer {
+    gap: 6px;
+  }
+  
+  .inputContainer textarea {
+    min-height: 55px;
+    font-size: 0.8rem;
+  }
+  
+  .inputContainer button {
+    height: 35px;
+  }
+  
+  .interactButton {
+    width: 120px;
+    height: 28px;
+  }
+  
+  .essayContent {
+    margin-top: 8px;
+    height: 220px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  
+  .selectAnotherButton {
+    font-size: 0.75rem;
+    padding: 6px 12px;
+  }
+  
+  .modalContent {
+    width: 98%;
+  }
+  
+  .modalHeader h2 {
+    font-size: 1rem;
+  }
+  
+  .modalBody {
+    padding: 12px;
+  }
+  
+  .modalFooter {
+    padding: 12px;
+  }
+  
+  .essayButtonTitle {
+    font-size: 0.75rem;
+  }
+  
+  .essayButtonGrade {
+    font-size: 0.7rem;
+  }
+  
+  .selectEssayButton {
+    font-size: 0.85rem;
+    padding: 10px 18px;
+  }
+  
+  .noDataContainer h2 {
+    font-size: 1.2rem;
+  }
+
+  .loadingLogo {
+    margin-top: -50px;
+    margin-left: -10px;
+    width: 60px;
+    height: 90px;
+  }
+}
+
+/* Para telas muito pequenas (até 360px) */
+@media screen and (max-width: 360px) {
+  .studyPlanContainer {
+    padding: 0.5rem;
+  }
+  
+  .studyPlanContainer h2 {
+    font-size: 1.1rem;
+  }
+  
+  .studyHeader h2, .headerSection h2 {
+    font-size: 1rem;
+  }
+  
+  .competencyButton {
+    height: 1.8rem;
+    font-size: 9px;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .errorItem {
+    padding: 5px 7px;
+    font-size: 10px;
+  }
+  
+  .errorDetails p {
+    font-size: 0.7rem;
+  }
+  
+  .headerTitle {
+    font-size: 16px;
+  }
+  
+  .messageText {
+    font-size: 0.75rem;
+  }
+  
+  .essayContent {
+    height: 200px;
+    line-height: 25px;
+    background-size: 100% 25px;
+  }
+
+  .loadingLogo {
+    margin-top: -50px;
+    margin-left: -10px;
+    width: 60px;
+    height: 90px;
+  }
+  
+  .interactButton {
+    width: 100px;
+    height: 25px;
+  }
+}
+
+/* Ajustes específicos para altura */
+@media screen and (max-height: 700px) {
+  .chatWidget {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  
+  .headerTitle {
+    margin: 2px auto 10px;
+  }
+  
+  .essayContent {
+    height: 180px;
+  }
+  
+  .errorDetails {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .loadingLogo {
+    margin-top: -50px;
+    margin-left: -10px;
+    width: 60px;
+    height: 90px;
+  }
+}
+
+/* Ajustes para larguras muito grandes (telas 2K, 4K) */
+@media screen and (min-width: 1800px) {
+  .studyPlanContainer {
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  
+  .studyPlanContainer h2 {
+    font-size: 2.2rem;
+  }
+  
+  .competencyButton {
+    font-size: 16px;
+    height: 3rem;
+    padding: 0.6rem 1.2rem;
+  }
+  
+  .competencyButton span {
+    font-size: 14px;
+    padding: 3px 10px;
+  }
+  
+  .errorSection h3,
+  .essaySection h3 {
+    font-size: 1.5rem;
+  }
+  
+  .errorItem {
+    font-size: 16px;
+    padding: 12px 18px;
+  }
+  
+  .errorDetails p {
+    font-size: 1rem;
+  }
+  
+  .essayContent {
+    height: 500px;
+    font-size: 1.1rem;
+    line-height: 35px;
+    background-size: 100% 35px;
+  }
+  
+  .chatWidget {
+    width: 30vw;
+    padding: 30px;
+  }
+  
+  .headerTitle {
+    font-size: 36px;
+  }
+  
+  .messageText {
+    font-size: 1.1rem;
+  }
+  
+  .interactButton {
+    width: 280px;
+    height: 50px;
+  }
+
+  
+}

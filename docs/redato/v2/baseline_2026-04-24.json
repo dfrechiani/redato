@@ -1,0 +1,346 @@
+{
+  "timestamp": "2026-04-24T10:00:53.153798",
+  "results": [
+    {
+      "id": "c1_and_c5_both_weak",
+      "passed": false,
+      "notas": {
+        "c1": 80,
+        "c2": 160,
+        "c3": 160,
+        "c4": 160,
+        "c5": 120,
+        "total": 680
+      },
+      "gabarito": {
+        "c1": 40,
+        "c2": 200,
+        "c3": 200,
+        "c4": 160,
+        "c5": 120,
+        "total": 720
+      },
+      "drift": {
+        "c1": 40,
+        "c2": -40,
+        "c3": -40,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [
+        "structural:c1_nota_exact: c1.nota=80 (esperado == 40)",
+        "structural:c2_nota_min: c2.nota=160 (esperado >= 180)",
+        "structural:c3_nota_min: c3.nota=160 (esperado >= 180)"
+      ],
+      "elapsed_s": 72.45,
+      "error": null
+    },
+    {
+      "id": "c1_frequent_diverse_errors",
+      "passed": true,
+      "notas": {
+        "c1": 40,
+        "c2": 160,
+        "c3": 160,
+        "c4": 160,
+        "c5": 200,
+        "total": 720
+      },
+      "gabarito": {
+        "c1": 40,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 840
+      },
+      "drift": {
+        "c1": 0,
+        "c2": -40,
+        "c3": -40,
+        "c4": -40,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 69.83,
+      "error": null
+    },
+    {
+      "id": "c2_false_repertoire",
+      "passed": false,
+      "notas": {},
+      "gabarito": {
+        "c1": 200,
+        "c2": 120,
+        "c3": 160,
+        "c4": 200,
+        "c5": 200,
+        "total": 880
+      },
+      "drift": {},
+      "structural_fails": [],
+      "elapsed_s": 62.09,
+      "error": "AttributeError: 'str' object has no attribute 'get'"
+    },
+    {
+      "id": "c2_heavy_copy",
+      "passed": false,
+      "notas": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0,
+        "total": 0
+      },
+      "gabarito": {
+        "c1": 120,
+        "c2": 80,
+        "c3": 80,
+        "c4": 120,
+        "c5": 40,
+        "total": 440
+      },
+      "drift": {
+        "c1": -120,
+        "c2": -80,
+        "c3": -80,
+        "c4": -120,
+        "c5": -40
+      },
+      "structural_fails": [
+        "numeric:c1: got 0, expected 120 (drift -120)",
+        "numeric:c2: got 0, expected 80 (drift -80)",
+        "numeric:c3: got 0, expected 80 (drift -80)",
+        "numeric:c4: got 0, expected 120 (drift -120)",
+        "structural:c2_copia_motivadores_sem_aspas: copia_motivadores_sem_aspas=True (esperado False)"
+      ],
+      "elapsed_s": 63.71,
+      "error": null
+    },
+    {
+      "id": "c2_tangenciamento",
+      "passed": false,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 40,
+        "c3": 160,
+        "c4": 200,
+        "c5": 200,
+        "total": 800
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 160,
+        "c3": 40,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [
+        "numeric:c2: got 200, expected 40 (drift +160)",
+        "structural:c2_tangenciamento_detected: tangenciamento_detected=False (esperado True)",
+        "structural:c2_nota_max: c2.nota=200 (esperado <= 80)"
+      ],
+      "elapsed_s": 58.59,
+      "error": null
+    },
+    {
+      "id": "c3_no_project",
+      "passed": false,
+      "notas": {
+        "c1": 120,
+        "c2": 120,
+        "c3": 120,
+        "c4": 120,
+        "c5": 200,
+        "total": 680
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 160,
+        "c3": 80,
+        "c4": 160,
+        "c5": 200,
+        "total": 800
+      },
+      "drift": {
+        "c1": -80,
+        "c2": -40,
+        "c3": 40,
+        "c4": -40,
+        "c5": 0
+      },
+      "structural_fails": [
+        "numeric:c1: got 120, expected 200 (drift -80)",
+        "structural:c3_has_explicit_thesis: has_explicit_thesis=True (esperado False)",
+        "structural:c3_argumentos_contraditorios: argumentos_contraditorios=False (esperado True)"
+      ],
+      "elapsed_s": 80.62,
+      "error": null
+    },
+    {
+      "id": "c3_weak_project_strong_repertoire",
+      "passed": false,
+      "notas": {
+        "c1": 160,
+        "c2": 120,
+        "c3": 80,
+        "c4": 120,
+        "c5": 200,
+        "total": 680
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 80,
+        "c4": 160,
+        "c5": 200,
+        "total": 840
+      },
+      "drift": {
+        "c1": -40,
+        "c2": -80,
+        "c3": 0,
+        "c4": -40,
+        "c5": 0
+      },
+      "structural_fails": [
+        "numeric:c2: got 120, expected 200 (drift -80)",
+        "structural:c2_nota_exact: c2.nota=120 (esperado == 200)"
+      ],
+      "elapsed_s": 70.16,
+      "error": null
+    },
+    {
+      "id": "c4_mechanical_cohesion",
+      "passed": true,
+      "notas": {
+        "c1": 160,
+        "c2": 160,
+        "c3": 160,
+        "c4": 120,
+        "c5": 200,
+        "total": 800
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 120,
+        "c5": 200,
+        "total": 920
+      },
+      "drift": {
+        "c1": -40,
+        "c2": -40,
+        "c3": -40,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 85.38,
+      "error": null
+    },
+    {
+      "id": "c5_three_elements",
+      "passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 160,
+        "c4": 200,
+        "c5": 120,
+        "total": 880
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 120,
+        "total": 920
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": -40,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 68.66,
+      "error": null
+    },
+    {
+      "id": "c5_two_elements_only",
+      "passed": false,
+      "notas": {
+        "c1": 160,
+        "c2": 160,
+        "c3": 160,
+        "c4": 160,
+        "c5": 120,
+        "total": 760
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 180,
+        "c5": 80,
+        "total": 860
+      },
+      "drift": {
+        "c1": -40,
+        "c2": -40,
+        "c3": -40,
+        "c4": -20,
+        "c5": 40
+      },
+      "structural_fails": [
+        "structural:c5_elements_count_exact: elements_count=3 (esperado == 2)",
+        "structural:c5_nota_exact: c5.nota=120 (esperado == 80)"
+      ],
+      "elapsed_s": 73.01,
+      "error": null
+    },
+    {
+      "id": "control_nota_1000",
+      "passed": true,
+      "notas": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "gabarito": {
+        "c1": 200,
+        "c2": 200,
+        "c3": 200,
+        "c4": 200,
+        "c5": 200,
+        "total": 1000
+      },
+      "drift": {
+        "c1": 0,
+        "c2": 0,
+        "c3": 0,
+        "c4": 0,
+        "c5": 0
+      },
+      "structural_fails": [],
+      "elapsed_s": 69.06,
+      "error": null
+    }
+  ]
+}

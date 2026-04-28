@@ -1,0 +1,102 @@
+{
+  "config": {
+    "model": "claude-opus-4-7",
+    "prompt_version": "ptbr",
+    "use_tool": false,
+    "max_width": 1800,
+    "jpeg_quality": 92,
+    "mode": "claude_solo_no_cloud_vision"
+  },
+  "results": [
+    {
+      "image": "Aluna Júlia -1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 1004.6,
+      "elapsed_s": 17.6,
+      "strict_would_fail": false,
+      "uncertain_count": 0,
+      "illegible_count": 0,
+      "total_words": 0,
+      "uncertain_pct": 0.0,
+      "theme": "",
+      "transcription": ""
+    },
+    {
+      "image": "Arthur José 26_02.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        960,
+        1280
+      ],
+      "size_kb": 272.7,
+      "elapsed_s": 21.1,
+      "strict_would_fail": true,
+      "uncertain_count": 0,
+      "illegible_count": 0,
+      "total_words": 0,
+      "uncertain_pct": 0.0,
+      "theme": "",
+      "transcription": ""
+    },
+    {
+      "image": "Carlos 02_08-1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 777.5,
+      "elapsed_s": 20.0,
+      "strict_would_fail": false,
+      "uncertain_count": 0,
+      "illegible_count": 0,
+      "total_words": 0,
+      "uncertain_pct": 0.0,
+      "theme": "",
+      "transcription": ""
+    },
+    {
+      "image": "Carlos 05_12-1.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 803.5,
+      "elapsed_s": 22.4,
+      "strict_would_fail": false,
+      "uncertain_count": 0,
+      "illegible_count": 0,
+      "total_words": 0,
+      "uncertain_pct": 0.0,
+      "theme": "",
+      "transcription": ""
+    },
+    {
+      "image": "Carlos 05_12-2.jpg",
+      "model": "claude-opus-4-7",
+      "ok": true,
+      "dims": [
+        1653,
+        2339
+      ],
+      "size_kb": 857.5,
+      "elapsed_s": 21.5,
+      "strict_would_fail": false,
+      "uncertain_count": 0,
+      "illegible_count": 0,
+      "total_words": 0,
+      "uncertain_pct": 0.0,
+      "theme": "",
+      "transcription": ""
+    }
+  ]
+}

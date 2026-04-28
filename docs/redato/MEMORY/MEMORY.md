@@ -1,0 +1,1 @@
+- [Redato project state](project_redato.md) — ENEM grader: INEP 9/11 ensemble, cache+HITL infra prontos, frente atual co-correção com cursinhos parceiros.

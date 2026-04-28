@@ -1,0 +1,559 @@
+.container {
+  display: flex;
+  background-color: #f8f9fb;
+  gap: 24px;
+  padding-right: 5%;
+  min-height: 95vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  min-width: 220px;
+  width: 250px;
+  background: white;
+  border-radius: 16px;
+  border: 2.5px solid rgba(0, 0, 0, 0.155);
+  padding: 24px 16px;
+}
+
+.sidebarContent {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.logoContainer {
+  padding: 8px;
+}
+
+.logo {
+  width: 20px;
+  height: 20px;
+  background: #9fe870;
+  border-radius: 8px;
+}
+
+.mainNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  color: #64748b;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.navItem:hover {
+  background: #f1f5f9;
+}
+
+.navItem.active {
+  background: #eff6ff;
+  color: #2e7bf3;
+}
+
+.navIcon {
+  opacity: 0.7;
+}
+
+.userSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+}
+
+.userDetails {
+  flex: 1;
+}
+
+.userName {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.userRole {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.chevron {
+  color: #6b7280;
+}
+
+/* Main Content Styles */
+.mainContent {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 320px;
+  max-width: 420px;
+}
+
+.gradeCard {
+  background: rgb(188, 237, 72);
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  padding: 15px;
+  min-height: 160px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.gradeLabel {
+  font-weight: 600;
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 18px;
+  color: #1f2937e6;
+}
+
+.gradeValue {
+  align-self: center;
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 100px;
+  font-weight: 600;
+  color: #1c5349;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+}
+
+.competencyDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
+}
+
+
+.gradeMax {
+  font-size: 30px;
+  font-weight: normal;
+  color: rgba(31, 41, 55, 0.207);
+}
+
+.chartCard,
+.competenciesCard {
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  background: white;
+  border-radius: 16px;
+  padding: 15px;
+  padding-bottom: 0px;
+}
+
+.competenciesCard {
+  padding-bottom: 15px;
+}
+
+.chartContainer {
+  height: 165px;
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.competenciesContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.competenciesList {
+  margin-top: 5px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.competencyItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  border-radius: 6px;
+  cursor: pointer; /* Mostra que é clicável */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  border-radius: 6px;
+}
+
+
+.competencyItem:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Leve destaque ao passar o mouse */
+  transform: scale(1.02); /* Efeito de leve aumento */
+}
+
+.competencyItem.active {
+  background-color: rgba(0, 0, 0, 0.1); /* Mantém o item ativo destacado */
+  font-weight: bold;
+}
+
+
+.competencyInfo {
+  display: flex;
+  align-items: center;
+}
+
+.competencyName {
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 14px;
+  color: #1f2937e6;
+}
+
+.competencyScores {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 16px;
+}
+
+.scoreValue {
+  font-size: 20px;
+  color: #1c5349;
+}
+
+/* Right Panel Styles */
+.rightPanel {
+  flex: 1.5;
+  min-width: 320px;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.essaysCard {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  border-radius: 16px;
+  padding: 15px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.essayInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.essayDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.essayTitle {
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 15px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.essayDate {
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.essayId {
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 19px;
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-weight: 600;
+}
+
+.essayScore {
+  display: flex;
+  font-size: 25px;
+  align-items: center;
+  gap: 12px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.downloadButton {
+  padding: 10px;
+  border: none;
+  margin: 0 auto;
+  background: none;
+  color: #6b7280;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.downloadButton:hover {
+  background: #e5e7eb;
+}
+
+.showMoreButton {
+  width: 100%;
+  border: none;
+  background: none;
+  color: #414650;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.studyPlanCard {
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  color: #1f2937e6;
+  border: 1px solid rgba(0, 0, 0, 0.259);
+  background: #d2ebff;
+  border-radius: 16px;
+  padding: 15px;
+  padding-bottom: 30px;
+}
+
+.studyPlanList {
+  margin: 24px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.studyPlanItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  font-size: 16px;
+  color: #6c84a6aa;
+  font-weight: 600;
+  position: relative;
+}
+
+.studyPlanItem:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 12px;
+  bottom: -20px;
+  width: 2px;
+  background: #9fe870;
+}
+
+.studyPlanDot {
+  width: 8px;
+  height: 8px;
+  background: #9fe870;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.containerButton {
+ width: 100%;
+ max-height: 55px;
+ display: flex;
+ justify-content: center;
+ align-items: center
+}
+
+.exerciseButton {
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 30px;
+  margin-top: 5px;
+  color: #1f2937d4;
+  border: 2px solid rgba(0, 0, 0, 0.248);
+  padding: 2px 30px;
+  background: #c5fd5e;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.exerciseButton:hover {
+  opacity: 1;
+  color: #1f2937;
+  background: #a6ff00;
+}
+
+.submitEssayButton {
+  font-family: 'BlauerNue', Arial, sans-serif; 
+  font-size: 30px;
+  width: 100%;
+  padding: 16px;
+  background: #2e7bf3;
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.submitEssayButton:hover {
+  opacity: 0.8;
+}
+.dashboardContent {
+  color: black!important;
+}
+
+.essaysList {
+  max-height: 500px; /* Altura máxima padrão */
+  overflow-y: auto; /* Adiciona scroll vertical se necessário */
+  transition: max-height 0.3s ease-in-out;
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.showMoreButton:hover {
+  opacity: 0.7;
+}
+
+.essayItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 15px;
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.essayItem::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 95%; 
+  border-bottom: 1px solid #D1D5DB;
+}
+
+.essayItem:last-child::after {
+  display: none;
+}
+
+.chartContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #fff;
+}
+
+.loadingLogo {
+  margin-top: 20px;
+  margin-left: 40px;
+  width: 100px;
+  height: 160px;
+  margin-bottom: 1rem;
+  animation: zoomSpin 2s ease-in-out infinite;
+}
+
+@keyframes zoomSpin {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) rotate(360deg);
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 800px) {
+  .container {
+    flex-direction: column;
+    padding-right: 0%;
+  }
+  .mainContent {
+    width: 100%;
+    max-width: none;
+  }
+
+  .rightPanel {
+    flex-direction: column-reverse;
+    max-width: none;
+  }
+
+  .loadingLogo {
+    margin-top: -50px;
+    margin-left: -10px;
+    width: 60px;
+    height: 90px;
+  }
+
+  .gradeCard {
+    margin-top: 5px;
+    min-height: 120px;
+  }
+
+  .gradeValue {
+    font-size: 75px;
+  }
+
+  .chartContainer {
+    height: 150px;
+  }
+
+  .submitEssayButton {
+    font-size: 20px;  
+  }
+  
+}
+
+.noDataContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+  padding: 20px;
+  text-align: center;
+}
+
+.noDataMessage {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}

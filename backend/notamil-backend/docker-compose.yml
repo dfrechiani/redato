@@ -1,0 +1,33 @@
+# Postgres local pra dev/teste do portal (M1+).
+# Não substitui Postgres de produção (Railway, M8).
+#
+# Subir:    docker compose up -d
+# Parar:    docker compose down
+# Reset:    docker compose down -v       (apaga volume também)
+#
+# Uso:
+#   DATABASE_URL=postgresql://redato:redato@localhost:5433/redato_portal_dev
+#   alembic upgrade head
+#
+# Porta 5433 (não 5432) pra coexistir com Postgres local via Homebrew.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: redato-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: redato
+      POSTGRES_PASSWORD: redato
+      POSTGRES_DB: redato_portal_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - redato_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redato -d redato_portal_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redato_pg_data:

@@ -1,0 +1,3 @@
+escola_id,escola_nome,escola_estado,escola_municipio,coordenador_email,coordenador_nome,professor_email,professor_nome,turma_codigo,turma_serie
+DEMO-CE-001,Colégio Demo Redato,CE,Fortaleza,coord@demo.redato,Carla Coordenadora Demo,prof@demo.redato,Maria Professora Demo,1A,1S
+DEMO-CE-001,Colégio Demo Redato,CE,Fortaleza,coord@demo.redato,Carla Coordenadora Demo,prof@demo.redato,Maria Professora Demo,1B,1S
