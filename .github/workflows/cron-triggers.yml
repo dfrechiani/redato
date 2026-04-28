@@ -1,0 +1,16 @@
+name: Daily triggers
+on:
+  schedule:
+    - cron: '0 9 * * *'  # 9h UTC = 6h Brasília
+  workflow_dispatch:  # permite trigger manual também
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /admin/triggers/run
+        run: |
+          curl -fsS -X POST https://backend-production-3bd7.up.railway.app/admin/triggers/run \
+            -H "X-Admin-Token: ${{ secrets.ADMIN_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -w "\nHTTP %{http_code}\n"
