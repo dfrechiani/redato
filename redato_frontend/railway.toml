@@ -1,14 +1,19 @@
 # Railway config — frontend Next.js.
 #
-# `next start` por padrão escuta em 0.0.0.0:3000. Override via $PORT
-# no comando.
+# `next start` por padrão escuta em 0.0.0.0:3000. Override via $PORT.
+#
+# ⚠️ `startCommand` é executado pelo Railway runtime SEM wrapping de
+# shell — `$PORT` chegaria literal e Next.js erraria com
+# "Invalid value for --port". Usamos `sh -c '...'` pra forçar shell
+# e expandir a var. Mesmo padrão do backend.
+# Se Railway não injetar PORT (improvável), cai no default 3000.
 
 [build]
 builder = "NIXPACKS"
 nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
-startCommand = "npm run start -- --port $PORT --hostname 0.0.0.0"
+startCommand = "sh -c 'npm run start -- --port ${PORT:-3000} --hostname 0.0.0.0'"
 # Frontend não tem endpoint dedicado de health; / responde 200 no
 # /login (após middleware redirecionar). Railway aceita.
 healthcheckPath = "/login"
