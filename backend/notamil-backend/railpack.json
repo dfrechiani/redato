@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.railpack.com/latest/railpack.json",
+  "_comment": "Railpack v0 (sucessor do Nixpacks). Railway prefere esse formato em deploys novos. Se Railway resolver Railpack, ignora nixpacks.toml. Se ainda usa Nixpacks, ele é fallback.",
+  "provider": "python",
+  "buildCommand": "python -m pip install --upgrade pip && python -m pip install -r requirements.txt",
+  "startCommand": "uvicorn redato_backend.unified_app:app --host 0.0.0.0 --port $PORT",
+  "packages": {
+    "python": "3.12"
+  },
+  "aptPackages": [
+    "postgresql-client"
+  ]
+}

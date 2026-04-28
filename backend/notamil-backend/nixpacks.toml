@@ -10,12 +10,28 @@
 # Deploys de schema (`alembic upgrade head` + `seed_missoes`) rodam
 # MANUALMENTE via Railway shell — não no boot, pra evitar lock em
 # deploys concorrentes. Ver DEPLOY_RAILWAY.md.
+#
+# ⚠️ Sobre `pip`:
+#   No Nixpacks, `python312` instala apenas o interpretador Python.
+#   `pip` vem como pacote Nix separado: `python312Packages.pip`.
+#   Sem isso, `pip install -r requirements.txt` quebra com
+#   "command not found" (exit 127). Comando usa `python -m pip`
+#   por extra-safety — funciona mesmo se `pip` não está no PATH,
+#   desde que o módulo `pip` esteja instalado.
 
 [phases.setup]
-nixPkgs = ["python312", "postgresql_16"]
+nixPkgs = [
+    "python312",
+    "python312Packages.pip",
+    "python312Packages.virtualenv",
+    "postgresql_16",
+]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = [
+    "python -m pip install --upgrade pip",
+    "python -m pip install -r requirements.txt",
+]
 
 [phases.build]
 cmds = []
