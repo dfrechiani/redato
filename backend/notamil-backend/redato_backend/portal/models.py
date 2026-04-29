@@ -27,8 +27,12 @@ from sqlalchemy import (
     Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer,
     String, Text, UniqueConstraint, func,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import (
+    ARRAY as PG_ARRAY,
+    JSONB as PG_JSONB,
+    UUID as PG_UUID,
+)
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from redato_backend.portal.db import Base
 
@@ -643,3 +647,302 @@ class PdfGerado(Base):
         Index("ix_pdf_escopo_tipo_gerado",
               "escopo_id", "tipo", "gerado_em"),
     )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Jogo "Redação em Jogo" (Fase 2 — schema 2026-04-29)
+# ──────────────────────────────────────────────────────────────────────
+#
+# 5 tabelas pra suportar o jogo de cartas que o livro 2S usa:
+#   1. JogoMinideck         — catálogo dos 7 temas
+#   2. CartaEstrutural      — 63 frases-base com lacunas (compartilhadas)
+#   3. CartaLacuna          — cartas temáticas (P/R/K/A/AC/ME/F)
+#   4. PartidaJogo          — instância de jogo por grupo (1:N atividade)
+#   5. ReescritaIndividual  — texto autoral do aluno sobre o texto do grupo
+#
+# Migration: h0a1b2c3d4e5_jogo_redacao_em_jogo.py
+# Spec: docs/redato/v3/proposta_integracao_jogo_redato.md (seção C.1)
+# Decisões: adendo_g_decisoes_jogo_redato.md (29/04/2026)
+# ──────────────────────────────────────────────────────────────────────
+
+
+# Whitelists pros validators Python (mantém em sincronia com CHECK
+# constraints da migration h0a1b2c3d4e5).
+SECOES_ESTRUTURAIS = (
+    "ABERTURA", "TESE",
+    "TOPICO_DEV1", "ARGUMENTO_DEV1", "REPERTORIO_DEV1",
+    "TOPICO_DEV2", "ARGUMENTO_DEV2", "REPERTORIO_DEV2",
+    "RETOMADA", "PROPOSTA",
+)
+CORES_ESTRUTURAIS = ("AZUL", "AMARELO", "VERDE", "LARANJA")
+TIPOS_LACUNA = (
+    "PROBLEMA", "REPERTORIO", "PALAVRA_CHAVE",
+    "AGENTE", "ACAO", "MEIO", "FIM",
+)
+
+# Mapping seção → cor (autoritativa). Usada pelo seed pra derivar `cor`
+# a partir da `secao` lida do xlsx (xlsx não tem coluna cor explícita).
+COR_POR_SECAO = {
+    "ABERTURA": "AZUL", "TESE": "AZUL",
+    "TOPICO_DEV1": "AMARELO", "ARGUMENTO_DEV1": "AMARELO",
+    "REPERTORIO_DEV1": "AMARELO",
+    "TOPICO_DEV2": "VERDE", "ARGUMENTO_DEV2": "VERDE",
+    "REPERTORIO_DEV2": "VERDE",
+    "RETOMADA": "LARANJA", "PROPOSTA": "LARANJA",
+}
+
+
+class JogoMinideck(Base):
+    """Catálogo de minidecks temáticos (Saúde Mental, Inclusão Digital,
+    etc.). Cada minideck tem seu próprio set de `cartas_lacuna` mas
+    todos compartilham as 63 `cartas_estruturais`.
+
+    `tema` é a chave canônica (slug snake_case): "saude_mental",
+    "inclusao_digital", etc. Usada como path-param em endpoints e
+    como índice no UI."""
+    __tablename__ = "jogos_minideck"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    tema: Mapped[str] = mapped_column(
+        Text, nullable=False, unique=True, index=True,
+    )
+    nome_humano: Mapped[str] = mapped_column(Text, nullable=False)
+    serie: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    descricao: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, onupdate=_utc_now,
+        nullable=False,
+    )
+
+    cartas_lacuna: Mapped[List["CartaLacuna"]] = relationship(
+        back_populates="minideck", cascade="all", lazy="selectin",
+    )
+    partidas: Mapped[List["PartidaJogo"]] = relationship(
+        back_populates="minideck",
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<JogoMinideck tema={self.tema!r} ativo={self.ativo}>"
+
+
+class CartaEstrutural(Base):
+    """Carta estrutural E01-E63: frase com placeholders [PROBLEMA],
+    [REPERTORIO], [PALAVRA_CHAVE], [AGENTE], [ACAO_MEIO]. Compartilhada
+    entre TODOS os minidecks — não tem FK pra `jogos_minideck`."""
+    __tablename__ = "cartas_estruturais"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    codigo: Mapped[str] = mapped_column(
+        Text, nullable=False, unique=True, index=True,
+    )
+    secao: Mapped[str] = mapped_column(Text, nullable=False)
+    cor: Mapped[str] = mapped_column(Text, nullable=False)
+    texto: Mapped[str] = mapped_column(Text, nullable=False)
+    # ARRAY Postgres-only. Lista dos placeholders presentes em `texto`,
+    # ordenados como aparecem na frase. Materializada no seed pra
+    # render de UI não precisar reparsing a cada request.
+    lacunas: Mapped[List[str]] = mapped_column(
+        PG_ARRAY(Text), nullable=False, default=list,
+    )
+    ordem: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "secao IN ('ABERTURA','TESE','TOPICO_DEV1','ARGUMENTO_DEV1',"
+            "'REPERTORIO_DEV1','TOPICO_DEV2','ARGUMENTO_DEV2',"
+            "'REPERTORIO_DEV2','RETOMADA','PROPOSTA')",
+            name="ck_cartas_estruturais_secao",
+        ),
+        CheckConstraint(
+            "cor IN ('AZUL','AMARELO','VERDE','LARANJA')",
+            name="ck_cartas_estruturais_cor",
+        ),
+        Index("ix_cartas_estruturais_secao_ordem", "secao", "ordem"),
+    )
+
+    @validates("secao")
+    def _v_secao(self, _key: str, value: str) -> str:
+        # Defesa-em-camada: barra ANTES do INSERT chegar no Postgres.
+        # Mensagem mais útil que o Postgres ("ck_cartas_estruturais_secao
+        # violation"). Se vier valor inválido geralmente é typo do seed.
+        if value not in SECOES_ESTRUTURAIS:
+            raise ValueError(
+                f"secao={value!r} inválida. Esperado um de "
+                f"{SECOES_ESTRUTURAIS!r}.",
+            )
+        return value
+
+    @validates("cor")
+    def _v_cor(self, _key: str, value: str) -> str:
+        if value not in CORES_ESTRUTURAIS:
+            raise ValueError(
+                f"cor={value!r} inválida. Esperado um de "
+                f"{CORES_ESTRUTURAIS!r}.",
+            )
+        return value
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<CartaEstrutural {self.codigo} secao={self.secao}>"
+
+
+class CartaLacuna(Base):
+    """Carta temática (P/R/K/A/AC/ME/F) que substitui um placeholder
+    de uma estrutural. Pertence a um minideck — `gravidade` é uma
+    cláusula UNIQUE (minideck_id, codigo) pra `P01` poder existir
+    em vários temas com conteúdos distintos."""
+    __tablename__ = "cartas_lacuna"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    minideck_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("jogos_minideck.id"),
+        nullable=False, index=True,
+    )
+    tipo: Mapped[str] = mapped_column(Text, nullable=False)
+    codigo: Mapped[str] = mapped_column(Text, nullable=False)
+    conteudo: Mapped[str] = mapped_column(Text, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+
+    minideck: Mapped[JogoMinideck] = relationship(
+        back_populates="cartas_lacuna",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "minideck_id", "codigo",
+            name="uq_cartas_lacuna_minideck_codigo",
+        ),
+        CheckConstraint(
+            "tipo IN ('PROBLEMA','REPERTORIO','PALAVRA_CHAVE','AGENTE',"
+            "'ACAO','MEIO','FIM')",
+            name="ck_cartas_lacuna_tipo",
+        ),
+        Index("ix_cartas_lacuna_minideck_tipo",
+              "minideck_id", "tipo"),
+    )
+
+    @validates("tipo")
+    def _v_tipo(self, _key: str, value: str) -> str:
+        if value not in TIPOS_LACUNA:
+            raise ValueError(
+                f"tipo={value!r} inválido. Esperado um de "
+                f"{TIPOS_LACUNA!r}.",
+            )
+        return value
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<CartaLacuna {self.codigo} tipo={self.tipo}>"
+
+
+class PartidaJogo(Base):
+    """Instância de jogo dentro de uma atividade. Decisão G.1.2:
+    1:N com `atividades` — uma atividade pode ter múltiplas partidas
+    (cada grupo da turma joga separado). Natural key:
+    (atividade_id, grupo_codigo).
+
+    `cartas_escolhidas` é JSONB com a lista de codigos selecionados:
+        ["E01", "E10", "E17", ..., "P03", "R05", "K22", ...]
+    Não é FK pra preservar histórico — se carta for removida do
+    catálogo, partida velha continua íntegra com o snapshot."""
+    __tablename__ = "partidas_jogo"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    atividade_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("atividades.id"),
+        nullable=False, index=True,
+    )
+    minideck_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("jogos_minideck.id"),
+        nullable=False, index=True,
+    )
+    grupo_codigo: Mapped[str] = mapped_column(Text, nullable=False)
+    cartas_escolhidas: Mapped[list] = mapped_column(
+        PG_JSONB, nullable=False, default=list,
+    )
+    texto_montado: Mapped[str] = mapped_column(Text, nullable=False)
+    prazo_reescrita: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False,
+    )
+    criada_por_professor_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("professores.id"),
+        nullable=False,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+
+    minideck: Mapped[JogoMinideck] = relationship(
+        back_populates="partidas",
+    )
+    reescritas: Mapped[List["ReescritaIndividual"]] = relationship(
+        back_populates="partida", cascade="all", lazy="selectin",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "atividade_id", "grupo_codigo",
+            name="uq_partidas_jogo_atividade_grupo",
+        ),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<PartidaJogo grupo={self.grupo_codigo!r} "
+            f"atividade_id={self.atividade_id}>"
+        )
+
+
+class ReescritaIndividual(Base):
+    """Texto autoral do aluno sobre a redação cooperativa. UNIQUE
+    (partida_id, aluno_turma_id) — 1 reescrita por aluno por partida.
+
+    `redato_output` é JSONB com o output do modo `jogo_redacao` da
+    pipeline Redato (nota + análise + transformação_cartas). Nullable
+    pra comportar reescritas que ainda estão sendo corrigidas."""
+    __tablename__ = "reescritas_individuais"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    partida_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("partidas_jogo.id"),
+        nullable=False, index=True,
+    )
+    aluno_turma_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("alunos_turma.id"),
+        nullable=False, index=True,
+    )
+    texto: Mapped[str] = mapped_column(Text, nullable=False)
+    redato_output: Mapped[Optional[dict]] = mapped_column(
+        PG_JSONB, nullable=True,
+    )
+    elapsed_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+
+    partida: Mapped[PartidaJogo] = relationship(back_populates="reescritas")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "partida_id", "aluno_turma_id",
+            name="uq_reescritas_partida_aluno",
+        ),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<ReescritaIndividual aluno={self.aluno_turma_id} "
+            f"partida={self.partida_id}>"
+        )

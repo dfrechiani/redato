@@ -345,6 +345,60 @@ zero-touch), prefere lock externo (Redis SETNX, ou primeiro-a-bootar
 mete `current_setting('cluster.is_master')`). Mas pra MVP single-tenant,
 manual via shell é suficiente.
 
+### Seed das 63 cartas estruturais (jogo "Redação em Jogo", Fase 2)
+
+A migration `h0a1b2c3d4e5_jogo_redacao_em_jogo.py` cria as 5 tabelas
+do jogo (`jogos_minideck`, `cartas_estruturais`, `cartas_lacuna`,
+`partidas_jogo`, `reescritas_individuais`) mas **deixa
+`cartas_estruturais` vazia**. Popular o catálogo é um passo separado:
+
+```bash
+# Pré-condição: alembic upgrade head já passou e h0a1b2c3d4e5 está
+# em current. Confirmar:
+alembic -c redato_backend/portal/alembic.ini current
+# → expected: h0a1b2c3d4e5 (head)
+
+# 1. Dry-run primeiro — script lê
+#    backend/notamil-backend/data/seeds/cartas_redacao_em_jogo.xlsx
+#    (commitado no repo) e relata o que seria feito.
+cd /app   # ou repo root, depende do shell
+python scripts/seed_cartas_estruturais.py
+# Saída esperada: 63 cartas distribuídas em 10 seções,
+#                 "DRY-RUN — would insert=63 update=0".
+
+# 2. Apply
+python scripts/seed_cartas_estruturais.py --apply
+
+# 3. Verificação no Postgres:
+psql "$DATABASE_URL" -c "SELECT count(*) FROM cartas_estruturais;"
+# expected: 63
+
+psql "$DATABASE_URL" -c "
+  SELECT secao, count(*) FROM cartas_estruturais
+  GROUP BY secao ORDER BY secao;
+"
+# expected:
+#   ABERTURA          | 9
+#   ARGUMENTO_DEV1    | 7
+#   ARGUMENTO_DEV2    | 5
+#   PROPOSTA          | 11
+#   REPERTORIO_DEV1   | 5
+#   REPERTORIO_DEV2   | 4
+#   RETOMADA          | 4
+#   TESE              | 7
+#   TOPICO_DEV1       | 4
+#   TOPICO_DEV2       | 7
+```
+
+O script é **idempotente**: re-rodar `--apply` é seguro. Match por
+`codigo` (E01-E66 — 63 com gaps). Se o texto da carta mudar no xlsx
+(Daniel reescreveu uma frase), `--apply` atualiza. Se nada mudou, é
+no-op (`updated=0`).
+
+Os minidecks temáticos (`cartas_lacuna`) ficam em script separado
+(`scripts/seed_minideck.py`, Fase 5). Por enquanto, só
+`cartas_estruturais` é populada.
+
 ## Rollback
 
 Railway mantém histórico de deploys. Pra reverter:
