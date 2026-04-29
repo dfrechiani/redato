@@ -690,6 +690,220 @@ COMPLETO_PARCIAL_TOOL: Dict[str, Any] = {
 }
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Modo Jogo Redação (RJ2·OF13·MF) — Fase 2 passo 5, 2026-04-29
+# ──────────────────────────────────────────────────────────────────────
+# Spec: docs/redato/v3/proposta_integracao_jogo_redato.md (seção C.5) +
+# adendo G (decisões G.1.6, G.1.7).
+#
+# Aluno do 2S faz REESCRITA INDIVIDUAL a partir de uma redação
+# cooperativa montada com cartas. O tool avalia a versão autoral (não a
+# montada) com 5 competências ENEM completas (escala 0/40/80/120/160/200,
+# total 0-1000) MAIS 2 saídas específicas do jogo:
+#
+# - `transformacao_cartas` (0-100, decisão G.1.6): score independente.
+#   Mede quanto a reescrita superou o esqueleto cooperativo. NÃO compõe
+#   a nota total ENEM. Aparece no dashboard como métrica complementar.
+#
+# - `sugestoes_cartas_alternativas` (0-2 itens, decisão G.1.7): pra
+#   cartas escolhidas que ficaram fracas no contexto do tema, sugerir
+#   UMA outra carta do mesmo minideck + motivo pedagógico curto.
+#
+# Flags barram regressões clássicas do jogo: cópia literal das cartas,
+# cartas mal articuladas, fuga do tema, tipo textual inadequado, e
+# desrespeito a DH (cap C1=0 padrão ENEM).
+
+JOGO_REDACAO_TOOL: Dict[str, Any] = {
+    "name": "submit_jogo_redacao",
+    "description": (
+        "Avaliação Modo Jogo Redação (RJ2·OF13·MF, 2S). Aluno fez "
+        "reescrita individual de uma redação cooperativa montada com "
+        "cartas (estruturais E## + temáticas P/R/K/A/AC/ME/F do "
+        "minideck). Avalie A REESCRITA AUTORAL (não a montada) com 5 "
+        "competências ENEM completas. Adicionalmente, produza score "
+        "independente `transformacao_cartas` (0-100) medindo quanto "
+        "a reescrita superou o esqueleto, e até 2 sugestões de cartas "
+        "alternativas pra cartas que ficaram fracas no contexto."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "modo": {"type": "string", "enum": ["jogo_redacao"]},
+            "tema_minideck": {
+                "type": "string",
+                "description": (
+                    "Slug do minideck temático (ex.: 'saude_mental'). "
+                    "Vem repetido aqui pra reforçar a coerência do "
+                    "feedback com o tema escolhido pelo grupo."
+                ),
+            },
+            "notas_enem": {
+                "type": "object",
+                "properties": {
+                    "c1": {"type": "integer", "enum": _NOTA_ENEM,
+                           "description": "Domínio da norma culta."},
+                    "c2": {"type": "integer", "enum": _NOTA_ENEM,
+                           "description": "Compreensão da proposta + tipo textual + repertório."},
+                    "c3": {"type": "integer", "enum": _NOTA_ENEM,
+                           "description": "Seleção/relação/organização/interpretação de informações."},
+                    "c4": {"type": "integer", "enum": _NOTA_ENEM,
+                           "description": "Conhecimento dos mecanismos linguísticos."},
+                    "c5": {"type": "integer", "enum": _NOTA_ENEM,
+                           "description": "Proposta de intervenção com agente, ação, meio, finalidade, detalhamento."},
+                },
+                "required": ["c1", "c2", "c3", "c4", "c5"],
+            },
+            "nota_total_enem": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000,
+                "description": (
+                    "Soma das 5 competências (0-1000). Override "
+                    "determinístico em Python depois — emita o melhor "
+                    "valor possível."
+                ),
+            },
+            "transformacao_cartas": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 100,
+                "description": (
+                    "Score independente (0-100, decisão G.1.6). "
+                    "Quanto a reescrita superou o esqueleto cooperativo. "
+                    "Bandas: "
+                    "0-15 = cópia literal das cartas; "
+                    "16-40 = só conectivos trocados, dependência alta "
+                    "do esqueleto; "
+                    "41-70 = paráfrases com algum recorte autoral, mas "
+                    "ainda reconhecível como expansão das cartas; "
+                    "71-90 = autoria substancial, cartas reaproveitadas "
+                    "como ponto de partida; "
+                    "91-100 = autoria plena, cartas claramente subordinadas "
+                    "à voz do aluno. NÃO compõe a nota_total_enem."
+                ),
+            },
+            "sugestoes_cartas_alternativas": {
+                "type": "array",
+                "minItems": 0,
+                "maxItems": 2,
+                "description": (
+                    "0-2 sugestões (decisão G.1.7). Lista vazia é "
+                    "feedback positivo legítimo (todas as cartas do "
+                    "grupo funcionaram bem). Cada item: carta original "
+                    "que ficou fraca + carta alternativa do mesmo "
+                    "minideck + motivo pedagógico curto."
+                ),
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "codigo_original": {
+                            "type": "string",
+                            "description": (
+                                "Código da carta escolhida pelo grupo "
+                                "que ficou fraca (ex.: 'P03', 'K22'). "
+                                "DEVE estar entre as cartas que o "
+                                "grupo escolheu."
+                            ),
+                        },
+                        "codigo_sugerido": {
+                            "type": "string",
+                            "description": (
+                                "Código de carta alternativa (ex.: "
+                                "'P05'). DEVE estar no minideck e "
+                                "ser do mesmo TIPO da original "
+                                "(P→P, R→R, etc.). DEVE ser diferente "
+                                "da original."
+                            ),
+                        },
+                        "motivo": {
+                            "type": "string",
+                            "description": (
+                                "1-2 frases curtas em vocabulário REJ. "
+                                "Por que a alternativa funciona "
+                                "melhor no contexto. Ex.: 'P05 dá "
+                                "mais especificidade ao recorte que "
+                                "P03 deixou genérico'."
+                            ),
+                        },
+                    },
+                    "required": [
+                        "codigo_original", "codigo_sugerido", "motivo",
+                    ],
+                },
+            },
+            "flags": {
+                "type": "object",
+                "properties": {
+                    "copia_literal_das_cartas": {
+                        "type": "boolean",
+                        "description": (
+                            "true se a reescrita reproduz literalmente "
+                            "frases da redação cooperativa montada — "
+                            "sem reformulação. Trigger pra "
+                            "transformacao_cartas <= 15."
+                        ),
+                    },
+                    "cartas_mal_articuladas": {
+                        "type": "boolean",
+                        "description": (
+                            "true se cartas escolhidas aparecem coladas "
+                            "à força, sem ligação argumentativa "
+                            "(repertório de bolso, agente solto). "
+                            "Compromete C3."
+                        ),
+                    },
+                    "fuga_do_tema_do_minideck": {
+                        "type": "boolean",
+                        "description": (
+                            "true se reescrita perde o tema do "
+                            "minideck escolhido pelo grupo (ex.: "
+                            "minideck 'Saúde Mental' mas reescrita "
+                            "discute educação digital). Cap C2 em 80."
+                        ),
+                    },
+                    "tipo_textual_inadequado": {
+                        "type": "boolean",
+                        "description": (
+                            "true se reescrita não é dissertativo-"
+                            "argumentativa (vira narração, descrição, "
+                            "carta). Cap C2 em 80 (padrão ENEM)."
+                        ),
+                    },
+                    "desrespeito_direitos_humanos": {
+                        "type": "boolean",
+                        "description": (
+                            "true se a reescrita propõe ou defende "
+                            "violação de direitos humanos. Cap "
+                            "C1=0 + C5=0 (padrão ENEM, cartilha INEP)."
+                        ),
+                    },
+                },
+                "required": [
+                    "copia_literal_das_cartas",
+                    "cartas_mal_articuladas",
+                    "fuga_do_tema_do_minideck",
+                    "tipo_textual_inadequado",
+                    "desrespeito_direitos_humanos",
+                ],
+            },
+            "feedback_aluno": _feedback_aluno_schema(),
+            "feedback_professor": _feedback_professor_schema("200-400 palavras"),
+        },
+        "required": [
+            "modo",
+            "tema_minideck",
+            "notas_enem",
+            "nota_total_enem",
+            "transformacao_cartas",
+            "sugestoes_cartas_alternativas",
+            "flags",
+            "feedback_aluno",
+            "feedback_professor",
+        ],
+    },
+}
+
+
 TOOLS_BY_MODE: Dict[str, Dict[str, Any]] = {
     # foco_c1 ADIADO (decisão Daniel 2026-04-28) — sem missão atual.
     # Quando ativar: implementar FOCO_C1_TOOL conforme proposta em
@@ -701,4 +915,5 @@ TOOLS_BY_MODE: Dict[str, Dict[str, Any]] = {
     "foco_c4": FOCO_C4_TOOL,
     "foco_c5": FOCO_C5_TOOL,
     "completo_parcial": COMPLETO_PARCIAL_TOOL,
+    "jogo_redacao": JOGO_REDACAO_TOOL,  # Fase 2 passo 5 (2S, OF13 jogo)
 }

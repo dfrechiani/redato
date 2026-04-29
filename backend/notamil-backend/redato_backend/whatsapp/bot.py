@@ -1457,7 +1457,7 @@ def _handle_revisando_texto_montado(
         ))]
 
     try:
-        PL.persist_reescrita(
+        reescrita_id = PL.persist_reescrita(
             partida_id=partida.partida_id,
             aluno_turma_id=partida.aluno_turma_id,
             texto=texto,
@@ -1478,11 +1478,167 @@ def _handle_revisando_texto_montado(
             "em alguns segundos."
         )]
 
-    # Sucesso — volta READY. NÃO chama Redato (Passo 5).
+    # Volta o estado pra READY antes de chamar Claude — se Claude
+    # demorar ou falhar, aluno já está num estado consistente
+    # (reescrita persistida, sem FSM travada). Próxima mensagem do
+    # aluno cai em fluxo normal.
     P.upsert_aluno(msg.phone, estado=READY)
-    return [OutboundMessage(MSG_JOGO_REESCRITA_RECEBIDA.format(
+
+    # Fase 2 passo 5 — avaliação SÍNCRONA via Claude. Bot bloqueia
+    # ~30s aguardando resposta. Decisão Daniel 2026-04-29: padrão
+    # dos outros modos (foco_c2/c3/c4/c5/completo_parcial), familiar
+    # pro aluno.
+    return _avaliar_reescrita_e_responder(
+        msg=msg,
+        partida=partida,
+        reescrita_id=reescrita_id,
+        reescrita_texto=texto,
         n_chars=n_chars,
-    ))]
+    )
+
+
+def _avaliar_reescrita_e_responder(
+    *,
+    msg: InboundMessage,
+    partida: Any,
+    reescrita_id: uuid.UUID,
+    reescrita_texto: str,
+    n_chars: int,
+) -> List[OutboundMessage]:
+    """Chama o pipeline Redato modo jogo_redacao, persiste o
+    `redato_output` na reescrita e retorna feedback formatado pro
+    aluno via WhatsApp.
+
+    Tratamento de erro:
+    - Timeout/erro Anthropic: bot avisa "estamos avaliando, você
+      receberá em alguns minutos" — reescrita já está persistida com
+      `redato_output=null`, professor pode reprocessar via UI futura
+      (Passo 6).
+    - Erro genérico: log + mensagem genérica + reescrita continua
+      no DB.
+    """
+    import time as _time
+
+    from redato_backend.whatsapp import portal_link as PL
+    from redato_backend.whatsapp.render import render_aluno_whatsapp
+
+    logger = _get_logger()
+
+    # 1. Carrega contexto (catálogo do minideck) + partida atualizada
+    ctx = PL.carregar_contexto_validacao(partida.minideck_id)
+    if ctx is None:
+        logger.error(
+            "carregar_contexto_validacao retornou None — minideck %s",
+            partida.minideck_id,
+        )
+        return [OutboundMessage(
+            f"Sua reescrita ({n_chars} caracteres) foi recebida, "
+            "mas não consegui avaliar agora porque o tema da partida "
+            "não está disponível. Fala com o professor."
+        )]
+
+    # codigos_escolhidos vem da partida atualizada — re-resolve pra
+    # garantir snapshot consistente com texto_montado.
+    codigos_escolhidos: List[str] = []
+    try:
+        partida_atual = PL.get_partida_by_id(
+            partida.partida_id, phone=msg.phone,
+        )
+        if partida_atual is not None and isinstance(
+            getattr(partida_atual, "texto_montado", None), str,
+        ):
+            # Acessar `cartas_escolhidas.codigos` direto via DB já que
+            # PartidaPendenteContext não expõe — fazemos query auxiliar.
+            from sqlalchemy.orm import Session as _Session
+            from redato_backend.portal.db import get_engine as _ge
+            from redato_backend.portal.models import PartidaJogo as _PJ
+            with _Session(_ge()) as _s:
+                _p = _s.get(_PJ, partida.partida_id)
+                if _p is not None:
+                    raw = _p.cartas_escolhidas or {}
+                    if isinstance(raw, dict):
+                        codigos_escolhidos = list(raw.get("codigos") or [])
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "Falha ao re-resolver codigos_escolhidos da partida %s",
+            partida.partida_id,
+        )
+
+    # 2. Chama Claude
+    from redato_backend.missions.router import grade_jogo_redacao
+
+    payload = {
+        "tema_minideck": ctx.minideck_tema,
+        "nome_humano_tema": ctx.minideck_nome_humano,
+        # cartas_lacuna_full: lista de snapshots — render_minideck_block
+        # precisa de objetos com .codigo/.tipo/.conteudo. ContextoValidacao
+        # tem isso em `lacunas_por_codigo.values()`.
+        "cartas_lacuna_full": list(ctx.lacunas_por_codigo.values()),
+        "codigos_escolhidos": codigos_escolhidos,
+        "estruturais_por_codigo": ctx.estruturais_por_codigo,
+        "lacunas_por_codigo": ctx.lacunas_por_codigo,
+        "texto_montado": partida.texto_montado or "",
+        "reescrita_texto": reescrita_texto,
+    }
+
+    t0 = _time.monotonic()
+    tool_args: Optional[Dict[str, Any]] = None
+    erro_temporario = False
+    try:
+        tool_args = grade_jogo_redacao(payload)
+    except Exception as exc:  # noqa: BLE001
+        # Timeout/rate-limit/connection: tratamento específico pra o
+        # aluno saber que vai receber depois. Avaliação real será
+        # reprocessada manualmente pelo professor (Passo 6 implementa
+        # "rerodar avaliação" via UI).
+        import anthropic
+        if isinstance(exc, (anthropic.APITimeoutError,
+                              anthropic.APIConnectionError,
+                              anthropic.RateLimitError)):
+            erro_temporario = True
+        logger.exception(
+            "grade_jogo_redacao falhou pra reescrita_id=%s: %r",
+            reescrita_id, exc,
+        )
+
+    elapsed_ms = int((_time.monotonic() - t0) * 1000)
+
+    if tool_args is None:
+        if erro_temporario:
+            return [OutboundMessage(
+                f"📨 Sua reescrita ({n_chars} caracteres) foi recebida! "
+                "A avaliação está demorando — você receberá o feedback "
+                "em alguns minutos quando o sistema processar. Pode "
+                "guardar o WhatsApp."
+            )]
+        return [OutboundMessage(
+            f"📨 Sua reescrita ({n_chars} caracteres) foi recebida! "
+            "Tive um problema técnico pra avaliar agora — o professor "
+            "pode reprocessar pelo portal."
+        )]
+
+    # 3. Persiste redato_output
+    try:
+        PL.update_reescrita_redato_output(
+            reescrita_id=reescrita_id,
+            redato_output=tool_args,
+            elapsed_ms=elapsed_ms,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "update_reescrita_redato_output falhou: %r", exc,
+        )
+        # Continua e mostra feedback ao aluno mesmo assim — pior
+        # caso é redato_output ficar null no DB e professor reprocessar.
+
+    # 4. Renderiza feedback WhatsApp + responde
+    feedback = render_aluno_whatsapp(tool_args, texto_transcrito=None)
+    return [OutboundMessage(feedback)]
+
+
+def _get_logger():
+    import logging as _logging
+    return _logging.getLogger(__name__)
 
 
 # ──────────────────────────────────────────────────────────────────────

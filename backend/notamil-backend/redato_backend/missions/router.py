@@ -26,6 +26,8 @@ from redato_backend.missions.schemas import TOOLS_BY_MODE
 from redato_backend.missions.prompts import (
     system_prompt_for,
     context_block_for,
+    render_minideck_block,
+    render_cartas_escolhidas_block,
 )
 from redato_backend.missions.detectors import (
     compute_pre_flags,
@@ -44,6 +46,13 @@ class MissionMode(str, Enum):
     FOCO_C5 = "foco_c5"
     COMPLETO_PARCIAL = "completo_parcial"
     COMPLETO_INTEGRAL = "completo_integral"
+    # Fase 2 passo 5 (2S, OF13 jogo de redação) — Daniel 2026-04-29.
+    # NÃO entra em _MISSAO_TO_MODE porque não é resolvido por
+    # activity_id sozinho — o caller (bot) decide chamar
+    # `grade_jogo_redacao` em vez de `grade_mission` quando há
+    # partida ativa. activity_id da atividade pode ser RJ2_OF13_MF
+    # mas o roteamento pra esse modo depende do estado da partida.
+    JOGO_REDACAO = "jogo_redacao"
 
 
 _MISSAO_TO_MODE: Dict[str, MissionMode] = {
@@ -69,6 +78,7 @@ _DEFAULT_MODEL_BY_MODE: Dict[MissionMode, str] = {
     MissionMode.FOCO_C4: "claude-sonnet-4-6",
     MissionMode.FOCO_C5: "claude-sonnet-4-6",
     MissionMode.COMPLETO_PARCIAL: "claude-opus-4-7",
+    MissionMode.JOGO_REDACAO: "claude-sonnet-4-6",   # 5 comp + cartas + texto montado — Sonnet basta
     # COMPLETO_INTEGRAL não passa por este router — usa pipeline v2.
 }
 
@@ -402,3 +412,268 @@ def _log_divergence(
         _logging.getLogger(__name__).warning(
             "Falha ao registrar divergência: %r", exc
         )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Fase 2 passo 5 — entry point pro modo jogo_redacao
+# ──────────────────────────────────────────────────────────────────────
+#
+# Formato de input separado de `grade_mission` porque jogo_redacao
+# precisa de muito mais contexto: catálogo do minideck (104 cartas) +
+# cartas escolhidas pelo grupo + texto montado + reescrita autoral.
+# O caller (bot quando aluno em REVISANDO_TEXTO_MONTADO) carrega
+# tudo do DB via `whatsapp/portal_link.py` e passa snapshots aqui.
+#
+# Esta função NÃO toca DB — pura. Caller persiste `redato_output`
+# em `reescritas_individuais.redato_output` depois.
+
+def _build_jogo_redacao_user_msg(
+    *,
+    nome_humano_tema: str,
+    cartas_lacuna_full: list,
+    codigos_escolhidos: list,
+    estruturais_por_codigo: dict,
+    lacunas_por_codigo: dict,
+    texto_montado: str,
+    reescrita_texto: str,
+) -> str:
+    """Monta o user_msg pro modo jogo_redacao. Função pura — testável
+    sem mock de SDK.
+
+    Estrutura (ordem importa pro Claude):
+    1. Header: missão a avaliar
+    2. Contexto da oficina (rubrica jogo_redacao)
+    3. CARTAS DO MINIDECK (catálogo completo do tema, ~104 cartas)
+    4. CARTAS QUE O GRUPO ESCOLHEU (com placeholders preenchidos)
+    5. TEXTO MONTADO (redação cooperativa)
+    6. REESCRITA INDIVIDUAL (texto a avaliar)
+    7. Instruções finais explicitas
+    """
+    tool = TOOLS_BY_MODE[MissionMode.JOGO_REDACAO.value]
+
+    header = (
+        f"## Missão a avaliar\n\n"
+        f"Modo: jogo_redacao | Tema: {nome_humano_tema} | "
+        f"Atividade: RJ2·OF13·MF\n\n"
+        f"---\n\n"
+    )
+
+    # Contexto da rubrica
+    contexto = context_block_for(MissionMode.JOGO_REDACAO.value)
+
+    # Catálogo do minideck — ~8 KB. Cache TTL=1h vai cobrir múltiplos
+    # alunos do mesmo grupo + grupos diferentes do mesmo tema.
+    bloco_catalogo = render_minideck_block(
+        nome_humano_tema, cartas_lacuna_full,
+    )
+
+    # Cartas escolhidas — ~1 KB. Varia por partida.
+    bloco_escolhidas = render_cartas_escolhidas_block(
+        codigos_escolhidos,
+        estruturais_por_codigo,
+        lacunas_por_codigo,
+    )
+
+    return (
+        f"{header}"
+        f"{contexto}\n"
+        f"---\n\n"
+        f"{bloco_catalogo}\n"
+        f"---\n\n"
+        f"{bloco_escolhidas}\n"
+        f"---\n\n"
+        f"### TEXTO MONTADO (redação cooperativa expandida)\n\n"
+        f"```\n{texto_montado}\n```\n\n"
+        f"---\n\n"
+        f"### REESCRITA INDIVIDUAL (texto a avaliar)\n\n"
+        f"```\n{reescrita_texto}\n```\n\n"
+        f"---\n\n"
+        f"## Avaliação\n\n"
+        f"Avalie agora chamando a ferramenta `{tool['name']}` com "
+        f"TODOS os campos obrigatórios.\n\n"
+        f"**Lembre-se:**\n"
+        f"1. As 5 competências ENEM avaliam A REESCRITA AUTORAL — "
+        f"não o TEXTO MONTADO.\n"
+        f"2. `transformacao_cartas` (0-100) mede quanto a reescrita "
+        f"superou o esqueleto. Use o continuum, não só extremos.\n"
+        f"3. `sugestoes_cartas_alternativas` é DINÂMICA (0-2 itens). "
+        f"Lista vazia é feedback positivo legítimo. NÃO force "
+        f"sugestões se o grupo escolheu bem.\n"
+        f"4. `tema_minideck` no output deve ser exatamente o slug "
+        f"que veio no header desta missão (ex.: 'saude_mental')."
+    )
+
+
+def grade_jogo_redacao(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Grade uma reescrita individual no modo jogo_redacao.
+
+    `data` (dict) precisa conter:
+        - tema_minideck (str): slug, ex.: "saude_mental"
+        - nome_humano_tema (str): display, ex.: "Saúde Mental"
+        - cartas_lacuna_full (list): catálogo do minideck (objetos
+          com .codigo, .tipo, .conteudo). Caller carrega via
+          `portal_link.carregar_contexto_validacao(minideck_id)`.
+        - codigos_escolhidos (list[str]): codes que o grupo escolheu
+        - estruturais_por_codigo (dict): catálogo das estruturais
+        - lacunas_por_codigo (dict): catálogo das lacunas do minideck
+          (mesmas 104 cartas de cartas_lacuna_full mas indexadas)
+        - texto_montado (str): redação cooperativa expandida
+        - reescrita_texto (str): texto autoral do aluno (a avaliar)
+
+    Retorna `tool_args` com:
+        - 5 competências ENEM, nota_total_enem
+        - transformacao_cartas, sugestoes_cartas_alternativas
+        - flags do jogo
+        - feedback_aluno + feedback_professor
+        - `_mission` metadata (mode, model, override info)
+
+    Levanta:
+        - RuntimeError se Claude não invocar o tool
+        - anthropic.* exceptions (timeout, rate limit) propagadas
+          pro caller decidir UX
+    """
+    import anthropic
+
+    # Validações mínimas — caller (bot) deve garantir, mas defesa.
+    nome_tema = (data.get("nome_humano_tema") or "").strip()
+    tema_slug = (data.get("tema_minideck") or "").strip().lower()
+    reescrita = (data.get("reescrita_texto") or "").strip()
+    texto_montado = (data.get("texto_montado") or "").strip()
+    if not nome_tema or not tema_slug or not reescrita:
+        raise ValueError(
+            "grade_jogo_redacao: campos obrigatórios vazios "
+            "(nome_humano_tema, tema_minideck, reescrita_texto)",
+        )
+
+    user_msg = _build_jogo_redacao_user_msg(
+        nome_humano_tema=nome_tema,
+        cartas_lacuna_full=data.get("cartas_lacuna_full") or [],
+        codigos_escolhidos=data.get("codigos_escolhidos") or [],
+        estruturais_por_codigo=data.get("estruturais_por_codigo") or {},
+        lacunas_por_codigo=data.get("lacunas_por_codigo") or {},
+        texto_montado=texto_montado,
+        reescrita_texto=reescrita,
+    )
+
+    model = (
+        os.getenv("REDATO_MISSION_MODEL")
+        or _DEFAULT_MODEL_BY_MODE[MissionMode.JOGO_REDACAO]
+    )
+    tool = TOOLS_BY_MODE[MissionMode.JOGO_REDACAO.value]
+
+    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    message = client.messages.create(
+        model=model,
+        max_tokens=8000,
+        # System + catálogo cacheados (TTL=1h). Quando outro aluno do
+        # mesmo grupo (ou outro grupo do mesmo tema) submeter, cache
+        # hit no system+catálogo (~10 KB) e só user_msg variável paga.
+        system=[
+            {
+                "type": "text",
+                "text": system_prompt_for(MissionMode.JOGO_REDACAO.value),
+                "cache_control": {"type": "ephemeral", "ttl": "1h"},
+            },
+        ],
+        tools=[tool],
+        tool_choice={"type": "tool", "name": tool["name"]},
+        messages=[{"role": "user", "content": user_msg}],
+    )
+
+    tool_args: Optional[Dict[str, Any]] = None
+    for block in message.content:
+        btype = getattr(block, "type", None)
+        if btype == "tool_use" and getattr(block, "name", None) == tool["name"]:
+            tool_args = dict(getattr(block, "input", {}) or {})
+            break
+    if tool_args is None:
+        raise RuntimeError(
+            f"Claude não invocou {tool['name']}. Blocos: "
+            + ", ".join(str(getattr(b, "type", "?")) for b in message.content)
+        )
+
+    # Garante que o `tema_minideck` no output bate com o slug que veio
+    # no input — defesa contra Claude inventando outro slug.
+    if tool_args.get("tema_minideck") != tema_slug:
+        tool_args["tema_minideck"] = tema_slug
+
+    # Override determinístico via scoring (caps por flags).
+    from redato_backend.missions.scoring import apply_override
+    override_result = apply_override(
+        MissionMode.JOGO_REDACAO.value, tool_args,
+    )
+
+    # Validação adicional das sugestões (defesa contra Claude
+    # alucinar codes que não estão no minideck).
+    _sanear_sugestoes(
+        tool_args,
+        codigos_escolhidos=data.get("codigos_escolhidos") or [],
+        lacunas_por_codigo=data.get("lacunas_por_codigo") or {},
+    )
+
+    tool_args["_mission"] = {
+        "mode": MissionMode.JOGO_REDACAO.value,
+        "tema_minideck": tema_slug,
+        "model": model,
+        "nota_emitida_llm": override_result.get("nota_emitida_llm"),
+        "nota_final_python": override_result.get("nota_final_python"),
+        "divergiu": override_result.get("divergiu", False),
+    }
+    return tool_args
+
+
+def _sanear_sugestoes(
+    tool_args: Dict[str, Any],
+    *,
+    codigos_escolhidos: list,
+    lacunas_por_codigo: dict,
+) -> None:
+    """Filtra `sugestoes_cartas_alternativas` removendo entries
+    inválidos (in-place):
+    - codigo_original tem que estar entre os codes do grupo
+    - codigo_sugerido tem que estar no minideck (catálogo)
+    - codigos diferentes (não sugerir o que já foi escolhido)
+    - mesmo TIPO entre original e sugerida
+
+    Claude pode alucinar codes; defesa-em-camada antes de retornar
+    pro caller / persistir em DB.
+    """
+    sug = tool_args.get("sugestoes_cartas_alternativas")
+    if not isinstance(sug, list):
+        tool_args["sugestoes_cartas_alternativas"] = []
+        return
+
+    codes_grupo = set(codigos_escolhidos)
+    saneadas: list = []
+    for item in sug:
+        if not isinstance(item, dict):
+            continue
+        orig = (item.get("codigo_original") or "").upper()
+        sugerida = (item.get("codigo_sugerido") or "").upper()
+        motivo = (item.get("motivo") or "").strip()
+        if not orig or not sugerida or not motivo:
+            continue
+        if orig == sugerida:
+            continue
+        if orig not in codes_grupo:
+            continue
+        if sugerida not in lacunas_por_codigo:
+            continue
+        # Mesmo tipo: só compara P/R/K/A/AC/ME/F entre lacunas.
+        # E## (estruturais) não devem aparecer aqui — sugestão é só
+        # de cartas temáticas.
+        orig_lac = lacunas_por_codigo.get(orig)
+        sug_lac = lacunas_por_codigo.get(sugerida)
+        if orig_lac is None or sug_lac is None:
+            continue
+        if orig_lac.tipo != sug_lac.tipo:
+            continue
+        saneadas.append({
+            "codigo_original": orig,
+            "codigo_sugerido": sugerida,
+            "motivo": motivo,
+        })
+        if len(saneadas) >= 2:
+            break  # maxItems=2 do schema
+
+    tool_args["sugestoes_cartas_alternativas"] = saneadas

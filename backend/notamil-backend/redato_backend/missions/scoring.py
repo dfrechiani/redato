@@ -301,10 +301,85 @@ def apply_override(mode: str, tool_args: Dict[str, Any]) -> Dict[str, Any]:
             "detalhe_notas_python": notas_calc,
         }
 
+    if mode == "jogo_redacao":
+        return _apply_override_jogo_redacao(tool_args)
+
     # completo_integral (OF14) não passa por este override — pipeline v2
     return {
         "tool_args": tool_args,
         "divergiu": False,
         "nota_emitida_llm": None,
         "nota_final_python": None,
+    }
+
+
+def _apply_override_jogo_redacao(
+    tool_args: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Aplica caps por flags + recalcula nota_total_enem.
+
+    Caps por flag (decisão Daniel 2026-04-29 + cartilha INEP):
+
+    - `desrespeito_direitos_humanos=True` → C1=0 + C5=0. Padrão ENEM:
+      reescrita inteira zerada. Não cap parcial: zera as competências
+      inteiras pra deixar claro o motivo na UI.
+    - `tipo_textual_inadequado=True` → C2 cap em 80. Cartilha INEP
+      penaliza tipo errado severamente.
+    - `fuga_do_tema_do_minideck=True` → C2 cap em 80. Decisão G.1.5:
+      tema do minideck domina; sair dele equivale a tangenciamento
+      forte (não fuga total — aluno ainda escreve dissertação).
+
+    `nota_total_enem` é sempre recalculada como soma das 5 após caps,
+    pra evitar drift entre LLM e Python.
+
+    `transformacao_cartas` NÃO é tocado — é informacional (decisão
+    G.1.6). Cap (mas só consistência: se flag copia_literal_das_cartas,
+    transformacao_cartas máximo 15).
+    """
+    notas_emitidas = dict(tool_args.get("notas_enem") or {})
+    flags = tool_args.get("flags") or {}
+
+    # Snapshot dos valores que LLM emitiu, pra log de divergência
+    nota_total_emitida = sum(
+        int(notas_emitidas.get(k, 0) or 0)
+        for k in ("c1", "c2", "c3", "c4", "c5")
+    )
+    transf_emitida = int(tool_args.get("transformacao_cartas", 0) or 0)
+
+    # Caps por flag
+    notas_pos_cap = dict(notas_emitidas)
+    if flags.get("desrespeito_direitos_humanos"):
+        notas_pos_cap["c1"] = 0
+        notas_pos_cap["c5"] = 0
+    if flags.get("tipo_textual_inadequado"):
+        notas_pos_cap["c2"] = min(int(notas_pos_cap.get("c2", 0) or 0), 80)
+    if flags.get("fuga_do_tema_do_minideck"):
+        notas_pos_cap["c2"] = min(int(notas_pos_cap.get("c2", 0) or 0), 80)
+
+    # Garante que cada nota é múltiplo de 40 (escala discreta ENEM).
+    # Cap pode produzir 80 mas se LLM já tinha 80 ainda OK.
+    for k in ("c1", "c2", "c3", "c4", "c5"):
+        v = int(notas_pos_cap.get(k, 0) or 0)
+        # Snap ao múltiplo de 40 mais próximo, dentro de [0, 200]
+        v = max(0, min(200, v))
+        v = (v // 40) * 40
+        notas_pos_cap[k] = v
+
+    nota_total_calc = sum(notas_pos_cap[k] for k in ("c1", "c2", "c3", "c4", "c5"))
+
+    tool_args["notas_enem"] = notas_pos_cap
+    tool_args["nota_total_enem"] = nota_total_calc
+
+    # Cap de transformacao_cartas se flag de cópia literal disparada
+    if flags.get("copia_literal_das_cartas"):
+        if transf_emitida > 15:
+            tool_args["transformacao_cartas"] = 15
+
+    return {
+        "tool_args": tool_args,
+        "divergiu": nota_total_emitida != nota_total_calc,
+        "nota_emitida_llm": nota_total_emitida,
+        "nota_final_python": nota_total_calc,
+        "detalhe_notas_emitidas": notas_emitidas,
+        "detalhe_notas_python": notas_pos_cap,
     }

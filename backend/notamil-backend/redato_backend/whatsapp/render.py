@@ -235,6 +235,83 @@ def _render_completo_parcial(args: Dict[str, Any],
     return "\n".join(parts)
 
 
+def _render_jogo_redacao(args: Dict[str, Any],
+                          transcript: Optional[str]) -> str:
+    """Renderiza feedback do modo jogo_redacao (Fase 2 passo 5).
+
+    Diferenças vs `_render_completo_parcial`:
+    - 5 competências (não só C1-C4)
+    - Total 0-1000 (não 0-800)
+    - Badge separado pra `transformacao_cartas` (decisão G.1.6 —
+      visualmente fora do bloco de nota ENEM)
+    - Lista de sugestões de cartas alternativas se houver (até 2)
+    - SEM bloco de transcrição (reescrita é texto digitado, não foto)
+    """
+    notas = args.get("notas_enem") or {}
+    total = int(args.get("nota_total_enem", 0) or 0)
+    faixa = _faixa_total_1000(total)
+    transformacao = int(args.get("transformacao_cartas", 0) or 0)
+    sugestoes = args.get("sugestoes_cartas_alternativas") or []
+    fa = args.get("feedback_aluno") or {}
+    acertos = list(fa.get("acertos") or [])[:2]
+    ajustes = list(fa.get("ajustes") or [])[:2]
+
+    # Linha inline com 5 notas — exemplo "C1 160 · C2 160 · C3 120 · C4 120 · C5 80"
+    notas_inline = " · ".join(
+        f"{k.upper()} {int(notas.get(k, 0) or 0)}"
+        for k in ("c1", "c2", "c3", "c4", "c5")
+    )
+
+    parts: List[str] = []
+    # transcrição: reescrita é texto, não OCR — não mostra bloco
+
+    parts.append(f"📊 *Reescrita avaliada* — {faixa} ({total}/1000)")
+    parts.append(f"_{notas_inline}_\n")
+
+    # Badge separado de transformacao_cartas (decisão G.1.6)
+    parts.append(_render_transformacao_badge(transformacao))
+    parts.append("")
+
+    if acertos:
+        parts.append("*O que ficou bom:*")
+        parts.extend(_bullets(acertos))
+        parts.append("")
+    if ajustes:
+        parts.append("*Pra trabalhar:*")
+        parts.extend(_bullets(ajustes))
+        parts.append("")
+
+    if sugestoes:
+        parts.append("*Cartas alternativas que valem testar:*")
+        for s in sugestoes[:2]:
+            if not isinstance(s, dict):
+                continue
+            cod_ori = s.get("codigo_original", "?")
+            cod_sug = s.get("codigo_sugerido", "?")
+            motivo = (s.get("motivo") or "").strip()
+            motivo_short = _truncate(motivo, _MAX_BULLET_CHARS)
+            parts.append(f"- {cod_ori} → {cod_sug}: {motivo_short}")
+        parts.append("")
+
+    return "\n".join(parts).rstrip()
+
+
+def _render_transformacao_badge(score: int) -> str:
+    """Badge visual pra `transformacao_cartas` (0-100). Decisão G.1.6:
+    score independente da nota ENEM — visualmente separado."""
+    if score >= 91:
+        emoji, label = "🏆", "autoria plena"
+    elif score >= 71:
+        emoji, label = "🎯", "autoria substancial"
+    elif score >= 41:
+        emoji, label = "🔄", "paráfrase com algum recorte"
+    elif score >= 16:
+        emoji, label = "📋", "esqueleto reconhecível"
+    else:
+        emoji, label = "⚠️", "cópia das cartas"
+    return f"{emoji} *Transformação das cartas:* {score}/100 — _{label}_"
+
+
 def _render_completo_integral(args: Dict[str, Any],
                                 transcript: Optional[str]) -> str:
     c1 = (args.get("c1_audit") or {}).get("nota") or 0
@@ -287,6 +364,10 @@ def render_aluno_whatsapp(
         out = _render_foco(args, "c5", texto_transcrito)
     elif mode == "completo_parcial":
         out = _render_completo_parcial(args, texto_transcrito)
+    elif mode == "jogo_redacao":
+        # Fase 2 passo 5 — reescrita individual do jogo de redação.
+        # Não passa transcrição (reescrita é texto digitado).
+        out = _render_jogo_redacao(args, None)
     elif "essay_analysis" in args:
         out = _render_completo_integral(args, texto_transcrito)
     else:

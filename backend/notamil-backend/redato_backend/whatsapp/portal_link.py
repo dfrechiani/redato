@@ -866,3 +866,25 @@ def find_reescrita_existente(
             )
         ).first()
         return n is not None
+
+
+def update_reescrita_redato_output(
+    *, reescrita_id: uuid.UUID, redato_output: dict,
+    elapsed_ms: Optional[int] = None,
+) -> None:
+    """Atualiza `redato_output` (e opcionalmente `elapsed_ms`) de uma
+    reescrita após o pipeline Redato concluir. Chamado pelo bot no
+    _handle_revisando_texto_montado depois da chamada ao Claude."""
+    from redato_backend.portal.models import ReescritaIndividual
+
+    with _open_session() as session:
+        r = session.get(ReescritaIndividual, reescrita_id)
+        if r is None:
+            raise RuntimeError(
+                f"Reescrita {reescrita_id} não encontrada — "
+                f"persistência inconsistente",
+            )
+        r.redato_output = redato_output
+        if elapsed_ms is not None:
+            r.elapsed_ms = elapsed_ms
+        session.commit()

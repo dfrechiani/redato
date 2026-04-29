@@ -422,9 +422,42 @@ def test_foto_em_aguardando_cartas_redireciona(world):
     assert aluno["estado"].startswith("AGUARDANDO_CARTAS_PARTIDA|")
 
 
-def test_reescrita_persiste_e_volta_ready(world):
-    """Aluno em REVISANDO manda texto >= 50 chars — persiste e volta
-    READY com mensagem de sucesso."""
+def test_reescrita_persiste_e_volta_ready(world, monkeypatch):
+    """Aluno em REVISANDO manda texto >= 50 chars — persiste, volta READY.
+
+    Passo 5 (commit feat(jogo): avaliação Redato modo jogo_redacao):
+    bot agora chama grade_jogo_redacao síncrono na hora da reescrita.
+    Aqui mockamos o pipeline pra testar SÓ a parte de persistência +
+    transição de estado (avaliação real é coberta em
+    `test_bot_jogo_partida_completa.py`)."""
+    from unittest.mock import MagicMock
+    monkeypatch.setattr(
+        "redato_backend.missions.router.grade_jogo_redacao",
+        MagicMock(return_value={
+            "modo": "jogo_redacao",
+            "tema_minideck": "saude_mental",
+            "notas_enem": {"c1": 160, "c2": 160, "c3": 120,
+                            "c4": 120, "c5": 120},
+            "nota_total_enem": 680,
+            "transformacao_cartas": 70,
+            "sugestoes_cartas_alternativas": [],
+            "flags": {
+                "copia_literal_das_cartas": False,
+                "cartas_mal_articuladas": False,
+                "fuga_do_tema_do_minideck": False,
+                "tipo_textual_inadequado": False,
+                "desrespeito_direitos_humanos": False,
+            },
+            "feedback_aluno": {
+                "acertos": ["Tese clara."],
+                "ajustes": ["Aprofundar o argumento."],
+            },
+            "feedback_professor": {
+                "pontos_fortes": ["x"], "pontos_fracos": ["y"],
+                "padrao_falha": "z", "transferencia_competencia": "w",
+            },
+        }),
+    )
     _seed_aluno_ready(world["phone_a2"])
     _send(world["phone_a2"], text="oi")
     _send(world["phone_a2"], text=_codigos_completos_text())
@@ -438,13 +471,14 @@ def test_reescrita_persiste_e_volta_ready(world):
     )
     out = _send(world["phone_a2"], text=reescrita)
     assert len(out) == 1
-    assert "Reescrita recebida" in out[0]
+    # Passo 5: feedback formatado em vez do placeholder antigo
+    assert "Reescrita avaliada" in out[0]
 
     from redato_backend.whatsapp import persistence as P
     aluno = P.get_aluno(world["phone_a2"])
     assert aluno["estado"] == "READY"
 
-    # Reescrita persistida
+    # Reescrita persistida com redato_output populado
     from redato_backend.portal.models import ReescritaIndividual
     from sqlalchemy import select
     from sqlalchemy.orm import Session
@@ -456,7 +490,8 @@ def test_reescrita_persiste_e_volta_ready(world):
                 ReescritaIndividual.aluno_turma_id == world["aluno_a2_id"],
             )
         ).scalar_one()
-        assert rs.redato_output is None  # Passo 5 popula
+        assert rs.redato_output is not None
+        assert rs.redato_output["nota_total_enem"] == 680
         assert "estigma" in rs.texto.lower()
 
 

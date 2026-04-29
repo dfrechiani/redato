@@ -498,12 +498,119 @@ causal" (use "como isso acontece na prática").
 """
 
 
+_JOGO_REDACAO_CONTEXT = """\
+## Missão — RJ2·OF13·MF·Jogo de Redação (2S)
+
+**Enunciado:** aluno do 2S faz REESCRITA INDIVIDUAL a partir de uma
+redação cooperativa montada com cartas. O grupo escolheu cartas
+estruturais (E##, com placeholders) e cartas temáticas (P/R/K/A/AC/ME/F)
+do minideck. O bot expandiu os placeholders e gerou um TEXTO MONTADO.
+Cada aluno do grupo agora escreve sua versão autoral em cima desse
+texto-base.
+
+**Você avalia A REESCRITA AUTORAL** — não o texto cooperativo. As
+cartas são contexto: você precisa entender o que o grupo escolheu pra
+julgar se o aluno superou o esqueleto ou só copiou.
+
+**5 competências ENEM completas (0-200 cada, total 0-1000):**
+- C1 (norma culta): aplica integralmente.
+- C2 (compreensão do tema + tipo dissertativo-argumentativo +
+  repertório): aplica integralmente. **Tema = tema do minideck**
+  (decisão G.1.5). Sair do tema do minideck = `fuga_do_tema_do_minideck`
+  + cap C2 em 80.
+- C3 (seleção/relação/organização/interpretação de informações):
+  aplica integralmente. Projeto de texto avaliado na reescrita autoral,
+  não no esqueleto.
+- C4 (mecanismos linguísticos): aplica integralmente.
+- C5 (proposta de intervenção com agente/ação/meio/finalidade/
+  detalhamento): aplica integralmente. **Aluno PODE ter cartas A/AC/
+  ME/F que articulam parcialmente a proposta** — avalie como o aluno
+  desenvolveu (não conte só presença).
+
+**Score independente `transformacao_cartas` (0-100, decisão G.1.6):**
+
+Mede SUPERAÇÃO do esqueleto cooperativo. NÃO entra na nota_total_enem.
+
+| Banda | Critério |
+|---|---|
+| 0-15 | cópia literal — frases idênticas ou quase idênticas ao TEXTO MONTADO. Trigger pra flag `copia_literal_das_cartas`. |
+| 16-40 | só conectivos trocados ("ademais" → "além disso") + paráfrases triviais. Esqueleto reconhecível palavra por palavra. |
+| 41-70 | paráfrases com algum recorte autoral mas estrutura espelhada. Aluno reproduziu a ordem das cartas, expandiu pouco. |
+| 71-90 | autoria substancial. Aluno reorganizou ideias, acrescentou interpretação própria, manteve cartas como ponto de partida. |
+| 91-100 | autoria plena. Cartas claramente subordinadas à voz do aluno. Pode até ter contornado escolhas fracas do grupo. |
+
+**Sugestões `sugestoes_cartas_alternativas` (0-2 itens, decisão G.1.7):**
+
+Lista DINÂMICA. Vazia é feedback positivo legítimo (todas as cartas
+funcionaram bem no contexto da reescrita). Cada item:
+
+- `codigo_original`: código que o GRUPO ESCOLHEU e ficou fraco
+- `codigo_sugerido`: outra carta do MESMO TIPO (P→P, R→R, K→K, etc.)
+  no MESMO MINIDECK
+- `motivo`: 1-2 frases curtas em vocabulário REJ explicando por que
+  a alternativa funciona melhor
+
+NÃO sugira mais de 2. Se o grupo fez uma escolha de cartas
+consistente, não force feedback negativo.
+
+**Flags do jogo (5):**
+
+- `copia_literal_das_cartas`: true se reescrita reproduz literalmente
+  trechos do TEXTO MONTADO. Trigger pra `transformacao_cartas <= 15`.
+- `cartas_mal_articuladas`: true se cartas escolhidas aparecem coladas
+  à força (repertório de bolso, agente solto sem mecanismo). Compromete
+  C3.
+- `fuga_do_tema_do_minideck`: true se reescrita sai do tema do
+  minideck. Cap C2 em 80.
+- `tipo_textual_inadequado`: true se reescrita não é dissertativo-
+  argumentativa (vira narração, descrição, carta). Cap C2 em 80
+  (padrão ENEM).
+- `desrespeito_direitos_humanos`: true se a reescrita propõe ou defende
+  violação de DH. Cap C1=0 + C5=0 (cartilha INEP). Reescrita inteira
+  zerada na nota total.
+
+**Casos críticos:**
+
+1. Aluno copiou literalmente o TEXTO MONTADO (apenas conectivos
+   trocados): transformacao_cartas <= 20, flag copia_literal_das_cartas
+   = true, C3 cap em 120 (autoria comprometida).
+2. Reescrita perde tema do minideck (Saúde Mental → Educação Digital):
+   fuga_do_tema_do_minideck = true, C2 cap em 80, C5 ainda avaliável.
+3. Reescrita autoral substancial mas cartas A/AC/ME/F faltavam (proposta
+   incompleta): NÃO penalize transformacao_cartas — penalize C5 só
+   pelo que falta na proposta efetivamente escrita.
+4. Reescrita ofensiva (DH): desrespeito_direitos_humanos = true, C1=0,
+   C5=0, total será 0 na maioria dos casos.
+
+**Tom do feedback ao aluno:** aluno do 2S, vocabulário REJ acumulado.
+Tom encorajador da AUTORIA. "Sua versão deu mais profundidade ao
+argumento que a carta P03 sozinha não dava" é melhor que "Você
+parafraseou bem". Reforce voz própria.
+
+**Tamanho dos campos:**
+- `feedback_aluno.acertos` / `ajustes`: 1-3 itens, cada 1-2 frases.
+- `feedback_professor.pontos_fortes` / `pontos_fracos`: 1-3 itens cada.
+- `feedback_professor.padrao_falha` + `transferencia_competencia`:
+  1-2 frases cada.
+
+**Termos PERMITIDOS no `feedback_aluno`** (vocabulário REJ acumulado
+do 2S): `tópico frasal`, `argumento`, `repertório`, `coesão`,
+`conclusão`, `premissa`, `exemplo`, `conectivo`, `cadeia lógica`,
+`agente`, `ação`, `meio`, `finalidade`, `detalhamento`, `proposta de
+intervenção`, `compreensão do tema`, `tipo textual`, `cartas`,
+`reescrita autoral`. Use as cartas pelo código (E01, P03, etc.) só
+no `feedback_professor` — pro aluno fale "as ideias da abertura",
+"sua escolha de exemplo", etc.
+"""
+
+
 _CONTEXT_BY_MODE: Dict[str, str] = {
     "foco_c2": _FOCO_C2_CONTEXT,        # M9.1 (2S)
     "foco_c3": _FOCO_C3_CONTEXT,
     "foco_c4": _FOCO_C4_CONTEXT,
     "foco_c5": _FOCO_C5_CONTEXT,
     "completo_parcial": _COMPLETO_PARCIAL_CONTEXT,
+    "jogo_redacao": _JOGO_REDACAO_CONTEXT,  # Fase 2 passo 5 (2S)
 }
 
 
@@ -547,3 +654,104 @@ Tom do feedback: formativo, não certificatório. Linguagem como "neste seu
 primeiro contato com a redação completa" + "para o próximo simulado" é
 apropriada. Mantém todo o resto da rubrica v2 integralmente.
 """
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Bloco do catálogo do minideck — usado pelo modo jogo_redacao
+# ──────────────────────────────────────────────────────────────────────
+# Helper puro que monta o trecho "CARTAS DO MINIDECK TEMÁTICO" do
+# user_msg de jogo_redacao. Mantido em prompts.py pra ficar perto dos
+# outros context blocks. Caller é o `router.py` quando modo=jogo_redacao.
+#
+# Custo: prompt grows com ~104 cartas × ~80 chars = ~8 KB. Cache TTL=1h
+# no system + agora também esse bloco do catálogo (mesmo TTL) cobre
+# múltiplos alunos do mesmo grupo + mesmo tema sem rebill.
+
+_TIPO_HEADERS_PT: Dict[str, str] = {
+    "PROBLEMA": "PROBLEMAS disponíveis (P##)",
+    "REPERTORIO": "REPERTÓRIOS disponíveis (R##)",
+    "PALAVRA_CHAVE": "PALAVRAS-CHAVE disponíveis (K##)",
+    "AGENTE": "AGENTES disponíveis (A##)",
+    "ACAO": "AÇÕES disponíveis (AC##)",
+    "MEIO": "MEIOS disponíveis (ME##)",
+    "FIM": "FINALIDADES disponíveis (F##)",
+}
+
+
+def render_minideck_block(
+    nome_humano_tema: str,
+    cartas_lacuna: list,
+) -> str:
+    """Renderiza o bloco "CARTAS DO MINIDECK TEMÁTICO" pra user_msg
+    do modo jogo_redacao. `cartas_lacuna` é lista de objetos com
+    atributos `tipo`, `codigo`, `conteudo` (snapshot do catálogo).
+
+    Agrupa por tipo na ordem canônica (P, R, K, A, AC, ME, F).
+    Retorna string pronta pra concatenar no user_msg.
+    """
+    if not cartas_lacuna:
+        return f"### CARTAS DO MINIDECK TEMÁTICO ({nome_humano_tema})\n\n_(catálogo vazio)_\n"
+
+    por_tipo: Dict[str, list] = {}
+    for c in cartas_lacuna:
+        por_tipo.setdefault(c.tipo, []).append(c)
+
+    # Ordena dentro de cada tipo por código (estabilidade do prompt
+    # → cache hit consistente)
+    for tipo, lst in por_tipo.items():
+        lst.sort(key=lambda c: c.codigo)
+
+    n_total = sum(len(lst) for lst in por_tipo.values())
+    parts = [
+        f"### CARTAS DO MINIDECK TEMÁTICO "
+        f"({nome_humano_tema} — {n_total} disponíveis)\n",
+    ]
+    # Ordem canônica dos tipos
+    for tipo in ("PROBLEMA", "REPERTORIO", "PALAVRA_CHAVE",
+                  "AGENTE", "ACAO", "MEIO", "FIM"):
+        cartas = por_tipo.get(tipo, [])
+        if not cartas:
+            continue
+        parts.append(f"**{_TIPO_HEADERS_PT.get(tipo, tipo)}** ({len(cartas)}):")
+        for c in cartas:
+            parts.append(f"- {c.codigo}: {c.conteudo}")
+        parts.append("")
+    return "\n".join(parts)
+
+
+def render_cartas_escolhidas_block(
+    codigos_escolhidos: list,
+    estruturais_por_codigo: dict,
+    lacunas_por_codigo: dict,
+) -> str:
+    """Bloco "CARTAS QUE O GRUPO ESCOLHEU" pra user_msg de jogo_redacao.
+
+    Lista as estruturais (com texto + lacunas) e as cartas de lacuna
+    escolhidas (P/R/K/A/AC/ME/F com seu conteúdo). Caller passa a
+    lista de codes da partida + os snapshots do catálogo.
+    """
+    estruturais: list = []
+    lacunas: list = []
+    for cod in codigos_escolhidos:
+        if cod in estruturais_por_codigo:
+            estruturais.append(estruturais_por_codigo[cod])
+        elif cod in lacunas_por_codigo:
+            lacunas.append(lacunas_por_codigo[cod])
+        # silencia codes desconhecidos — caller já validou
+
+    parts = ["### CARTAS QUE O GRUPO ESCOLHEU\n"]
+    if estruturais:
+        parts.append("**Estruturais (esqueleto da redação):**")
+        for e in estruturais:
+            placeholders = (
+                f" (placeholders: {', '.join(e.lacunas)})"
+                if getattr(e, "lacunas", None) else ""
+            )
+            parts.append(f"- {e.codigo} ({e.secao}): {e.texto}{placeholders}")
+        parts.append("")
+    if lacunas:
+        parts.append("**Lacunas (preencheram os placeholders):**")
+        for l in lacunas:
+            parts.append(f"- {l.codigo} ({l.tipo}): {l.conteudo}")
+        parts.append("")
+    return "\n".join(parts)
