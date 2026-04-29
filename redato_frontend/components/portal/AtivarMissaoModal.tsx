@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -24,18 +24,23 @@ interface Props {
   onCriada?: (atividadeId: string) => void;
 }
 
+// Formata Date local pro formato `<input type="datetime-local">`
+// (`YYYY-MM-DDTHH:MM`, zero-padded, hora local do navegador).
+function fmtDatetimeLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  );
+}
+
 function defaultDates() {
   const hoje = new Date();
   hoje.setSeconds(0, 0);
   const fim = new Date(hoje);
   fim.setDate(fim.getDate() + 7);
   fim.setHours(23, 59, 0, 0);
-  const fmt = (d: Date) => {
-    const pad = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-      `T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
-  return { inicio: fmt(hoje), fim: fmt(fim) };
+  return { inicio: fmtDatetimeLocal(hoje), fim: fmtDatetimeLocal(fim) };
 }
 
 export function AtivarMissaoModal({
@@ -50,13 +55,35 @@ export function AtivarMissaoModal({
   const [missoes, setMissoes] = useState<Missao[]>([]);
   const [loadingMissoes, setLoadingMissoes] = useState(true);
   const [missaoId, setMissaoId] = useState("");
-  const dates = useMemo(defaultDates, []);
-  const [dataInicio, setDataInicio] = useState(dates.inicio);
-  const [dataFim, setDataFim] = useState(dates.fim);
+  // Defaults inicializam com `defaultDates()` calculado UMA vez, mas
+  // o `useEffect([open])` abaixo recalcula sempre que o modal abre —
+  // antes esse cálculo ficava em `useMemo([])` e congelava na hora do
+  // primeiro mount. Bug de produção: professor abria modal de manhã,
+  // criava atividade à tarde, `data_inicio` ficava com hora da manhã.
+  const initial = defaultDates();
+  const [dataInicio, setDataInicio] = useState(initial.inicio);
+  const [dataFim, setDataFim] = useState(initial.fim);
+  // "Iniciar agora" é o caso padrão (~95% das atividades). Quando
+  // marcado, ignoramos o input `dataInicio` e enviamos `new Date()`
+  // ao backend no MOMENTO do clique em Ativar. Elimina toda
+  // dependência de timezone do navegador, comportamento de picker no
+  // iOS, e valor congelado no estado.
+  const [iniciarAgora, setIniciarAgora] = useState(true);
   const [notificar, setNotificar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Recalcula defaults toda vez que o modal abre (evita hora congelada
+  // se o componente fica vivo entre aberturas) e reseta a flag
+  // "Iniciar agora" pro padrão.
+  useEffect(() => {
+    if (!open) return;
+    const fresh = defaultDates();
+    setDataInicio(fresh.inicio);
+    setDataFim(fresh.fim);
+    setIniciarAgora(true);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -108,11 +135,23 @@ export function AtivarMissaoModal({
       setError("Selecione uma missão.");
       return;
     }
-    if (!dataInicio || !dataFim) {
-      setError("Preencha as datas.");
+    if (!dataFim) {
+      setError("Preencha a data de fim.");
       return;
     }
-    if (new Date(dataFim) <= new Date(dataInicio)) {
+    // `data_inicio` final: se "Iniciar agora" está marcado, usa o
+    // momento EXATO do clique (não o valor estado-do-input, que pode
+    // estar desatualizado). Senão, parseia o input local pra ISO UTC.
+    const dataInicioISO = iniciarAgora
+      ? new Date().toISOString()
+      : (dataInicio
+          ? new Date(dataInicio).toISOString()
+          : "");
+    if (!dataInicioISO) {
+      setError("Preencha a data de início (ou marque 'Iniciar agora').");
+      return;
+    }
+    if (new Date(dataFim) <= new Date(dataInicioISO)) {
       setError("A data de fim deve ser depois da data de início.");
       return;
     }
@@ -121,7 +160,7 @@ export function AtivarMissaoModal({
       const resp = await criarAtividade({
         turma_id: turmaId,
         missao_id: missaoId,
-        data_inicio: new Date(dataInicio).toISOString(),
+        data_inicio: dataInicioISO,
         data_fim: new Date(dataFim).toISOString(),
         notificar_alunos: notificar,
         confirmar_duplicata: forcar,
@@ -235,12 +274,21 @@ export function AtivarMissaoModal({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <FormField label="Início" required>
-              <Input
-                type="datetime-local"
-                value={dataInicio}
-                onChange={(e) => setDataInicio(e.target.value)}
-                disabled={loading}
-              />
+              {iniciarAgora ? (
+                <div
+                  className="block w-full rounded-lg border border-border bg-muted px-3.5 py-2.5 text-sm text-ink-400 select-none"
+                  aria-label="Início definido como agora"
+                >
+                  Agora (no momento de criar)
+                </div>
+              ) : (
+                <Input
+                  type="datetime-local"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                  disabled={loading}
+                />
+              )}
             </FormField>
             <FormField label="Fim" required>
               <Input
@@ -251,6 +299,28 @@ export function AtivarMissaoModal({
               />
             </FormField>
           </div>
+
+          {/* Default "Iniciar agora" cobre o caso comum (~95% das
+              ativações) e elimina ambiguidade de timezone/picker. Se
+              o professor quer agendar pro futuro, desmarca. */}
+          <label className="flex items-start gap-2.5 text-sm cursor-pointer select-none p-2 -mx-2 hover:bg-muted rounded">
+            <input
+              type="checkbox"
+              checked={iniciarAgora}
+              onChange={(e) => setIniciarAgora(e.target.checked)}
+              disabled={loading}
+              className="mt-0.5 rounded border-border accent-ink"
+            />
+            <span>
+              <span className="block">
+                Iniciar agora
+              </span>
+              <span className="block text-xs text-ink-400 mt-0.5">
+                Atividade fica ativa imediatamente após criar. Desmarque
+                pra agendar pra depois.
+              </span>
+            </span>
+          </label>
 
           <label className="flex items-start gap-2.5 text-sm cursor-pointer select-none p-2 -mx-2 hover:bg-muted rounded">
             <input
