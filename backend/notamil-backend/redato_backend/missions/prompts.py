@@ -87,12 +87,21 @@ recorte autoral".
   abstrata. Ex.: ✓ "a aluna escreveu uma tese genérica — 'X é
   fundamental' aplicado a qualquer tema"; ✗ "deficiência no projeto de
   texto demonstra ausência de tese articulada".
-- `padrao_falha`: nomeie em 1 frase o que está acontecendo, sem jargão.
-- `transferencia_c1`: 1 frase explicando como esse padrão vai aparecer
-  na redação completa do ENEM.
-- `audit_completo`: pode usar terminologia INEP **com explicação curta**.
-  Ex.: ✓ "C3 fica em 160 (texto bom, mas com tese clichê)"; ✗ "C3-160
-  por argumentação previsível em terreno temático ordinário".
+
+**Estrutura obrigatória — 4 campos discretos** (M9.4, 2026-04-29):
+
+- `pontos_fortes`: lista de 1-3 itens curtos (1-2 frases cada) com o
+  que o aluno fez bem. Específico, não genérico.
+- `pontos_fracos`: lista de 1-3 itens curtos (1-2 frases cada) com o
+  que compromete a nota. Específico ao texto avaliado.
+- `padrao_falha`: 1 frase nomeando o padrão pedagógico dominante (ex.:
+  "tese genérica", "salto lógico", "proposta desarticulada").
+- `transferencia_competencia`: 1-2 frases sobre como esse padrão se
+  manifesta em outras competências e o que treinar pra evitar.
+
+**NÃO escreva tudo em prosa única.** A UI do portal renderiza cada
+campo numa seção visual separada — texto monolítico vira parede de
+texto. Cada campo deve fazer sentido isolado.
 
 ## Economia de palavras
 

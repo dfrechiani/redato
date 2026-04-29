@@ -9,11 +9,14 @@ Auth: JWT (M3). Permissions: `can_create_atividade` (professor) ou
 from __future__ import annotations
 
 import json
+import logging
 import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -856,27 +859,104 @@ def _competencias_de(
     return found
 
 
-def _audit_pedagogico_de(out: Optional[Dict[str, Any]]) -> Optional[str]:
-    """Texto pedagógico em prosa pro professor ler na tela do aluno.
+def _analise_da_redacao_de(
+    out: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Análise pedagógica estruturada pro professor ler na tela do
+    aluno (M9.4, 2026-04-29 — antes "audit pedagógico").
 
-    Cobre formatos:
-    1. **Moderno (foco/completo_parcial)**: `feedback_professor.
-       audit_completo` é a prosa autoritativa.
-    2. **Legacy**: top-level `audit`, `audit_pedagogico`, `feedback`,
-       `comentario_geral` (string direta).
+    Cobre 3 formatos de `feedback_professor`:
+
+    1. **Estruturado moderno (M9.4+)**: 4 campos discretos
+       `pontos_fortes`, `pontos_fracos`, `padrao_falha`,
+       `transferencia_competencia`. Cada um vira uma seção na UI.
+
+    2. **Legacy v3 (M9.0–M9.3)**: `audit_completo` (string única) +
+       `padrao_falha` + `transferencia_c1`. UI renderiza
+       `audit_completo` como prosa única no campo `prosa_completa`,
+       e os outros 2 campos vão pras suas seções.
+
+    3. **Legacy seed (M6/M7)**: top-level `audit`, `audit_pedagogico`,
+       `feedback`, `comentario_geral` como string direta. Tudo vira
+       `prosa_completa`.
+
+    Retorna dict com keys (todas opcionais — vazio significa formato
+    não bate ou redato_output ausente):
+
+        {
+            "pontos_fortes": List[str],
+            "pontos_fracos": List[str],
+            "padrao_falha": Optional[str],
+            "transferencia": Optional[str],
+            "prosa_completa": Optional[str],
+        }
+
+    Frontend decide o que renderizar: se `pontos_fortes`/`pontos_fracos`
+    populados, mostra estrutura nova; senão, mostra `prosa_completa`.
     """
+    empty: Dict[str, Any] = {
+        "pontos_fortes": [],
+        "pontos_fracos": [],
+        "padrao_falha": None,
+        "transferencia": None,
+        "prosa_completa": None,
+    }
     if not out:
-        return None
+        return empty
+
+    result = {**empty}
     fb_prof = out.get("feedback_professor")
     if isinstance(fb_prof, dict):
+        # Estruturado moderno (M9.4+)
+        pf = fb_prof.get("pontos_fortes")
+        if isinstance(pf, list):
+            result["pontos_fortes"] = [
+                s for s in pf if isinstance(s, str) and s.strip()
+            ]
+        pfr = fb_prof.get("pontos_fracos")
+        if isinstance(pfr, list):
+            result["pontos_fracos"] = [
+                s for s in pfr if isinstance(s, str) and s.strip()
+            ]
+
+        # Padrão de falha (existe em ambos formatos modernos)
+        padrao = fb_prof.get("padrao_falha")
+        if isinstance(padrao, str) and padrao.strip():
+            result["padrao_falha"] = padrao
+
+        # Transferência: M9.4 usa transferencia_competencia; v3 legacy
+        # usa transferencia_c1. Aceita ambos.
+        for tk in ("transferencia_competencia", "transferencia_c1"):
+            tv = fb_prof.get(tk)
+            if isinstance(tv, str) and tv.strip():
+                result["transferencia"] = tv
+                break
+
+        # Legacy v3: audit_completo monolítico
         ac = fb_prof.get("audit_completo")
         if isinstance(ac, str) and ac.strip():
-            return ac
-    for k in ("audit", "audit_pedagogico", "feedback", "comentario_geral"):
-        v = out.get(k)
-        if isinstance(v, str) and v.strip():
-            return v
-    return None
+            result["prosa_completa"] = ac
+
+    # Legacy seed (M6/M7): top-level prosa direta — só usa se ainda
+    # não temos prosa_completa do feedback_professor.
+    if result["prosa_completa"] is None:
+        for k in ("audit_pedagogico", "audit", "feedback",
+                  "comentario_geral", "analise_da_redacao"):
+            v = out.get(k)
+            if isinstance(v, str) and v.strip():
+                result["prosa_completa"] = v
+                break
+
+    return result
+
+
+# Mantém alias retrocompat — caller pode chamar com nome antigo até
+# refatoração ser concluída em todas as camadas.
+def _audit_pedagogico_de(out: Optional[Dict[str, Any]]) -> Optional[str]:
+    """DEPRECATED desde M9.4. Mantido pra retrocompat com chamadas
+    externas. Use `_analise_da_redacao_de` que retorna estrutura
+    completa. Esta função extrai apenas a prosa monolítica legacy."""
+    return _analise_da_redacao_de(out).get("prosa_completa")
 
 
 def _detectores_acionados_de(out: Optional[Dict[str, Any]]) -> List[str]:
@@ -1220,11 +1300,23 @@ class EnvioFeedbackResponse(BaseModel):
     # path absoluto do backend — `<img src=>` não passa Authorization
     # header e arquivos não são servidos pelo Next.js.
     foto_url: Optional[str]
+    # Status diagnóstico da foto pro frontend mostrar mensagem útil
+    # quando foto_url é None. Valores:
+    #   "ok"             — foto existe no FS e foto_url está populada
+    #   "no_envio"       — aluno não enviou redação ainda
+    #   "not_persisted"  — envio existe mas interaction sem foto_path
+    #                      (bot pode ter falhado ao baixar do Twilio)
+    #   "file_missing"   — foto_path no DB mas arquivo sumiu do FS
+    #                      (volume Railway perdeu, deploy quebrou)
+    foto_status: str
     foto_hash: Optional[str]
     texto_transcrito: Optional[str]
     nota_total: Optional[int]
     faixas: List[FaixaQualitativa]
-    audit_pedagogico: Optional[str]
+    # Análise da redação (M9.4 — antes "audit_pedagogico"). Estrutura
+    # discreta com pontos fortes/fracos + padrão + transferência.
+    # `prosa_completa` é fallback pra outputs legacy monolíticos.
+    analise_da_redacao: Dict[str, Any]
     detectores: List[Dict[str, Any]]
     ocr_quality_issues: List[str]
     raw_output: Optional[Dict[str, Any]]
@@ -1277,8 +1369,10 @@ def detalhe_envio(
                 modo_correcao=missao.modo_correcao if missao else "",
                 aluno_id=str(aluno.id), aluno_nome=aluno.nome,
                 enviado_em=None,
-                foto_url=None, foto_hash=None, texto_transcrito=None,
-                nota_total=None, faixas=[], audit_pedagogico=None,
+                foto_url=None, foto_status="no_envio",
+                foto_hash=None, texto_transcrito=None,
+                nota_total=None, faixas=[],
+                analise_da_redacao=_analise_da_redacao_de(None),
                 detectores=[], ocr_quality_issues=[], raw_output=None,
             )
         interaction = (
@@ -1320,7 +1414,7 @@ def detalhe_envio(
                 "detalhe": None,
             })
 
-        audit_prose = _audit_pedagogico_de(out)
+        analise = _analise_da_redacao_de(out)
 
         try:
             issues = json.loads(interaction.ocr_quality_issues) if (
@@ -1329,16 +1423,44 @@ def detalhe_envio(
         except (ValueError, TypeError):
             issues = []
 
-        # `foto_url` aponta pro proxy frontend, que injeta o JWT-cookie
-        # e encaminha pra `/portal/atividades/{aid}/envios/{atid}/foto`.
-        # Só populamos quando a interação tem foto persistida — caso
-        # contrário frontend renderiza fallback "Foto não disponível".
+        # Diagnóstico da foto: a tela do aluno tem campo dedicado
+        # foto_status pra mostrar mensagem útil quando foto_url é None.
+        # Casos cobertos: not_persisted (bot não baixou do Twilio),
+        # file_missing (path no DB mas arquivo sumiu do volume Railway).
         foto_url: Optional[str] = None
-        if interaction is not None and interaction.foto_path:
-            foto_url = (
-                f"/api/portal/atividades/{atividade_id}"
-                f"/envios/{aluno_turma_id}/foto"
+        foto_status: str = "ok"
+        foto_db_path = (
+            interaction.foto_path
+            if interaction is not None and interaction.foto_path
+            else None
+        )
+        if not foto_db_path:
+            foto_status = "not_persisted"
+            logger.warning(
+                "detalhe_envio: foto_path null no DB. atividade_id=%s "
+                "aluno_turma_id=%s envio_id=%s interaction_id=%s",
+                atividade_id, aluno_turma_id, envio.id,
+                envio.interaction_id,
             )
+        else:
+            # Resolve path absoluto (alguns caminhos históricos foram
+            # salvos relativos — normaliza pro filesystem do container)
+            foto_path = Path(foto_db_path)
+            if not foto_path.is_absolute():
+                backend_root = Path(__file__).resolve().parents[2]
+                foto_path = (backend_root / foto_path).resolve()
+            if foto_path.exists() and foto_path.is_file():
+                foto_url = (
+                    f"/api/portal/atividades/{atividade_id}"
+                    f"/envios/{aluno_turma_id}/foto"
+                )
+            else:
+                foto_status = "file_missing"
+                logger.warning(
+                    "detalhe_envio: foto_path no DB mas arquivo não "
+                    "existe no FS. db_path=%s resolved=%s",
+                    foto_db_path, str(foto_path),
+                )
 
         return EnvioFeedbackResponse(
             atividade_id=str(atividade_id),
@@ -1349,11 +1471,12 @@ def detalhe_envio(
             aluno_id=str(aluno.id), aluno_nome=aluno.nome,
             enviado_em=envio.enviado_em.isoformat(),
             foto_url=foto_url,
+            foto_status=foto_status,
             foto_hash=interaction.foto_hash if interaction else None,
             texto_transcrito=interaction.texto_transcrito if interaction else None,
             nota_total=nota_total,
             faixas=faixas,
-            audit_pedagogico=audit_prose,
+            analise_da_redacao=analise,
             detectores=detectores,
             ocr_quality_issues=issues if isinstance(issues, list) else [],
             raw_output=out,
@@ -1419,6 +1542,11 @@ def baixar_foto_envio(
         )
 
     if not foto_path_str:
+        logger.warning(
+            "baixar_foto_envio: foto_path null no DB. atividade_id=%s "
+            "aluno_turma_id=%s",
+            atividade_id, aluno_turma_id,
+        )
         raise HTTPException(status_code=404, detail="Sem foto registrada")
 
     foto_path = Path(foto_path_str)
@@ -1428,6 +1556,11 @@ def baixar_foto_envio(
         backend_root = Path(__file__).resolve().parents[2]
         foto_path = (backend_root / foto_path).resolve()
     if not foto_path.exists() or not foto_path.is_file():
+        logger.warning(
+            "baixar_foto_envio: arquivo não existe no FS. "
+            "db_path=%s resolved=%s atividade_id=%s",
+            foto_path_str, str(foto_path), atividade_id,
+        )
         raise HTTPException(
             status_code=410,
             detail="Arquivo da foto não está mais disponível no servidor",

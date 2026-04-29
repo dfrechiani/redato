@@ -224,6 +224,180 @@ def test_audit_none_quando_out_none():
 
 
 # ──────────────────────────────────────────────────────────────────────
+# _analise_da_redacao_de — estrutura discreta moderna (M9.4)
+# ──────────────────────────────────────────────────────────────────────
+
+def test_analise_modern_4_campos():
+    """M9.4: feedback_professor com pontos_fortes/fracos/padrao/transferencia."""
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {
+        "modo": "foco_c2",
+        "feedback_professor": {
+            "pontos_fortes": ["Tese clara.", "Repertório articulado."],
+            "pontos_fracos": ["Conectivos repetidos."],
+            "padrao_falha": "tese genérica",
+            "transferencia_competencia": "Vai impactar C3.",
+        },
+    }
+    r = _analise_da_redacao_de(out)
+    assert r["pontos_fortes"] == ["Tese clara.", "Repertório articulado."]
+    assert r["pontos_fracos"] == ["Conectivos repetidos."]
+    assert r["padrao_falha"] == "tese genérica"
+    assert r["transferencia"] == "Vai impactar C3."
+    assert r["prosa_completa"] is None
+
+
+def test_analise_filtra_strings_vazias_em_listas():
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {
+        "feedback_professor": {
+            "pontos_fortes": ["ok", "  ", ""],
+            "pontos_fracos": ["válido"],
+            "padrao_falha": "x",
+            "transferencia_competencia": "y",
+        },
+    }
+    r = _analise_da_redacao_de(out)
+    assert r["pontos_fortes"] == ["ok"]
+    assert r["pontos_fracos"] == ["válido"]
+
+
+def test_analise_legacy_v3_audit_completo_string():
+    """Output produzido antes do M9.4: feedback_professor monolítico."""
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {
+        "modo": "foco_c3",
+        "feedback_professor": {
+            "padrao_falha": "tese genérica",
+            "transferencia_c1": "Impacto em C3.",
+            "audit_completo": "Texto longo do audit.",
+        },
+    }
+    r = _analise_da_redacao_de(out)
+    assert r["pontos_fortes"] == []
+    assert r["pontos_fracos"] == []
+    assert r["padrao_falha"] == "tese genérica"
+    assert r["transferencia"] == "Impacto em C3."
+    assert r["prosa_completa"] == "Texto longo do audit."
+
+
+def test_analise_aceita_transferencia_c1_legacy_quando_falta_competencia():
+    """Legacy v3 usava transferencia_c1; helper aceita os dois nomes."""
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {"feedback_professor": {"transferencia_c1": "x"}}
+    assert _analise_da_redacao_de(out)["transferencia"] == "x"
+
+
+def test_analise_prefere_competencia_quando_ambas_existem():
+    """Se output tem ambas (por algum bug), prefere a moderna."""
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {
+        "feedback_professor": {
+            "transferencia_competencia": "moderna",
+            "transferencia_c1": "legacy",
+        },
+    }
+    assert _analise_da_redacao_de(out)["transferencia"] == "moderna"
+
+
+def test_analise_legacy_seed_top_level():
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    for k in ("audit_pedagogico", "audit", "feedback",
+              "comentario_geral", "analise_da_redacao"):
+        out = {k: f"seed via {k}"}
+        r = _analise_da_redacao_de(out)
+        assert r["prosa_completa"] == f"seed via {k}", (
+            f"chave {k} não foi reconhecida"
+        )
+        assert r["pontos_fortes"] == []
+
+
+def test_analise_estrutura_moderna_tem_prioridade_sobre_top_level():
+    """Se output tem AMBOS estrutura moderna E top-level legacy, NÃO
+    duplica prosa_completa (mantém None — quem renderiza decide qual
+    formato mostrar)."""
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {
+        "feedback_professor": {
+            "pontos_fortes": ["x"],
+            "pontos_fracos": ["y"],
+            "padrao_falha": "p",
+            "transferencia_competencia": "t",
+        },
+        "audit_pedagogico": "prosa antiga top-level",
+    }
+    r = _analise_da_redacao_de(out)
+    # Estrutura moderna populada
+    assert r["pontos_fortes"] == ["x"]
+    # Top-level NÃO sobrescreve quando feedback_professor.audit_completo
+    # ausente — top-level só preenche prosa_completa via fallback.
+    assert r["prosa_completa"] == "prosa antiga top-level"
+
+
+def test_analise_vazio_quando_out_none():
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    r = _analise_da_redacao_de(None)
+    assert r["pontos_fortes"] == []
+    assert r["pontos_fracos"] == []
+    assert r["padrao_falha"] is None
+    assert r["transferencia"] is None
+    assert r["prosa_completa"] is None
+
+
+def test_analise_vazio_quando_sem_feedback_professor():
+    from redato_backend.portal.portal_api import _analise_da_redacao_de
+    out = {"modo": "foco_c2", "nota_c2_enem": 160}  # sem feedback_professor
+    r = _analise_da_redacao_de(out)
+    assert all(not v for v in r.values())
+
+
+def test_alias_audit_pedagogico_de_retorna_prosa():
+    """`_audit_pedagogico_de` é alias deprecated — extrai só prosa."""
+    from redato_backend.portal.portal_api import _audit_pedagogico_de
+    out_legacy = {"feedback_professor": {"audit_completo": "prosa"}}
+    assert _audit_pedagogico_de(out_legacy) == "prosa"
+    out_modern = {"feedback_professor": {"pontos_fortes": ["x"]}}
+    # Modern não tem prosa monolítica → None
+    assert _audit_pedagogico_de(out_modern) is None
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Schema do feedback_professor (M9.4) — verifica estrutura nova
+# ──────────────────────────────────────────────────────────────────────
+
+def test_schema_feedback_professor_tem_4_campos_estruturados():
+    from redato_backend.missions.schemas import _feedback_professor_schema
+    schema = _feedback_professor_schema()
+    props = schema["properties"]
+    assert "pontos_fortes" in props
+    assert "pontos_fracos" in props
+    assert "padrao_falha" in props
+    assert "transferencia_competencia" in props
+    # audit_completo foi removido — agora é prosa_completa só no
+    # fallback do helper, não no schema novo
+    assert "audit_completo" not in props
+
+
+def test_schema_pontos_fortes_e_fracos_sao_arrays():
+    from redato_backend.missions.schemas import _feedback_professor_schema
+    schema = _feedback_professor_schema()
+    pf = schema["properties"]["pontos_fortes"]
+    assert pf["type"] == "array"
+    assert pf["items"]["type"] == "string"
+    assert pf["minItems"] == 1
+    assert pf["maxItems"] == 3
+
+
+def test_schema_required_inclui_4_campos():
+    from redato_backend.missions.schemas import _feedback_professor_schema
+    schema = _feedback_professor_schema()
+    assert set(schema["required"]) == {
+        "pontos_fortes", "pontos_fracos",
+        "padrao_falha", "transferencia_competencia",
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────
 # _detectores_acionados_de — confirma formato moderno funciona
 # (regressão garantida — função já existia mas tela do aluno não usava)
 # ──────────────────────────────────────────────────────────────────────

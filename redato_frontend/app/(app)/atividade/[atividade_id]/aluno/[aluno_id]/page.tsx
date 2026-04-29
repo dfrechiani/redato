@@ -80,8 +80,24 @@ export default async function FeedbackAlunoPage({ params }: Props) {
                     className="w-full rounded border border-border bg-muted object-contain max-h-[600px]"
                   />
                 ) : (
+                  // Mensagem diagnóstica baseada em foto_status — ajuda
+                  // professor entender por que a foto sumiu sem precisar
+                  // olhar logs do servidor.
                   <p className="text-sm text-ink-400">
-                    Foto não disponível.
+                    {data.foto_status === "file_missing" ? (
+                      <>
+                        Arquivo da foto sumiu do servidor (provavelmente
+                        perdido em deploy). Aluno precisa reenviar.
+                      </>
+                    ) : data.foto_status === "not_persisted" ? (
+                      <>
+                        Foto não foi salva pelo bot. O envio chegou ao
+                        portal mas o download do WhatsApp pode ter
+                        falhado. Aluno precisa reenviar.
+                      </>
+                    ) : (
+                      <>Foto não disponível.</>
+                    )}
                   </p>
                 )}
                 {data.ocr_quality_issues.length > 0 && (
@@ -150,14 +166,79 @@ export default async function FeedbackAlunoPage({ params }: Props) {
             </div>
           </div>
 
-          {data.audit_pedagogico && (
+          {/* Análise da redação (M9.4 — substitui "Audit pedagógico").
+              Renderiza estrutura discreta quando o output moderno
+              tem pontos_fortes/pontos_fracos. Senão, fallback pra
+              prosa_completa de outputs legacy. */}
+          {(data.analise_da_redacao.pontos_fortes.length > 0 ||
+            data.analise_da_redacao.pontos_fracos.length > 0 ||
+            data.analise_da_redacao.padrao_falha ||
+            data.analise_da_redacao.transferencia ||
+            data.analise_da_redacao.prosa_completa) && (
             <Card>
-              <p className="font-mono text-xs uppercase tracking-wider text-ink-400 mb-2">
-                Audit pedagógico
+              <p className="font-mono text-xs uppercase tracking-wider text-ink-400 mb-3">
+                Análise da redação
               </p>
-              <p className="text-sm leading-relaxed whitespace-pre-line">
-                {data.audit_pedagogico}
-              </p>
+
+              {data.analise_da_redacao.pontos_fortes.length > 0 && (
+                <section className="mb-4">
+                  <h3 className="font-semibold text-sm mb-2">
+                    📌 Pontos fortes
+                  </h3>
+                  <ul className="space-y-1.5 list-disc list-inside text-sm leading-relaxed">
+                    {data.analise_da_redacao.pontos_fortes.map((p, i) => (
+                      <li key={i}>{p}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {data.analise_da_redacao.pontos_fracos.length > 0 && (
+                <section className="mb-4">
+                  <h3 className="font-semibold text-sm mb-2">
+                    ⚠️ Pontos fracos
+                  </h3>
+                  <ul className="space-y-1.5 list-disc list-inside text-sm leading-relaxed">
+                    {data.analise_da_redacao.pontos_fracos.map((p, i) => (
+                      <li key={i}>{p}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {data.analise_da_redacao.padrao_falha && (
+                <section className="mb-4">
+                  <h3 className="font-semibold text-sm mb-2">
+                    🎯 Padrão de falha
+                  </h3>
+                  <p className="text-sm leading-relaxed">
+                    {data.analise_da_redacao.padrao_falha}
+                  </p>
+                </section>
+              )}
+
+              {data.analise_da_redacao.transferencia && (
+                <section className="mb-4">
+                  <h3 className="font-semibold text-sm mb-2">
+                    🔁 Transferência para outras competências
+                  </h3>
+                  <p className="text-sm leading-relaxed">
+                    {data.analise_da_redacao.transferencia}
+                  </p>
+                </section>
+              )}
+
+              {/* Fallback pra outputs legacy que ainda têm prosa
+                  monolítica em audit_completo, ou seeds antigos com
+                  top-level audit/feedback. Só mostra quando NÃO tem
+                  estrutura nova (evita duplicar). */}
+              {data.analise_da_redacao.prosa_completa &&
+                data.analise_da_redacao.pontos_fortes.length === 0 &&
+                data.analise_da_redacao.pontos_fracos.length === 0 && (
+                <p className="text-sm leading-relaxed whitespace-pre-line">
+                  {data.analise_da_redacao.prosa_completa}
+                </p>
+              )}
             </Card>
           )}
 

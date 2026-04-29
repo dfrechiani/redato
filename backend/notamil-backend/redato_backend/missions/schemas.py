@@ -74,30 +74,71 @@ def _feedback_aluno_schema() -> Dict[str, Any]:
 
 
 def _feedback_professor_schema(audit_target: str = "100-200 palavras") -> Dict[str, Any]:
+    """Estrutura do `feedback_professor` (M9.4, 2026-04-29).
+
+    Decisão Daniel: substitui o monólito `audit_completo` por 4 campos
+    discretos, pra UI renderizar com seções visuais (pontos fortes,
+    pontos fracos, padrão de falha, transferência). Reduz parede de
+    texto na tela do aluno.
+
+    `audit_target` (parâmetro mantido pra retrocompat de chamadas
+    existentes em `FOCO_C{3,4,5}_TOOL` e `COMPLETO_PARCIAL_TOOL`)
+    agora se aplica ao **somatório** dos 4 campos — não mais a um
+    único campo. Helper `_audit_pedagogico_de` no portal lê tanto o
+    formato novo quanto o legado `audit_completo`.
+    """
     return {
         "type": "object",
         "properties": {
+            "pontos_fortes": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1,
+                "maxItems": 3,
+                "description": (
+                    "1-3 itens curtos (1-2 frases cada) sobre o que o "
+                    "aluno fez bem. Em terminologia INEP/oficina pro "
+                    "professor (não o vocabulário simplificado do "
+                    "feedback_aluno). Ex.: 'Tópico frasal assertivo "
+                    "com recorte temático preservado.'"
+                ),
+            },
+            "pontos_fracos": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1,
+                "maxItems": 3,
+                "description": (
+                    "1-3 itens curtos (1-2 frases cada) sobre o que "
+                    "compromete a nota. Específico, não genérico. "
+                    "Ex.: 'Repertório legitimado mas desarticulado do "
+                    "argumento — Bauman colado sem aprofundamento.'"
+                ),
+            },
             "padrao_falha": {
                 "type": "string",
-                "description": "1 frase nomeando o padrão pedagógico observado (ex.: "
-                               "'tese genérica', 'salto lógico', 'proposta desarticulada'). "
-                               "Em terminologia INEP/oficina.",
+                "description": (
+                    "1 frase nomeando o padrão pedagógico dominante. "
+                    "Em terminologia INEP/oficina. Ex.: 'tese "
+                    "genérica', 'salto lógico', 'proposta "
+                    "desarticulada', 'repertório de bolso'."
+                ),
             },
-            "transferencia_c1": {
-                "type": "string",
-                "description": "1 frase apontando o que pode ser transferido para a "
-                               "competência ENEM correspondente em redação completa.",
-            },
-            "audit_completo": {
+            "transferencia_competencia": {
                 "type": "string",
                 "description": (
-                    f"Audit técnico em terminologia INEP. **Tamanho-alvo: "
-                    f"{audit_target}.** Contém o quê + porquê + impacto na nota. "
-                    f"Não exceda o limite — verbosidade não agrega informação."
+                    "1-2 frases apontando como esse padrão se "
+                    "manifesta em outras competências do ENEM e o "
+                    "que o aluno deve treinar pra evitar reincidência."
                 ),
             },
         },
-        "required": ["padrao_falha", "transferencia_c1", "audit_completo"],
+        "required": [
+            "pontos_fortes",
+            "pontos_fracos",
+            "padrao_falha",
+            "transferencia_competencia",
+        ],
     }
 
 

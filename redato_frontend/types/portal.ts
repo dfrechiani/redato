@@ -150,11 +150,29 @@ export interface EnvioFeedback {
    *  arquivo. NÃO é mais path absoluto do filesystem do backend
    *  (mudança do M9.3, 2026-04-29 — fix tela individual). */
   foto_url: string | null;
+  /** Status diagnóstico da foto. Usado pra mostrar mensagem específica
+   *  quando foto_url é null. Valores:
+   *    "ok" — foto carrega normalmente
+   *    "no_envio" — aluno não enviou redação
+   *    "not_persisted" — envio existe mas bot não salvou foto_path
+   *    "file_missing" — path no DB mas arquivo sumiu do servidor */
+  foto_status: "ok" | "no_envio" | "not_persisted" | "file_missing";
   foto_hash: string | null;
   texto_transcrito: string | null;
   nota_total: number | null;
   faixas: FaixaQualitativa[];
-  audit_pedagogico: string | null;
+  /** Análise da redação (M9.4, antes "audit_pedagogico"). Estrutura
+   *  discreta com pontos fortes, pontos fracos, padrão de falha e
+   *  transferência. `prosa_completa` é fallback pra outputs legacy
+   *  monolíticos. UI mostra estrutura nova quando pontos_fortes ou
+   *  pontos_fracos populados; senão mostra prosa_completa. */
+  analise_da_redacao: {
+    pontos_fortes: string[];
+    pontos_fracos: string[];
+    padrao_falha: string | null;
+    transferencia: string | null;
+    prosa_completa: string | null;
+  };
   detectores: Array<{
     detector: string;
     codigo?: string;
