@@ -186,6 +186,76 @@ class AtividadeAtivaInfo:
     status: str  # "agendada" | "ativa" | "encerrada"
 
 
+@dataclass
+class AtividadeAtivaContext:
+    """Atividade `ativa` (entre data_inicio e data_fim) numa turma onde
+    o aluno está vinculado. Usado pelo bot pra resolver foto sem código
+    automaticamente quando há uma única atividade aberta."""
+    atividade_id: uuid.UUID
+    missao_codigo: str             # canonical: RJ2·OF04·MF
+    missao_titulo: str
+    oficina_numero: int            # 4
+    modo_correcao: str
+    serie: str                     # "1S" | "2S" | "3S"
+    turma_id: uuid.UUID
+    turma_codigo: str
+    escola_nome: str
+    aluno_turma_id: uuid.UUID
+    data_fim: datetime
+
+
+def list_atividades_ativas_por_aluno(
+    phone: str,
+) -> List[AtividadeAtivaContext]:
+    """Atividades de status `ativa` (entre data_inicio e data_fim) em
+    todas as turmas onde o aluno está vinculado e ativo. Ordem: mais
+    recente primeiro.
+
+    Usado pelo bot pra resolver `foto sem código` automaticamente:
+    - 1 atividade ativa → usa direto, sem perguntar
+    - >1 → lista oficina_numero pro aluno escolher
+    - 0 → pede código completo
+    """
+    agora = _utc_now()
+    with _open_session() as session:
+        rows = session.execute(
+            select(Atividade, Missao, Turma, Escola, AlunoTurma)
+            .join(Missao, Missao.id == Atividade.missao_id)
+            .join(Turma, Turma.id == Atividade.turma_id)
+            .join(Escola, Escola.id == Turma.escola_id)
+            .join(AlunoTurma, AlunoTurma.turma_id == Turma.id)
+            .where(
+                AlunoTurma.telefone == phone,
+                AlunoTurma.ativo.is_(True),
+                Turma.ativa.is_(True),
+                Turma.deleted_at.is_(None),
+                Escola.ativa.is_(True),
+                Escola.deleted_at.is_(None),
+                Atividade.deleted_at.is_(None),
+                Atividade.data_inicio <= agora,
+                Atividade.data_fim >= agora,
+            )
+            .order_by(Atividade.data_inicio.desc())
+        ).all()
+
+    return [
+        AtividadeAtivaContext(
+            atividade_id=ativ.id,
+            missao_codigo=missao.codigo,
+            missao_titulo=missao.titulo,
+            oficina_numero=missao.oficina_numero,
+            modo_correcao=missao.modo_correcao,
+            serie=missao.serie,
+            turma_id=turma.id,
+            turma_codigo=turma.codigo,
+            escola_nome=escola.nome,
+            aluno_turma_id=at.id,
+            data_fim=ativ.data_fim,
+        )
+        for (ativ, missao, turma, escola, at) in rows
+    ]
+
+
 def find_atividade_para_missao(
     *, turma_id: uuid.UUID, missao_codigo: str,
 ) -> Optional[AtividadeAtivaInfo]:

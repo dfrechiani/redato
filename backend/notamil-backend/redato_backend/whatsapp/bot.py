@@ -74,16 +74,20 @@ MSG_PEDE_TURMA = (
     "Exemplo: _1A — Colégio Estadual Rui Barbosa_"
 )
 
+# Aliases das mensagens canônicas em messages.py — preservados pra
+# retrocompat de imports antigos. Lógica que precisa de versão dinâmica
+# (lista de oficinas calculada do banco) usa `_msg_falta_missao` ou
+# importa `messages.MSG_FALTA_MISSAO_DINAMICO` direto.
 MSG_CADASTRADO = (
     "Beleza, {nome}! Cadastro feito.\n\n"
-    "Pra eu corrigir uma redação, manda a *foto da página do livro* + "
-    "o *número da missão* (10, 11, 12, 13 ou 14). Pode mandar tudo na "
-    "mesma mensagem ou em mensagens separadas."
+    "Pra eu corrigir uma redação, manda a *foto da página do livro*. "
+    "Eu identifico a missão pela atividade aberta na sua turma. Se "
+    "tiver mais de uma, pergunto."
 )
 
 MSG_FALTA_MISSAO = (
-    "Recebi a foto, mas não sei qual missão é. Me manda o número da "
-    "missão: *10*, *11*, *12*, *13* ou *14*."
+    "Recebi a foto, mas não sei qual missão é. "
+    "Manda o número ou o código completo (ex.: RJ2·OF04·MF)."
 )
 
 MSG_FALTA_FOTO = (
@@ -91,8 +95,8 @@ MSG_FALTA_FOTO = (
 )
 
 MSG_MISSAO_INVALIDA = (
-    "Não reconheci esse código. Manda só o número da missão: "
-    "*10*, *11*, *12*, *13* ou *14*."
+    "Não reconheci esse código. Manda o código completo no formato "
+    "`RJ{N}·OF{NN}·MF` (ex.: RJ2·OF04·MF) ou *cancelar* pra recomeçar."
 )
 
 MSG_PROCESSANDO = (
@@ -130,91 +134,176 @@ MSG_OCR_ERRADO_SEM_HISTORICO = (
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Activity ID parsing
+# Activity ID parsing — agora suporta 2S (OF01, OF04, ..., OF09 com
+# leading zero) e mantém compat com 1S (OF10..OF14).
 # ──────────────────────────────────────────────────────────────────────
 
-# Formato canônico: RJ1OF10MF com variações de separador
+# Formato canônico completo: RJ\dOF\d{1,2}MF com variações de separador
 _MISSAO_RE_FULL = re.compile(
-    r"RJ\d+\s*[\W_]*\s*OF\s*\d{2}\s*[\W_]*\s*MF",
+    r"RJ(\d)\s*[\W_]*\s*OF\s*(\d{1,2})\s*[\W_]*\s*MF",
     re.IGNORECASE,
 )
-# Autocorretor iPhone troca "1OF10" por "10F10" (O → 0)
+# Autocorretor iPhone troca "RJ\dOF" por "RJ\d0F" (O → 0)
 _MISSAO_RE_AUTOCORRECT = re.compile(
-    r"RJ(\d)0F(\d{2})\s*[\W_]*\s*MF",
+    r"RJ(\d)0F(\d{1,2})\s*[\W_]*\s*MF",
     re.IGNORECASE,
 )
-# Forma curta com OF: "OF10", "of 10", "of12"
-_MISSAO_RE_OF = re.compile(r"\bOF\s*(\d{2})\b", re.IGNORECASE)
-# Forma curta com M: "M1", "m 2", "m5"
-_MISSAO_RE_M = re.compile(r"\bM\s*([1-5])\b", re.IGNORECASE)
-# Número puro como única coisa na mensagem: "10", " 11 "
-_MISSAO_RE_NUM_ONLY = re.compile(r"^\s*(10|11|12|13|14)\s*$")
+# Forma curta com OF: "OF01", "OF10", "of 4", "of12"
+_MISSAO_RE_OF = re.compile(r"\bOF\s*(\d{1,2})\b", re.IGNORECASE)
+# Número puro 1-99 como única coisa na mensagem: "1", "10", " 04 "
+_MISSAO_RE_NUM_ONLY = re.compile(r"^\s*0*(\d{1,2})\s*$")
 
-# OF válidos (extensão futura: OF20+ pra Livro 2S)
-_VALID_OF_NUMBERS = {"10", "11", "12", "13", "14"}
-# M ↔ OF: M1=OF10, M2=OF11, ..., M5=OF14
-_M_TO_OF = {"1": "10", "2": "11", "3": "12", "4": "13", "5": "14"}
+# Comando de cancelamento — em qualquer estado da FSM volta pra READY.
+_CANCEL_RE = re.compile(
+    r"^\s*(cancelar|cancel|resetar|reset|sair|exit|recome[çc]ar|come[çc]ar de novo)\s*$",
+    re.IGNORECASE,
+)
 
 
-def _extract_missao(text: str) -> Optional[str]:
-    """Pega o código da missão em qualquer formato aceito.
+def _pad2(n: str) -> str:
+    """Normaliza '4' → '04', '04' → '04', '10' → '10'."""
+    return n.zfill(2)
 
-    Aceita (case-insensitive, com ou sem pontuação):
-    - RJ1OF10MF, RJ1·OF10·MF, rj1.of10.mf, ...
-    - RJ10F10MF (autocorretor iPhone trocou O por 0)
-    - OF10, of10
-    - M1, M2, M3, M4, M5
-    - 10, 11, 12, 13, 14 (apenas se for o conteúdo inteiro da mensagem)
 
-    Retorna formato canônico RJ1·OF10·MF, ou None se não reconhecer.
+def _extract_missao_canonical(text: str) -> Optional[str]:
+    """Extrai SOMENTE quando há prefixo RJ\\d explícito. Retorna o
+    canonical `RJ{N}·OF{NN}·MF` ou None.
+
+    Útil pra aceitar código completo em qualquer estado da FSM (sem
+    ambiguidade — o aluno especificou série).
     """
     if not text:
         return None
-
-    # 1. Forma completa RJ\d+OF\d{2}MF
     m = _MISSAO_RE_FULL.search(text)
     if m:
-        digits = re.findall(r"\d+", m.group(0))
-        if len(digits) >= 2 and digits[1] in _VALID_OF_NUMBERS:
-            return f"RJ{digits[0]}·OF{digits[1]}·MF"
-
-    # 2. Autocorretor iPhone: RJ\d0F\d{2}MF
+        rj_n, of_nn = m.group(1), _pad2(m.group(2))
+        return f"RJ{rj_n}·OF{of_nn}·MF"
     m = _MISSAO_RE_AUTOCORRECT.search(text)
     if m:
-        of_nn = m.group(2)
-        if of_nn in _VALID_OF_NUMBERS:
-            return f"RJ{m.group(1)}·OF{of_nn}·MF"
+        rj_n, of_nn = m.group(1), _pad2(m.group(2))
+        return f"RJ{rj_n}·OF{of_nn}·MF"
+    return None
 
-    # 3. Forma curta OF<nn>
+
+def _extract_oficina_numero(text: str) -> Optional[int]:
+    """Extrai apenas o número da oficina, sem prefixo de série.
+
+    Aceita (case-insensitive):
+    - `OF10`, `OF01`, `of 4`
+    - número puro como conteúdo único: `10`, `4`, `04`
+
+    Retorna int 1-99 ou None. Caller resolve qual série usar via
+    `list_atividades_ativas_por_aluno`.
+    """
+    if not text:
+        return None
     m = _MISSAO_RE_OF.search(text)
     if m:
-        of_nn = m.group(1)
-        if of_nn in _VALID_OF_NUMBERS:
-            return f"RJ1·OF{of_nn}·MF"
-
-    # 4. Forma curta M<n>
-    m = _MISSAO_RE_M.search(text)
-    if m:
-        m_n = m.group(1)
-        of_nn = _M_TO_OF.get(m_n)
-        if of_nn:
-            return f"RJ1·OF{of_nn}·MF"
-
-    # 5. Número puro (apenas se for o conteúdo único da mensagem,
-    #    pra evitar pegar "10 anos" numa frase qualquer)
+        try:
+            n = int(m.group(1))
+            if 1 <= n <= 99:
+                return n
+        except ValueError:
+            pass
     m = _MISSAO_RE_NUM_ONLY.match(text)
     if m:
-        of_nn = m.group(1)
-        return f"RJ1·OF{of_nn}·MF"
+        try:
+            n = int(m.group(1))
+            if 1 <= n <= 99:
+                return n
+        except ValueError:
+            pass
+    return None
 
+
+def _resolver_atividade_por_input(
+    text: str,
+    atividades_ativas: list,
+) -> Tuple[Optional[Any], List[int]]:
+    """Tenta casar o input do aluno com uma atividade ativa.
+
+    Retorna (atividade_resolvida, numeros_ambiguos):
+    - atividade != None, [] : match único — caller usa essa atividade
+    - None, [n1, n2, ...] : número casou com >1 atividade (ambíguo) —
+      caller deve perguntar pra desambiguar
+    - None, [] : nenhum match — caller decide próxima ação
+
+    Estratégia de matching:
+    1. Código completo `RJ{N}·OF{NN}·MF` → match exato em missao_codigo
+       (sem ambiguidade — aluno especificou série)
+    2. Número solto / `OF{nn}` → casa com `oficina_numero`. Se >1
+       atividade ativa tem mesmo oficina_numero (improvável mas
+       possível em aluno multi-série), retorna ambíguo.
+    """
+    if not atividades_ativas:
+        return None, []
+    canonical = _extract_missao_canonical(text)
+    if canonical:
+        for atv in atividades_ativas:
+            if atv.missao_codigo == canonical:
+                return atv, []
+        # Aluno escreveu RJ\d·OF\d\d·MF mas não bate com nenhuma ativa.
+        # Caller pode reportar "missão informada não está ativa".
+        return None, []
+
+    of_num = _extract_oficina_numero(text)
+    if of_num is not None:
+        matches = [a for a in atividades_ativas if a.oficina_numero == of_num]
+        if len(matches) == 1:
+            return matches[0], []
+        if len(matches) > 1:
+            return None, [of_num]
+    return None, []
+
+
+def _formatar_lista_oficinas(atividades_ativas: list) -> str:
+    """Renderiza '4', '4 ou 6', '4, 6 ou 13' a partir de oficina_numero
+    das atividades ativas. Ordem ascendente."""
+    nums = sorted({int(a.oficina_numero) for a in atividades_ativas})
+    if not nums:
+        return ""
+    if len(nums) == 1:
+        return str(nums[0])
+    if len(nums) == 2:
+        return f"{nums[0]} ou {nums[1]}"
+    return ", ".join(str(n) for n in nums[:-1]) + f" ou {nums[-1]}"
+
+
+# Backward-compat shim: alguns testes/callers antigos chamam
+# _extract_missao(text) sem contexto de atividades. Mantém o nome,
+# delega para a versão canônica + tenta resolver via número solto
+# assumindo prefixo RJ1 (1S) — comportamento prévio era hardcoded 1S.
+def _extract_missao(text: str) -> Optional[str]:
+    """Compat: tenta extrair canonical SEM contexto de aluno.
+
+    Em produção, o handler novo passa por `_resolver_atividade_por_input`
+    com lista de atividades ativas e resolve o prefixo correto. Esta
+    função é mantida pra:
+    - aceitar código completo em qualquer formato (preserva semântica)
+    - testes antigos que dependiam de "número solto → RJ1·OFNN·MF"
+
+    Comportamento conservador: se não houver prefixo RJ\\d explícito e
+    o input for número 1-14, ASSUME série 1S (compatibilidade); fora
+    disso retorna None pra forçar caller a usar fluxo novo.
+    """
+    if not text:
+        return None
+    canonical = _extract_missao_canonical(text)
+    if canonical:
+        return canonical
+    of_num = _extract_oficina_numero(text)
+    if of_num is None:
+        return None
+    # Assume 1S (compat) — só funciona pra OFs históricos da 1ª série.
+    if 10 <= of_num <= 14:
+        return f"RJ1·OF{_pad2(str(of_num))}·MF"
     return None
 
 
 def _is_valid_missao(canon: str) -> bool:
-    """O canon já vem validado por _extract_missao. Função mantida pra
-    compatibilidade com chamadas antigas; sempre True se o canon é
-    daqueles produzidos por _extract_missao."""
-    return any(f"OF{n}" in canon for n in _VALID_OF_NUMBERS)
+    """Verifica formato canonical RJ\\d·OF\\d\\d·MF. Não consulta DB —
+    só validação sintática."""
+    return bool(re.match(r"^RJ\d·OF\d{2}·MF$", canon or ""))
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -264,6 +353,19 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
 
     estado = aluno["estado"]
 
+    # Comando especial "cancelar/resetar/sair" — em QUALQUER estado pós-
+    # cadastro, volta pra READY. Não interfere com fluxo de cadastro
+    # inicial (aluno ainda sem turma) — esse continua exigindo código.
+    text_stripped = (msg.text or "").strip()
+    if text_stripped and _CANCEL_RE.match(text_stripped):
+        # Só permite cancelar quando aluno já tem ao menos 1 vínculo de
+        # turma — evita aluno em onboarding inicial sair de loop sem
+        # cadastrar.
+        if not estado.startswith(AWAITING_CODIGO_TURMA) and \
+                not estado.startswith(AWAITING_NOME_ALUNO):
+            P.upsert_aluno(msg.phone, estado=READY)
+            return [OutboundMessage(MSG.MSG_CANCELADO)]
+
     # Comando especial "ocr errado" — pode chegar em qualquer estado pós-avaliação
     if msg.text and _is_ocr_errado(msg.text):
         return _handle_ocr_errado(msg, aluno)
@@ -296,6 +398,26 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
         codigo_turma = PL.extract_codigo_turma(msg.text)
         if codigo_turma:
             return _handle_codigo_turma(msg, aluno)
+
+    # Bypass FSM via código completo: se aluno mandou `RJ\d·OF\d\d·MF`
+    # explícito (e não está em estado de duplicate/cancel), trata
+    # diretamente como nova interação. Limpa pending intermediários.
+    if msg.text and not estado.startswith(AWAITING_DUPLICATE_CHOICE) and \
+            not estado.startswith(AWAITING_TURMA_CHOICE):
+        canonical = _extract_missao_canonical(msg.text)
+        if canonical:
+            # Reseta pending mas preserva foto pendente se houver
+            pending_foto = _get_pending_foto(msg.phone)
+            P.upsert_aluno(msg.phone, estado=READY)
+            if msg.image_path:
+                return _process_photo(msg.phone, msg.image_path,
+                                      canonical, aluno)
+            if pending_foto:
+                return _process_photo(msg.phone, pending_foto,
+                                      canonical, aluno)
+            # Só código, sem foto — guarda missão e espera foto
+            _set_pending_missao(msg.phone, canonical)
+            return [OutboundMessage(MSG_FALTA_FOTO.format(missao=canonical))]
 
     # Caso 4: READY ou AWAITING_FOTO — fluxo principal
     return _handle_ready_or_awaiting(msg, aluno)
@@ -437,44 +559,111 @@ def _parse_turma(text: str) -> Tuple[Optional[str], Optional[str]]:
 def _handle_ready_or_awaiting(
     msg: InboundMessage, aluno: Dict[str, Any],
 ) -> List[OutboundMessage]:
+    """Fluxo principal de envio (READY/AWAITING_FOTO/AWAITING_CODIGO).
+
+    Mudança M9.2 (2026-04-29): roteamento agora consulta atividades
+    ATIVAS da turma do aluno em vez de hardcode 1S. Casos:
+
+    a) Foto sem código + 1 atividade ativa → processa direto
+    b) Foto sem código + N atividades ativas → pergunta listando
+       oficina_numero reais
+    c) Foto sem código + 0 atividades ativas → pede código completo
+    d) Código (completo) já foi tratado upstream em handle_inbound
+       (bypass via _extract_missao_canonical)
+    e) Número solto sem prefixo + 1 atividade ativa que casa com ele
+       → processa direto (resolve série pelo contexto)
+    """
+    from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import portal_link as PL
+
     estado = aluno["estado"]
     text = (msg.text or "").strip()
     image_path = msg.image_path
 
-    # Tenta extrair missão da mensagem.
-    missao_canon = _extract_missao(text) if text else None
-    if missao_canon and not _is_valid_missao(missao_canon):
-        return [OutboundMessage(MSG_MISSAO_INVALIDA)]
+    # Atividades ativas das turmas do aluno (pode ser 0).
+    # Falha de DB não trava o fluxo — fallback graceful.
+    try:
+        atividades_ativas = PL.list_atividades_ativas_por_aluno(msg.phone)
+    except Exception:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).exception(
+            "Falha consultando atividades ativas; usando fluxo legado"
+        )
+        atividades_ativas = []
 
-    # Sub-caso 4a: aluno mandou só texto sem missão e sem foto.
-    if not image_path and not missao_canon:
-        return [OutboundMessage(
-            "Pra eu corrigir, preciso da *foto da redação* + o *código "
-            "da missão* (ex.: RJ1OF10MF)."
-        )]
+    # 1. Resolve via contexto: se aluno mandou número/OF/canonical e
+    #    casa com uma atividade ativa, usa direto.
+    atividade_resolvida, ambiguos = _resolver_atividade_por_input(
+        text, atividades_ativas
+    )
 
-    # Sub-caso 4b: missão sem foto → checa foto pendente, ou aguarda foto
-    if missao_canon and not image_path:
+    # Caso e1: input casou com atividade ativa
+    if atividade_resolvida is not None:
+        missao_canon = atividade_resolvida.missao_codigo
+        if image_path:
+            return _process_photo(msg.phone, image_path, missao_canon, aluno)
+        # Sem foto na mensagem — checa pending, ou guarda missão
         pending_foto = _get_pending_foto(msg.phone)
         if pending_foto and estado.startswith(AWAITING_CODIGO):
             return _process_photo(msg.phone, pending_foto, missao_canon, aluno)
         _set_pending_missao(msg.phone, missao_canon)
         return [OutboundMessage(MSG_FALTA_FOTO.format(missao=missao_canon))]
 
-    # Sub-caso 4c: foto sem missão → tentar resgatar pendente, ou GUARDAR
-    if image_path and not missao_canon:
-        pending_missao = _get_pending_missao(msg.phone)
-        if pending_missao and estado.startswith(AWAITING_FOTO):
-            return _process_photo(msg.phone, image_path, pending_missao, aluno)
-        # Guarda a foto pra reusar quando o código chegar
-        _set_pending_foto(msg.phone, image_path)
-        return [OutboundMessage(MSG_FALTA_MISSAO)]
+    # Caso e2: número casou com >1 atividade (aluno multi-turma com
+    # mesmo oficina_numero em séries diferentes). Pergunta com lista
+    # restrita às que bateram.
+    if ambiguos:
+        # Filtra atividades que tem o número ambíguo
+        candidatas = [a for a in atividades_ativas
+                      if a.oficina_numero in ambiguos]
+        lista = "\n".join(
+            f"{i+1}. {a.missao_codigo} ({a.turma_codigo} — {a.escola_nome})"
+            for i, a in enumerate(candidatas)
+        )
+        # Sem state machine extra pra esse caso raro; pede código completo
+        if image_path:
+            _set_pending_foto(msg.phone, image_path)
+        return [OutboundMessage(MSG.MSG_AMBIGUO_PEDE_COMPLETO.format(
+            numero=ambiguos[0], lista=lista,
+        ))]
 
-    # Sub-caso 4d: missão + foto na mesma mensagem — vai direto.
-    if image_path and missao_canon:
-        return _process_photo(msg.phone, image_path, missao_canon, aluno)
+    # Sub-caso 4a: nada útil + nada de foto (texto vazio ou irrelevante)
+    if not image_path:
+        # Tem foto pendente em estado AWAITING_CODIGO — aluno mandou só
+        # texto que não casou; insiste pedindo missão.
+        if estado.startswith(AWAITING_CODIGO):
+            return [OutboundMessage(
+                _msg_falta_missao(atividades_ativas)
+            )]
+        return [OutboundMessage(
+            "Pra eu corrigir, preciso da *foto da redação*. "
+            "Manda a foto da página do livro com sua redação."
+        )]
 
-    return [OutboundMessage(MSG_ERRO_GENERICO)]
+    # Sub-caso 4b: foto chegou. Resolve por número de atividades ativas.
+    pending_missao = _get_pending_missao(msg.phone)
+    if pending_missao and estado.startswith(AWAITING_FOTO):
+        return _process_photo(msg.phone, image_path, pending_missao, aluno)
+
+    # Caso a: 1 atividade ativa → processa direto, sem perguntar.
+    if len(atividades_ativas) == 1:
+        unica = atividades_ativas[0]
+        return _process_photo(msg.phone, image_path,
+                              unica.missao_codigo, aluno)
+
+    # Caso b: >1 atividades ativas → pergunta com lista real.
+    # Caso c: 0 atividades ativas → pede código completo.
+    _set_pending_foto(msg.phone, image_path)
+    return [OutboundMessage(_msg_falta_missao(atividades_ativas))]
+
+
+def _msg_falta_missao(atividades_ativas: list) -> str:
+    """Renderiza a mensagem de 'foto sem código' adequada ao contexto."""
+    from redato_backend.whatsapp import messages as MSG
+    if not atividades_ativas:
+        return MSG.MSG_FALTA_MISSAO_SEM_ATIVAS
+    nums = _formatar_lista_oficinas(atividades_ativas)
+    return MSG.MSG_FALTA_MISSAO_DINAMICO.format(numeros=nums)
 
 
 # ──────────────────────────────────────────────────────────────────────

@@ -123,22 +123,52 @@ MSG_OCR_ERRADO_SEM_HISTORICO = (
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Erros gerais
+# Erros gerais e mensagens dinâmicas (M9.2 — listas calculadas no
+# runtime a partir das atividades ativas das turmas do aluno).
 # ──────────────────────────────────────────────────────────────────────
 
 MSG_MISSAO_INVALIDA = (
-    "Não reconheci esse código. Manda só o número da missão: "
-    "*10*, *11*, *12*, *13* ou *14*."
+    "Não reconheci esse código. Se quiser, manda o código completo "
+    "no formato `RJ{N}·OF{NN}·MF` (ex.: RJ2·OF04·MF) ou "
+    "*cancelar* pra recomeçar."
 )
 
 MSG_FALTA_FOTO = (
     "Anotei: missão *{missao}*. Agora manda a foto da redação."
 )
 
-MSG_FALTA_MISSAO = (
+# Versão dinâmica: lista de oficina_numero das atividades ativas do
+# aluno. Ex.: "1, 4, 6 ou 7" pra 2S; "10 ou 11" pra 1A com 2 ativas.
+MSG_FALTA_MISSAO_DINAMICO = (
     "Recebi a foto, mas não sei qual missão é. Me manda o número da "
-    "missão: *10*, *11*, *12*, *13* ou *14*."
+    "missão: *{numeros}*."
 )
+
+# Quando aluno não tem nenhuma atividade ativa nas turmas dele.
+# Pode ser intervalo entre missões — pede pra mandar código completo.
+MSG_FALTA_MISSAO_SEM_ATIVAS = (
+    "Recebi a foto, mas não há missão aberta na sua turma agora. "
+    "Se sua professora já disponibilizou uma, manda o código completo "
+    "(ex.: RJ2·OF04·MF) junto. Senão, espera ela abrir a atividade."
+)
+
+# Aluno em múltiplas turmas mandou número que casa com >1 atividade
+# (ex.: OF12 da 1S e OF12 da 2S). Pede código completo pra desambiguar.
+MSG_AMBIGUO_PEDE_COMPLETO = (
+    "Achei mais de uma missão *{numero}* nas suas turmas:\n\n{lista}\n\n"
+    "Manda o código completo pra eu saber qual é (ex.: RJ2·OF12·MF)."
+)
+
+# Comando "cancelar/resetar/sair" volta pra READY a partir de qualquer
+# estado pós-cadastro.
+MSG_CANCELADO = (
+    "OK, voltei ao estado inicial. Manda a foto da redação quando "
+    "estiver pronto, ou mande o código da missão (ex.: RJ2·OF04·MF)."
+)
+
+# Aliases legados (testes antigos podem importar). Mantidos por
+# retrocompat — não usar em código novo.
+MSG_FALTA_MISSAO = MSG_FALTA_MISSAO_SEM_ATIVAS
 
 MSG_ERRO_GENERICO = (
     "Algo deu errado na correção. Pode tentar de novo? Se persistir, "
@@ -173,7 +203,7 @@ MSG_PEDE_TURMA = (
 
 MSG_CADASTRADO = (
     "Beleza, {nome}! Cadastro feito.\n\n"
-    "Pra eu corrigir uma redação, manda a *foto da página do livro* + "
-    "o *número da missão* (10, 11, 12, 13 ou 14). Pode mandar tudo na "
-    "mesma mensagem ou em mensagens separadas."
+    "Pra eu corrigir uma redação, manda a *foto da página do livro*. "
+    "Eu identifico a missão pela atividade aberta na sua turma. Se "
+    "tiver mais de uma aberta, pergunto."
 )
