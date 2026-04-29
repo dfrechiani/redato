@@ -1120,7 +1120,11 @@ class EnvioFeedbackResponse(BaseModel):
     aluno_id: str
     aluno_nome: str
     enviado_em: Optional[str]
-    foto_path: Optional[str]
+    # `foto_url`: URL relativa ao frontend (proxy /api/portal/...) que
+    # serve a imagem com auth do JWT-cookie. NÃO usar mais filesystem
+    # path absoluto do backend — `<img src=>` não passa Authorization
+    # header e arquivos não são servidos pelo Next.js.
+    foto_url: Optional[str]
     foto_hash: Optional[str]
     texto_transcrito: Optional[str]
     nota_total: Optional[int]
@@ -1178,7 +1182,7 @@ def detalhe_envio(
                 modo_correcao=missao.modo_correcao if missao else "",
                 aluno_id=str(aluno.id), aluno_nome=aluno.nome,
                 enviado_em=None,
-                foto_path=None, foto_hash=None, texto_transcrito=None,
+                foto_url=None, foto_hash=None, texto_transcrito=None,
                 nota_total=None, faixas=[], audit_pedagogico=None,
                 detectores=[], ocr_quality_issues=[], raw_output=None,
             )
@@ -1248,6 +1252,17 @@ def detalhe_envio(
         except (ValueError, TypeError):
             issues = []
 
+        # `foto_url` aponta pro proxy frontend, que injeta o JWT-cookie
+        # e encaminha pra `/portal/atividades/{aid}/envios/{atid}/foto`.
+        # Só populamos quando a interação tem foto persistida — caso
+        # contrário frontend renderiza fallback "Foto não disponível".
+        foto_url: Optional[str] = None
+        if interaction is not None and interaction.foto_path:
+            foto_url = (
+                f"/api/portal/atividades/{atividade_id}"
+                f"/envios/{aluno_turma_id}/foto"
+            )
+
         return EnvioFeedbackResponse(
             atividade_id=str(atividade_id),
             missao_codigo=missao.codigo if missao else "",
@@ -1256,7 +1271,7 @@ def detalhe_envio(
             modo_correcao=missao.modo_correcao if missao else "",
             aluno_id=str(aluno.id), aluno_nome=aluno.nome,
             enviado_em=envio.enviado_em.isoformat(),
-            foto_path=interaction.foto_path if interaction else None,
+            foto_url=foto_url,
             foto_hash=interaction.foto_hash if interaction else None,
             texto_transcrito=interaction.texto_transcrito if interaction else None,
             nota_total=nota_total,
@@ -1266,6 +1281,83 @@ def detalhe_envio(
             ocr_quality_issues=issues if isinstance(issues, list) else [],
             raw_output=out,
         )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# GET /portal/atividades/{atividade_id}/envios/{aluno_turma_id}/foto
+# ──────────────────────────────────────────────────────────────────────
+
+# Mapeamento extensão → MIME. Lista curta — o que o WhatsApp envia
+# (sempre image/jpeg via Twilio) + variações comuns que professores
+# poderiam upload manualmente no futuro.
+_FOTO_MIME_BY_EXT = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".heic": "image/heic",
+    ".heif": "image/heif",
+}
+
+
+@router.get("/atividades/{atividade_id}/envios/{aluno_turma_id}/foto")
+def baixar_foto_envio(
+    atividade_id: uuid.UUID,
+    aluno_turma_id: uuid.UUID,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> FileResponse:
+    """Stream da foto da redação enviada pelo aluno.
+
+    Permission: mesma do `detalhe_envio` — professor da turma OU
+    admin/coordenador da escola. Frontend usa via proxy
+    `/api/portal/...` que injeta o JWT do cookie httpOnly.
+
+    Retorna:
+    - 404 se atividade/aluno não existe ou não há envio
+    - 410 se path no DB mas arquivo sumiu (volume Railway perdido)
+    - 200 com a imagem nos formatos comuns do WhatsApp
+    """
+    _check_permission_atividade(auth, atividade_id)
+    with Session(get_engine()) as session:
+        ativ = session.get(Atividade, atividade_id)
+        if ativ is None or ativ.deleted_at is not None:
+            raise HTTPException(status_code=404, detail="Atividade não encontrada")
+        aluno = session.get(AlunoTurma, aluno_turma_id)
+        if aluno is None or aluno.turma_id != ativ.turma_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Aluno não encontrado nessa turma",
+            )
+        envio = session.execute(
+            select(Envio).where(
+                Envio.atividade_id == atividade_id,
+                Envio.aluno_turma_id == aluno_turma_id,
+            )
+        ).scalar_one_or_none()
+        if envio is None or envio.interaction_id is None:
+            raise HTTPException(status_code=404, detail="Envio não encontrado")
+        interaction = session.get(Interaction, envio.interaction_id)
+        foto_path_str = (
+            interaction.foto_path if interaction is not None else None
+        )
+
+    if not foto_path_str:
+        raise HTTPException(status_code=404, detail="Sem foto registrada")
+
+    foto_path = Path(foto_path_str)
+    if not foto_path.is_absolute():
+        # Histórico: alguns paths foram salvos relativos ao cwd do
+        # backend. Normaliza pro filesystem.
+        backend_root = Path(__file__).resolve().parents[2]
+        foto_path = (backend_root / foto_path).resolve()
+    if not foto_path.exists() or not foto_path.is_file():
+        raise HTTPException(
+            status_code=410,
+            detail="Arquivo da foto não está mais disponível no servidor",
+        )
+
+    mime = _FOTO_MIME_BY_EXT.get(foto_path.suffix.lower(), "image/jpeg")
+    return FileResponse(path=str(foto_path), media_type=mime)
 
 
 # ──────────────────────────────────────────────────────────────────────

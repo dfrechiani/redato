@@ -145,7 +145,11 @@ export interface EnvioFeedback {
   aluno_id: string;
   aluno_nome: string;
   enviado_em: string | null;
-  foto_path: string | null;
+  /** URL relativa pro proxy frontend (`/api/portal/...`) que serve a
+   *  foto autenticada via JWT-cookie. `null` se não há envio ou
+   *  arquivo. NÃO é mais path absoluto do filesystem do backend
+   *  (mudança do M9.3, 2026-04-29 — fix tela individual). */
+  foto_url: string | null;
   foto_hash: string | null;
   texto_transcrito: string | null;
   nota_total: number | null;

@@ -72,10 +72,10 @@ export default async function FeedbackAlunoPage({ params }: Props) {
                 <p className="font-mono text-xs uppercase tracking-wider text-ink-400 mb-3">
                   Foto da redação
                 </p>
-                {data.foto_path ? (
+                {data.foto_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={data.foto_path}
+                    src={data.foto_url}
                     alt={`Redação de ${data.aluno_nome}`}
                     className="w-full rounded border border-border bg-muted object-contain max-h-[600px]"
                   />
