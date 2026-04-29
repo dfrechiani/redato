@@ -110,20 +110,27 @@ def _bloco_transcricao(texto_transcrito: Optional[str]) -> str:
 
 # Mapeamento de chave técnica → label legível ao aluno
 _CRITERIO_LABEL = {
+    # foco_c2 (RJ2·OF04·MF, RJ2·OF06·MF — M9.2)
+    "compreensao_tema": "Compreensão do tema",
+    "tipo_textual": "Tipo textual",
+    # foco_c3 (OF10) — Conclusão / Premissa / Exemplo / Fluência
     "conclusao": "Conclusão",
     "premissa": "Premissa",
     "exemplo": "Exemplo",
     "fluencia": "Fluência",
+    # foco_c4 (OF11) — Estrutura / Conectivos / Cadeia / Palavra do Dia
     "estrutura": "Estrutura",
     "conectivos": "Conectivos",
     "cadeia_logica": "Cadeia lógica",
     "palavra_dia": "Palavra do Dia",
+    # foco_c5 (OF12) — 6 critérios da proposta
     "agente": "Agente",
     "acao_verbo": "Ação e verbo",
     "meio": "Meio",
     "finalidade": "Finalidade",
     "detalhamento": "Detalhamento",
     "direitos_humanos": "Direitos humanos",
+    # completo_parcial (OF13) — Tópico / Argumento / Repertório / Coesão
     "topico_frasal": "Tópico frasal",
     "argumento": "Argumento",
     "repertorio": "Repertório",
@@ -267,7 +274,12 @@ def render_aluno_whatsapp(
         return "Algo deu errado na avaliação. Tenta mandar a foto de novo."
 
     mode = args.get("modo")
-    if mode == "foco_c3":
+    if mode == "foco_c2":
+        # M9.2 (2026-04-29) — RJ2·OF04·MF e RJ2·OF06·MF.
+        # Reusa _render_foco genérico: nota_c2_enem (0-200) + rubrica
+        # de 3 critérios (compreensao_tema, tipo_textual, repertorio).
+        out = _render_foco(args, "c2", texto_transcrito)
+    elif mode == "foco_c3":
         out = _render_foco(args, "c3", texto_transcrito)
     elif mode == "foco_c4":
         out = _render_foco(args, "c4", texto_transcrito)
