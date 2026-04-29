@@ -52,21 +52,45 @@ _NOTA_ENEM = [0, 40, 80, 120, 160, 200]
 
 
 def _feedback_aluno_schema() -> Dict[str, Any]:
+    """Schema do `feedback_aluno`. Aplica a guideline 'Registro do
+    feedback_aluno' (calibração 2026-04-29) — vocabulário acessível,
+    trecho específico citado, caminho concreto pra melhorar.
+
+    Schema (acertos[], ajustes[], 1-3 itens cada) é DELIBERADAMENTE
+    igual ao anterior — só as descriptions mudaram pra refletir o
+    novo registro. Contrato com clientes (UI, render WhatsApp,
+    dashboard) preservado.
+    """
     return {
         "type": "object",
         "properties": {
             "acertos": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "1-3 frases curtas em vocabulário REJ ('tópico frasal', "
-                               "'argumento', 'repertório', 'coesão') reconhecendo o que "
-                               "o aluno fez bem.",
+                "description": (
+                    "1-3 itens curtos (1-2 frases cada) em vocabulário "
+                    "ACESSÍVEL ao aluno de Ensino Médio (português "
+                    "corrente, sem jargão acadêmico — ver guideline "
+                    "'Registro do feedback_aluno' no prompt). Cite "
+                    "trecho específico do texto entre aspas. Elogio "
+                    "tem que ser específico: O QUE foi feito + POR "
+                    "QUE funcionou. NÃO use 'tópico frasal', "
+                    "'cadeia argumentativa', 'operador adversativo', "
+                    "'coesão referencial', 'eixo causal', etc."
+                ),
             },
             "ajustes": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "1-3 ações concretas e acionáveis para o próximo "
-                               "exercício, em vocabulário REJ.",
+                "description": (
+                    "1-3 itens curtos (1-2 frases cada) em vocabulário "
+                    "ACESSÍVEL ao aluno (ver guideline). Cada item: "
+                    "(1) cite o trecho específico, (2) explique o que "
+                    "aconteceu em palavras simples, (3) termine com "
+                    "COMO MELHORAR — caminho concreto e acionável, "
+                    "não só apontamento. Mesma lista de termos "
+                    "proibidos do `acertos`."
+                ),
             },
         },
         "required": ["acertos", "ajustes"],

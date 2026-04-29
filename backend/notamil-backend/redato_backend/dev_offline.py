@@ -2807,7 +2807,9 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
     from redato_backend.missions import (
         MissionMode, resolve_mode, grade_mission,
     )
-    from redato_backend.missions.prompts import OF14_REJ_PREAMBLE
+    from redato_backend.missions.prompts import (
+        OF14_REJ_PREAMBLE, feedback_aluno_registro_block,
+    )
 
     _mission_mode = resolve_mode(activity_id)
     if _mission_mode is not None and _mission_mode != MissionMode.COMPLETO_INTEGRAL:
@@ -2822,8 +2824,16 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
         else ""
     )
 
+    # Calibração 2026-04-29: guideline central do registro de
+    # feedback_aluno injetada em todos os modos. OF14 (pipeline v2)
+    # também herda — schema v2 inclui `feedback_aluno` então a
+    # guideline se aplica idêntica aos outros modos.
+    registro_block = feedback_aluno_registro_block()
+
     user_msg = (
         f"{rej_preamble}"
+        f"{registro_block}\n\n"
+        f"---\n\n"
         f"TEMA: {theme}\n\n"
         f"REDAÇÃO DO ALUNO:\n\"\"\"\n{content}\n\"\"\"\n\n"
         "Avalie a redação acima pelas 5 competências ENEM, aplicando a "

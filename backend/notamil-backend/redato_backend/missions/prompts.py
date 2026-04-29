@@ -6,6 +6,14 @@ Cada modo tem um system prompt curto que invoca a Cartilha INEP como base
 canônica + a rubrica REJ como lente de calibração. O contexto da oficina
 (enunciado, casos críticos, tabela de tradução) entra no user_msg pra não
 inflar o cache de prompts da Redato em produção.
+
+Calibração 2026-04-29 (Daniel após canário real do jogo_redacao com
+Claude real): registro do `feedback_aluno` ficava acadêmico demais —
+"tópico frasal", "operador adversativo", "cadeia argumentativa" etc.
+Solução: guideline central `FEEDBACK_ALUNO_REGISTRO_GUIDELINE` (esta
+unidade) injetada em TODOS os user_msg builders. Garante reforço por
+chamada (mesmo se Claude esquecer regra do system) e DRY (1 fonte
+de verdade pra registros de aluno em todos os 6 modos).
 """
 from __future__ import annotations
 from typing import Dict
@@ -29,19 +37,38 @@ Princípios transversais:
 
 ## Vocabulário pedagógico — regra dura
 
-**Aluno é da 1ª série do EM. Feedback ao aluno = conversa de sala de aula,
-não relatório acadêmico.** Cada oficina ensina um conjunto restrito de
-termos técnicos; **só esses podem aparecer no `feedback_aluno`** (a
-whitelist específica está no contexto da missão abaixo).
+**Aluno-alvo: Ensino Médio de escola pública brasileira (1ª, 2ª e 3ª
+séries).** Feedback ao aluno = conversa de sala de aula, não relatório
+acadêmico. Cada oficina ativa um conjunto restrito de termos técnicos
+no whitelist específico (no contexto da missão abaixo).
+
+A guideline detalhada com termos proibidos + substituições + exemplos
+BOM/RUIM está em **`FEEDBACK_ALUNO_REGISTRO_GUIDELINE`** (mesma
+unidade) e é injetada literalmente no user_msg. A versão abreviada
+abaixo cobre os termos MAIS comuns — em caso de dúvida, consulte a
+versão completa na guideline.
 
 ### Termos PROIBIDOS por padrão (a menos que a oficina ative)
 
 Termo proibido               → use no lugar
 - "tese"                     → "a frase que você quer provar" / "a ideia central"
+- "tópico frasal"            → "a frase de abertura do parágrafo"
 - "premissa"                 → "a explicação" / "o porquê"
 - "repertório"               → "o que comprova" / "número ou pesquisa que sustenta"
 - "dado verificável"         → "número que dá pra checar" / "pesquisa concreta"
 - "mecanismo causal"         → "como isso acontece na prática"
+- "operador adversativo"     → o conectivo em si ("o 'mas'") + "dá ideia de oposição"
+- "operador conclusivo"      → o conectivo em si ("o 'portanto'") + "fecha a conclusão"
+- "elo causal" / "cadeia causal" → "como uma coisa puxa a outra" / "ligação entre as ideias"
+- "cadeia argumentativa"     → "como seu argumento se desenvolve"
+- "coesão referencial"       → "como suas palavras se conectam pra deixar claro"
+- "articulação inter-frasal" → "como uma frase puxa a próxima"
+- "eixo causal"              → "a causa que você apontou"
+- "dimensão cultural"        → "o lado cultural da questão"
+- "registro" (formal/informal) → "o jeito de escrever (formal ou informal)"
+- "coerência" (abstrato)     → "se as ideias batem entre si"
+- "modalizador"              → "palavra que mostra opinião" / "palavra que suaviza"
+- "inferência"               → "conclusão que dá pra tirar do que foi dito"
 - "argumentação por reformulação" → "repetir a mesma ideia com outras palavras"
 - "prosa" / "prosa contínua" → "texto corrido"
 - "terreno previsível"       → "previsível" / "esperado" / "óbvio demais"
@@ -612,6 +639,137 @@ _CONTEXT_BY_MODE: Dict[str, str] = {
     "completo_parcial": _COMPLETO_PARCIAL_CONTEXT,
     "jogo_redacao": _JOGO_REDACAO_CONTEXT,  # Fase 2 passo 5 (2S)
 }
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Guideline central de "registro do feedback_aluno"
+# ──────────────────────────────────────────────────────────────────────
+#
+# Calibração 2026-04-29 (Daniel após inspecionar output real do
+# jogo_redacao com Claude). Output saía com vocabulário acadêmico
+# pesado pra alunos de escola pública: "tópico frasal", "cadeia
+# argumentativa comprimida", "operador adversativo cria ambiguidade
+# semântica". Aluno-alvo lê português corrente, não jargão técnico.
+#
+# Esta guideline é injetada por `feedback_aluno_registro_block()` no
+# user_msg de TODOS os 6 modos (foco_c2/c3/c4/c5/completo_parcial/
+# jogo_redacao). Reforça o que já está no `_PERSONA` (system) — a
+# duplicação intencional cobre dois riscos:
+#   1. Cache do system pode rebill sob certas condições — user_msg
+#      garante reforço por chamada.
+#   2. Termos novos descobertos no canário 2026-04-29 (operador
+#      adversativo, cadeia argumentativa, articulação inter-frasal,
+#      eixo causal, etc.) eram aceitos pelo PERSONA antigo. Lista
+#      explícita aqui força substituição.
+#
+# Note: feedback_professor continua técnico. Esta guideline NÃO afeta
+# `feedback_professor` — professor PRECISA do diagnóstico preciso pra
+# planejar a próxima aula.
+
+FEEDBACK_ALUNO_REGISTRO_GUIDELINE = """\
+**Público-alvo:** aluno de Ensino Médio de escola pública brasileira.
+Pode ser o primeiro contato dele com correção estruturada de redação.
+Lê português corrente. Não lê jargão acadêmico.
+
+**Como falar:**
+- Tom de professor que CONVERSA, não professor que DISSERTA.
+- Frases curtas, voz ativa, "você" direto.
+- Termo técnico só quando essencial — sempre com explicação prática
+  acoplada na mesma frase.
+
+**Termos OK** (aluno conhece):
+`tese`, `repertório`, `argumento`, `conclusão`, `parágrafo`,
+`introdução`, `desenvolvimento`, `proposta`, `conectivo` (com exemplo
+do conectivo concreto).
+
+**Termos PROIBIDOS** no `feedback_aluno` (devem ser SUBSTITUÍDOS):
+
+| Proibido                       | Use no lugar                                                         |
+|--------------------------------|----------------------------------------------------------------------|
+| tópico frasal                  | a frase de abertura do parágrafo                                     |
+| operador adversativo           | o conectivo em si ("o 'mas'") + explicação ("dá ideia de oposição")  |
+| operador conclusivo            | o conectivo em si ("o 'portanto'") + "mostra que a conclusão fecha"  |
+| elo causal / cadeia causal     | "como uma coisa puxa a outra", "ligação entre as ideias"             |
+| cadeia argumentativa           | "como seu argumento se desenvolve do começo ao fim"                  |
+| coesão referencial             | "como suas palavras se conectam pra deixar claro do que você fala"   |
+| articulação inter-frasal       | "como uma frase puxa a próxima"                                      |
+| eixo causal                    | "a causa que você apontou", "o porquê que você mostrou"              |
+| dimensão cultural              | "o lado cultural da questão"                                         |
+| registro (formal/informal)     | "o jeito de escrever (formal ou informal)"                           |
+| coerência                      | "se as ideias batem entre si" (ou explique o caso específico)        |
+| modalizador                    | "palavra que mostra opinião" / "palavra que suaviza"                 |
+| inferência                     | "conclusão que dá pra tirar do que foi dito"                         |
+| premissa                       | "a explicação", "o porquê"                                           |
+| dado verificável               | "número que dá pra checar", "pesquisa concreta"                      |
+| mecanismo causal               | "como isso acontece na prática"                                      |
+| operadores argumentativos      | "as palavras de ligação", "os conectivos"                            |
+| projeto de texto               | "como o texto se organiza"                                           |
+| recorte temático               | "ponto de vista próprio"                                             |
+| autoria                        | "voz própria", "jeito seu de pensar"                                 |
+
+**Substituições específicas do jogo de redação:**
+
+| Proibido (no `feedback_aluno`)             | Use no lugar                                       |
+|--------------------------------------------|----------------------------------------------------|
+| "agente, ação e finalidade articulados"    | "quem vai fazer, o quê vai fazer e pra quê"        |
+| "cartas mal articuladas"                   | "as cartas ficaram coladas, sem ligação clara"     |
+| "transformação das cartas"                 | "como você reescreveu com suas palavras"           |
+
+**Estrutura de cada item de `acertos[]` e `ajustes[]`:**
+
+1. Identifique o TRECHO específico (cite uma frase ou palavra do
+   texto entre aspas curtas).
+2. Diga em vocabulário acessível O QUE aconteceu.
+3. Pra `ajustes[]`: termine com COMO MELHORAR — caminho concreto e
+   acionável, não só apontamento da falha.
+
+**Exemplos:**
+
+✗ RUIM (acadêmico, abstrato, sem trecho específico):
+- "Seu tópico frasal é preciso e estabelece o recorte argumentativo."
+- "A cadeia lógica entre raízes culturais e desinvestimento ficou
+   comprimida."
+- "O operador 'mas' antes de 'potencializada' cria leve ambiguidade
+   na coesão."
+
+✓ BOM (conversa, com trecho específico, com caminho concreto):
+- "Sua frase de abertura ficou clara — você nomeou direto qual é o
+   problema."
+- "Faltou explicar melhor como uma coisa puxa a outra. Tenta dar um
+   exemplo concreto entre 'raízes culturais' e 'falta de
+   investimento'."
+- "O 'mas' aí dá ideia de oposição, mas no seu argumento os dois
+   pontos se somam — troca por 'além disso' ou 'também'."
+
+**Especificidade > formalidade:** sempre cite o trecho da redação
+do aluno. Adjetivo abstrato ("argumento foi bom") sem exemplo
+concreto não vale.
+
+**Elogiar:** elogio precisa ser específico — O QUE foi feito + POR
+QUE funcionou. Não vale "argumento ficou bom".
+
+**Tom:** direto e respeitoso, sem condescendência. Aluno é
+interlocutor adulto. NÃO use diminutivos referindo-se ao aluno ou
+ao texto dele ("palavrinhas", "frasezinha", "ajustezinhos" etc.).
+NÃO use "que legal!", "show!" — interlocutor é adulto.
+"""
+
+
+def feedback_aluno_registro_block() -> str:
+    """Retorna o bloco "## Registro do feedback_aluno" pronto pra
+    injetar em qualquer user_msg builder. Inclui marcador `##` pra
+    formatar como seção, evitando ambiguidade quando o template do
+    modo já tem outras seções.
+
+    Caller: cada `_build_*_user_msg` (router.py + dev_offline para
+    OF14). Custo: ~3KB por chamada que paga mesmo com cache hit no
+    system. Vale a pena pelo controle do registro — feedback_aluno
+    é o output mais visível pro usuário final.
+    """
+    return (
+        "## Registro do feedback_aluno\n\n"
+        + FEEDBACK_ALUNO_REGISTRO_GUIDELINE
+    )
 
 
 def system_prompt_for(mode: str) -> str:

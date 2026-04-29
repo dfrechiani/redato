@@ -26,6 +26,7 @@ from redato_backend.missions.schemas import TOOLS_BY_MODE
 from redato_backend.missions.prompts import (
     system_prompt_for,
     context_block_for,
+    feedback_aluno_registro_block,
     render_minideck_block,
     render_cartas_escolhidas_block,
 )
@@ -166,6 +167,8 @@ def _build_user_msg(
     return (
         f"{header}"
         f"{context_block_for(mode.value)}\n"
+        f"---\n\n"
+        f"{feedback_aluno_registro_block()}\n"
         f"---\n\n"
         f"## Texto do aluno\n\n"
         f"**Tema/contexto:** {theme}\n\n"
@@ -478,6 +481,8 @@ def _build_jogo_redacao_user_msg(
         f"{header}"
         f"{contexto}\n"
         f"---\n\n"
+        f"{feedback_aluno_registro_block()}\n"
+        f"---\n\n"
         f"{bloco_catalogo}\n"
         f"---\n\n"
         f"{bloco_escolhidas}\n"
@@ -500,7 +505,11 @@ def _build_jogo_redacao_user_msg(
         f"Lista vazia é feedback positivo legítimo. NÃO force "
         f"sugestões se o grupo escolheu bem.\n"
         f"4. `tema_minideck` no output deve ser exatamente o slug "
-        f"que veio no header desta missão (ex.: 'saude_mental')."
+        f"que veio no header desta missão (ex.: 'saude_mental').\n"
+        f"5. `feedback_aluno` (acertos + ajustes) DEVE seguir a "
+        f"guideline 'Registro do feedback_aluno' acima — vocabulário "
+        f"acessível, trecho específico citado, caminho concreto pra "
+        f"melhorar. `feedback_professor` continua técnico."
     )
 
 
