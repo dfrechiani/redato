@@ -13,7 +13,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
@@ -784,6 +784,101 @@ def _detector_triggered(value: Any) -> bool:
     return False
 
 
+def _competencias_de(
+    out: Optional[Dict[str, Any]],
+) -> List[Tuple[str, int]]:
+    """Extrai competências avaliadas + notas ENEM do redato_output.
+
+    Retorna lista `[(competencia, nota), ...]` em ordem (C1..C5).
+    Cobre 4 formatos:
+
+    1. **Moderno foco (M9+)**: `modo` = `foco_c{N}` + `nota_c{N}_enem`
+       no top-level. Ex.: `foco_c2` + `nota_c2_enem: 160` →
+       `[("C2", 160)]`. Apenas a competência focada aparece.
+
+    2. **Moderno completo_parcial (OF13)**: `modo` = `completo_parcial`
+       + `notas_enem: {c1: 160, c2: 160, c3: 120, c4: 160, c5:
+       "não_aplicável"}`. Inclui C1-C4; C5 com valor string não vira
+       FaixaQualitativa (frontend renderiza "—" pra ausente).
+
+    3. **Moderno completo (OF14, pipeline v2)**: `c{N}_audit.nota`
+       em sub-dict por competência. Espelha `_render_completo_integral`
+       em redato_backend/whatsapp/render.py.
+
+    4. **Legacy (seeds sintéticos M6/M7)**: keys top-level `C1`/`c1`
+       como int direto OU como sub-dict com `.nota`/`.score`. Mantido
+       pra retrocompatibilidade.
+
+    Bug original (interaction id=3, M9.3): código inline em
+    `detalhe_envio` só lia formato (4) → quadro de competências vazio
+    pra qualquer redação real do bot moderno.
+    """
+    if not out:
+        return []
+    found: List[Tuple[str, int]] = []
+    seen: set = set()
+
+    def _add(comp: str, nota_raw: Any) -> None:
+        if comp in seen:
+            return
+        if isinstance(nota_raw, (int, float)):
+            seen.add(comp)
+            found.append((comp, int(nota_raw)))
+
+    modo = out.get("modo")
+    # (1) Moderno foco — só uma competência
+    if isinstance(modo, str) and modo.startswith("foco_c"):
+        comp = modo[len("foco_"):].upper()  # "c2" → "C2"
+        _add(comp, out.get(f"nota_{comp.lower()}_enem"))
+    # (2) Moderno completo_parcial — c1..c4 (c5 = "não_aplicável" pula)
+    if isinstance(modo, str) and modo.startswith("completo"):
+        notas_enem = out.get("notas_enem")
+        if isinstance(notas_enem, dict):
+            for ck in ("c1", "c2", "c3", "c4", "c5"):
+                _add(ck.upper(), notas_enem.get(ck))
+    # (3) Moderno completo (OF14) — c{N}_audit.nota
+    for ck in ("C1", "C2", "C3", "C4", "C5"):
+        audit = out.get(f"{ck.lower()}_audit")
+        if isinstance(audit, dict):
+            _add(ck, audit.get("nota"))
+    # (4) Legacy — top-level int ou sub-dict
+    for ck in ("C1", "C2", "C3", "C4", "C5"):
+        v = out.get(ck) or out.get(ck.lower())
+        if isinstance(v, dict):
+            _add(ck, v.get("nota") or v.get("score"))
+        elif isinstance(v, (int, float)):
+            _add(ck, v)
+
+    # Ordena C1..C5 (set Python não preserva ordem de inserção
+    # determinística entre versões — explicitamos)
+    order = {"C1": 1, "C2": 2, "C3": 3, "C4": 4, "C5": 5}
+    found.sort(key=lambda t: order.get(t[0], 9))
+    return found
+
+
+def _audit_pedagogico_de(out: Optional[Dict[str, Any]]) -> Optional[str]:
+    """Texto pedagógico em prosa pro professor ler na tela do aluno.
+
+    Cobre formatos:
+    1. **Moderno (foco/completo_parcial)**: `feedback_professor.
+       audit_completo` é a prosa autoritativa.
+    2. **Legacy**: top-level `audit`, `audit_pedagogico`, `feedback`,
+       `comentario_geral` (string direta).
+    """
+    if not out:
+        return None
+    fb_prof = out.get("feedback_professor")
+    if isinstance(fb_prof, dict):
+        ac = fb_prof.get("audit_completo")
+        if isinstance(ac, str) and ac.strip():
+            return ac
+    for k in ("audit", "audit_pedagogico", "feedback", "comentario_geral"):
+        v = out.get(k)
+        if isinstance(v, str) and v.strip():
+            return v
+    return None
+
+
 def _detectores_acionados_de(out: Optional[Dict[str, Any]]) -> List[str]:
     """Lista códigos crus de detectores acionados num redato_output.
 
@@ -1195,55 +1290,37 @@ def detalhe_envio(
         )
         nota_total = _nota_total_de(out)
 
-        faixas: List[FaixaQualitativa] = []
-        if out:
-            for ck in ("C1", "C2", "C3", "C4", "C5"):
-                v = out.get(ck) or out.get(ck.lower())
-                nota_c: Optional[int] = None
-                if isinstance(v, dict):
-                    raw = v.get("nota") or v.get("score")
-                    if isinstance(raw, (int, float)):
-                        nota_c = int(raw)
-                elif isinstance(v, (int, float)):
-                    nota_c = int(v)
-                if nota_c is not None:
-                    faixas.append(FaixaQualitativa(
-                        competencia=ck, nota=nota_c,
-                        faixa=_faixa_qualitativa(nota_c),
-                    ))
+        # Competências avaliadas — usa helper que cobre 4 formatos
+        # (foco_c{N}, completo_parcial.notas_enem, completo OF14
+        # c{N}_audit, e legacy C1/c1). Antes esse loop era inline e
+        # só cobria o formato legacy → quadro vazio em redação real
+        # do bot moderno (bug interaction id=3, M9.3).
+        faixas: List[FaixaQualitativa] = [
+            FaixaQualitativa(
+                competencia=comp, nota=nota,
+                faixa=_faixa_qualitativa(nota),
+            )
+            for comp, nota in _competencias_de(out)
+        ]
 
+        # Detectores acionados — reusa _detectores_acionados_de que já
+        # suporta `flags: {nome: bool}` (formato moderno) E top-level
+        # com prefixo flag_/detector_/... (formato legacy). Antes esse
+        # loop era duplicado inline aqui e só lia o legacy.
         detectores: List[Dict[str, Any]] = []
-        if out:
-            for k, v in out.items():
-                if not isinstance(k, str):
-                    continue
-                kl = k.lower()
-                if not (kl.startswith("flag_") or kl.startswith("detector_")
-                        or kl.startswith("alerta_") or kl.startswith("aviso_")):
-                    continue
-                triggered = bool(v) if not isinstance(v, dict) else bool(
-                    v.get("triggered") or v.get("ativo")
-                )
-                if triggered:
-                    canon = get_canonical(k)
-                    detectores.append({
-                        "detector": k,
-                        "codigo": canon.codigo if canon else k,
-                        "nome": humanize_detector(k),
-                        "categoria": canon.categoria if canon else "forma",
-                        "severidade": canon.severidade if canon else "media",
-                        "canonical": canon is not None,
-                        "detalhe": (
-                            v.get("detalhe") if isinstance(v, dict) else None
-                        ),
-                    })
+        for codigo in _detectores_acionados_de(out):
+            canon = get_canonical(codigo)
+            detectores.append({
+                "detector": codigo,
+                "codigo": canon.codigo if canon else codigo,
+                "nome": humanize_detector(codigo),
+                "categoria": canon.categoria if canon else "forma",
+                "severidade": canon.severidade if canon else "media",
+                "canonical": canon is not None,
+                "detalhe": None,
+            })
 
-        audit_prose: Optional[str] = None
-        if out:
-            for k in ("audit", "audit_pedagogico", "feedback", "comentario_geral"):
-                if isinstance(out.get(k), str):
-                    audit_prose = out.get(k)
-                    break
+        audit_prose = _audit_pedagogico_de(out)
 
         try:
             issues = json.loads(interaction.ocr_quality_issues) if (
