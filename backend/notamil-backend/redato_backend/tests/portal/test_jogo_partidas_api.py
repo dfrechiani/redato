@@ -85,14 +85,12 @@ def engine_e_schema():
     with engine.connect() as conn:
         conn.execute(text(f'CREATE SCHEMA "{test_schema}"'))
         conn.commit()
-    for table in Base.metadata.tables.values():
-        table.schema = test_schema
+    # search_path no connect_args + NÃO muta Base.metadata.tables[*]
+    # .schema (evita leak entre módulos no full pytest run).
     Base.metadata.create_all(engine)
 
     yield engine, test_schema
 
-    for table in Base.metadata.tables.values():
-        table.schema = None
     with engine.connect() as conn:
         conn.execute(text(f'DROP SCHEMA "{test_schema}" CASCADE'))
         conn.commit()
@@ -227,24 +225,23 @@ def world(engine_e_schema) -> _World:
 
 @pytest.fixture(scope="module")
 def client(engine_e_schema):
-    """TestClient apontado pro app. Override de get_engine() pra
-    usar engine do schema isolado."""
+    """TestClient apontado pro app. Injeta engine isolado em
+    `portal.db._engine` (cache global). Não monkey-patcha `get_engine`
+    porque módulos importam `get_engine` por nome — bindings locais
+    não são afetados. Trocar o cache funciona porque a função original
+    consulta o cache antes de criar nova engine."""
     from fastapi.testclient import TestClient
 
     from redato_backend.portal.portal_app import app
-    from redato_backend.portal.db import get_engine
 
     engine, _ = engine_e_schema
-
-    # Monkey-patch get_engine no portal/db pra todos os endpoints
-    # usarem a engine do schema isolado.
     import redato_backend.portal.db as dbmod
-    original_get_engine = dbmod.get_engine
-    dbmod.get_engine = lambda: engine
+    original_engine = dbmod._engine
+    dbmod._engine = engine
 
     yield TestClient(app)
 
-    dbmod.get_engine = original_get_engine
+    dbmod._engine = original_engine
 
 
 @pytest.fixture

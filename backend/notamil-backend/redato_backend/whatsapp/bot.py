@@ -24,7 +24,7 @@ import os
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -53,6 +53,12 @@ AWAITING_FOTO = "AWAITING_FOTO"               # missão recebida, esperando foto
 AWAITING_CODIGO = "AWAITING_CODIGO"           # foto recebida, esperando código
 AWAITING_DUPLICATE_CHOICE = "AWAITING_DUP"    # foto duplicada — esperando 1/2
 AWAITING_TURMA_CHOICE = "AWAITING_TURMA_CHOICE"  # aluno em múltiplas turmas
+# Fase 2 passo 4 (jogo "Redação em Jogo") — estados encoded com partida_id
+# pra evitar re-resolver via DB a cada mensagem do aluno na partida.
+# Formato: "AGUARDANDO_CARTAS_PARTIDA|<uuid_partida>" e
+#          "REVISANDO_TEXTO_MONTADO|<uuid_partida>".
+AGUARDANDO_CARTAS_PARTIDA = "AGUARDANDO_CARTAS_PARTIDA"
+REVISANDO_TEXTO_MONTADO = "REVISANDO_TEXTO_MONTADO"
 # Estados legados (Fase A) — descontinuados pós-M4, preservados pra
 # não quebrar testes existentes que ainda referenciam constantes.
 AWAITING_NOME = "AWAITING_NOME"
@@ -130,6 +136,66 @@ MSG_OCR_ERRADO_SEM_HISTORICO = (
     "Não tenho correção recente sua pra descartar. Se a Redato leu "
     "errado depois de avaliar, manda a foto de novo com o código da "
     "missão."
+)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Mensagens do jogo "Redação em Jogo" (Fase 2 passo 4)
+# ──────────────────────────────────────────────────────────────────────
+
+MSG_JOGO_SAUDACAO_CARTAS = (
+    "🎲 Você está jogando o *jogo de redação* na atividade "
+    "*{missao_titulo}*, no grupo *{grupo_codigo}*.\n"
+    "Tema: *{nome_humano_tema}*.\n\n"
+    "Manda os *códigos das cartas* que vocês escolheram, separados "
+    "por vírgula ou espaço. Exemplo:\n\n"
+    "_E01, E10, E17, E22, E33, E37, E49, E51, "
+    "P03, R05, K11, K22, A02, AC07, ME04, F02_"
+)
+
+MSG_JOGO_TEXTO_MONTADO = (
+    "📝 Esta é a redação que o seu grupo montou com as cartas:\n\n"
+    "{texto_montado}\n\n"
+    "✏️ Agora você precisa *reescrever* em sua versão autoral.\n"
+    "- Use suas palavras\n"
+    "- Reforce com seu repertório\n"
+    "- Mude onde achar que a carta escolhida ficou fraca\n\n"
+    "Manda sua versão final quando estiver pronto."
+)
+
+MSG_JOGO_REESCRITA_RECEBIDA = (
+    "✅ Reescrita recebida ({n_chars} caracteres). A avaliação "
+    "será enviada quando o sistema processar."
+)
+
+MSG_JOGO_REESCRITA_CURTA_AVISO = (
+    "⚠️ Texto curto demais ({n_chars} caracteres). Tem certeza que é "
+    "sua versão final? Se for, manda *sim*. Se não, manda a versão "
+    "completa."
+)
+
+MSG_JOGO_FOTO_EM_PARTIDA = (
+    "Esta atividade pede *texto*, não foto. Manda os códigos das "
+    "cartas (ou cancela com *cancelar*)."
+)
+
+MSG_JOGO_FOTO_EM_REESCRITA = (
+    "Esta atividade pede a *reescrita em texto*, não foto. Manda sua "
+    "versão autoral em texto (ou cancela com *cancelar*)."
+)
+
+MSG_JOGO_PRAZO_EXPIRADO = (
+    "⏰ O prazo da partida ({prazo_pt}) já passou. Fala com o "
+    "professor pra reabrir."
+)
+
+MSG_JOGO_REESCRITA_JA_ENVIADA = (
+    "Você já mandou a reescrita dessa partida. Não é possível "
+    "reenviar (decisão pedagógica). Espera a avaliação."
+)
+
+MSG_JOGO_AVISOS_PRE_TEXTO = (
+    "ℹ️ Antes de seguir, alguns avisos:\n\n{avisos}"
 )
 
 
@@ -378,6 +444,14 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
     if estado.startswith(AWAITING_TURMA_CHOICE + "|"):
         return _handle_turma_choice(msg, aluno)
 
+    # Fase 2 passo 4 — fluxo do jogo "Redação em Jogo".
+    # Aluno já está numa partida (FSM cacheou partida_id). Trata
+    # ANTES do fluxo de foto pra não cair em M9.2 acidentalmente.
+    if estado.startswith(AGUARDANDO_CARTAS_PARTIDA + "|"):
+        return _handle_aguardando_cartas_partida(msg, aluno, estado)
+    if estado.startswith(REVISANDO_TEXTO_MONTADO + "|"):
+        return _handle_revisando_texto_montado(msg, aluno, estado)
+
     # M4: estados legados de Fase A são reciclados pra fluxo novo
     if estado in (AWAITING_NOME, AWAITING_TURMA):
         P.upsert_aluno(msg.phone, estado=AWAITING_CODIGO_TURMA)
@@ -398,6 +472,26 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
         codigo_turma = PL.extract_codigo_turma(msg.text)
         if codigo_turma:
             return _handle_codigo_turma(msg, aluno)
+
+    # Fase 2 passo 4 — entrada em fluxo de partida. Aluno em READY
+    # (sem partida ativa em FSM) que tem partida pendente em alguma
+    # atividade ativa: redireciona pro fluxo do jogo. Dec G.1.4 (sem
+    # partida = fluxo M9.2 normal de foto), então checamos só READY +
+    # AWAITING_FOTO/CODIGO sem missão pendente.
+    # OBS: chamada blocking de DB. Faz só na entrada do fluxo (uma vez
+    # por mensagem). `find_partida_pendente_para_aluno` retorna None
+    # rápido quando não há partida.
+    if estado in (READY,) or estado.startswith(AWAITING_FOTO):
+        try:
+            partida_pend = PL.find_partida_pendente_para_aluno(msg.phone)
+        except Exception:  # noqa: BLE001
+            import logging as _logging
+            _logging.getLogger(__name__).exception(
+                "find_partida_pendente_para_aluno falhou — fallback fluxo normal",
+            )
+            partida_pend = None
+        if partida_pend is not None:
+            return _entrar_fluxo_partida(msg, aluno, partida_pend)
 
     # Bypass FSM via código completo: se aluno mandou `RJ\d·OF\d\d·MF`
     # explícito (e não está em estado de duplicate/cancel), trata
@@ -1121,6 +1215,274 @@ def _build_messages_pos_correcao(
         ))
     msgs.append(OutboundMessage(resposta))
     return msgs
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Fase 2 passo 4 — handlers do jogo "Redação em Jogo"
+# ──────────────────────────────────────────────────────────────────────
+
+def _format_prazo_brt(dt: datetime) -> str:
+    """Formata datetime aware UTC como '06/05 às 22:00' BRT."""
+    from redato_backend.utils.timezone import fmt_brt
+    return fmt_brt(dt, "%d/%m às %H:%M")
+
+
+def _entrar_fluxo_partida(
+    msg: InboundMessage, aluno: Dict[str, Any],
+    partida: Any,
+) -> List[OutboundMessage]:
+    """Aluno em READY tem partida pendente — saúda + transição.
+
+    Despacha pra `aguardando_cartas` ou `revisando_texto_montado`
+    direto baseado em `estado_partida` da partida (texto_montado já
+    foi populado por outra sessão? aluno entra no estado certo).
+    """
+    if partida.estado_partida == "aguardando_cartas":
+        # Saudação inicial + estado encoded com partida_id
+        P.upsert_aluno(
+            msg.phone,
+            estado=f"{AGUARDANDO_CARTAS_PARTIDA}|{partida.partida_id}",
+        )
+        return [OutboundMessage(MSG_JOGO_SAUDACAO_CARTAS.format(
+            missao_titulo=partida.missao_titulo,
+            grupo_codigo=partida.grupo_codigo,
+            nome_humano_tema=partida.minideck_nome_humano,
+        ))]
+
+    # estado_partida == "aguardando_reescrita": cartas já foram
+    # validadas (talvez por outro membro do grupo), texto_montado
+    # populado. Manda direto pro REVISANDO.
+    P.upsert_aluno(
+        msg.phone,
+        estado=f"{REVISANDO_TEXTO_MONTADO}|{partida.partida_id}",
+    )
+    return [OutboundMessage(MSG_JOGO_TEXTO_MONTADO.format(
+        texto_montado=partida.texto_montado,
+    ))]
+
+
+def _decode_partida_id_do_estado(estado: str) -> Optional[uuid.UUID]:
+    """Extrai partida_id de estados encoded como '<PREFIX>|<uuid>'."""
+    import uuid as _uuid
+    if "|" not in estado:
+        return None
+    raw = estado.split("|", 1)[1]
+    try:
+        return _uuid.UUID(raw)
+    except (ValueError, TypeError):
+        return None
+
+
+def _handle_aguardando_cartas_partida(
+    msg: InboundMessage, aluno: Dict[str, Any], estado: str,
+) -> List[OutboundMessage]:
+    """Aluno em AGUARDANDO_CARTAS_PARTIDA mandou mensagem.
+
+    Cenários:
+    - Imagem (foto) → mensagem MSG_JOGO_FOTO_EM_PARTIDA, estado mantém
+    - Texto sem códigos válidos → reitera MSG_JOGO_SAUDACAO_CARTAS
+    - Texto com códigos → valida → se erro reporta; se warning aceita
+      com aviso; se ok monta texto-base + transição
+    """
+    from redato_backend.whatsapp import portal_link as PL
+    from redato_backend.whatsapp.jogo_partida import (
+        montar_texto_montado, parse_codigos, validar_partida,
+    )
+
+    partida_id = _decode_partida_id_do_estado(estado)
+    if partida_id is None:
+        # FSM corrompida — reset.
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(
+            "Algo deu errado no estado da partida. Manda *cancelar* "
+            "e começa de novo."
+        )]
+
+    # Re-resolve partida (pode ter mudado prazo, sido apagada, etc.).
+    partida = PL.get_partida_by_id(partida_id, phone=msg.phone)
+    if partida is None:
+        # Partida não existe mais ou aluno foi removido. Volta READY.
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(
+            "Essa partida não está mais ativa pra você. Fala com o "
+            "professor."
+        )]
+
+    # Prazo expirado?
+    if partida.prazo_reescrita < datetime.now(timezone.utc):
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(MSG_JOGO_PRAZO_EXPIRADO.format(
+            prazo_pt=_format_prazo_brt(partida.prazo_reescrita),
+        ))]
+
+    # Foto em fluxo de cartas?
+    if msg.image_path:
+        return [OutboundMessage(MSG_JOGO_FOTO_EM_PARTIDA)]
+
+    text = (msg.text or "").strip()
+    codigos = parse_codigos(text)
+    if not codigos:
+        # Texto sem códigos — repete a saudação como prompt.
+        return [OutboundMessage(MSG_JOGO_SAUDACAO_CARTAS.format(
+            missao_titulo=partida.missao_titulo,
+            grupo_codigo=partida.grupo_codigo,
+            nome_humano_tema=partida.minideck_nome_humano,
+        ))]
+
+    # Carrega catálogo do minideck pra validar
+    ctx = PL.carregar_contexto_validacao(partida.minideck_id)
+    if ctx is None:
+        # Minideck removido — não deveria acontecer em prod, mas
+        # cobre catalog drift. Reset estado.
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(
+            "Tema da partida não está mais disponível. Fala com o "
+            "professor."
+        )]
+
+    resultado = validar_partida(codigos, ctx)
+    if not resultado.ok:
+        return [OutboundMessage(resultado.mensagem_erro or "Validação falhou.")]
+
+    texto_montado = montar_texto_montado(
+        resultado.estruturais_em_ordem,
+        resultado.lacunas_por_tipo,
+        ctx,
+        placeholders_vazios=resultado.placeholders_vazios,
+    )
+
+    # Persiste cartas + texto_montado
+    try:
+        # Reordena codigos: estruturais na ordem do tabuleiro + lacunas
+        # na ordem que o aluno mandou (preserva intenção).
+        codigos_persist: List[str] = list(resultado.estruturais_em_ordem)
+        for tipo_lac, codes in resultado.lacunas_por_tipo.items():
+            codigos_persist.extend(codes)
+        PL.persist_cartas_e_texto(
+            partida_id=partida_id,
+            codigos=codigos_persist,
+            texto_montado=texto_montado,
+        )
+    except Exception as exc:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).exception(
+            "persist_cartas_e_texto falhou: %r", exc,
+        )
+        return [OutboundMessage(
+            "Tive um problema pra salvar as cartas. Tenta de novo "
+            "em alguns segundos."
+        )]
+
+    # Transiciona pra REVISANDO
+    P.upsert_aluno(
+        msg.phone,
+        estado=f"{REVISANDO_TEXTO_MONTADO}|{partida_id}",
+    )
+
+    # Resposta: avisos (se houver) + texto montado
+    msgs: List[OutboundMessage] = []
+    if resultado.warnings:
+        msgs.append(OutboundMessage(MSG_JOGO_AVISOS_PRE_TEXTO.format(
+            avisos="\n".join(f"• {w}" for w in resultado.warnings),
+        )))
+    msgs.append(OutboundMessage(MSG_JOGO_TEXTO_MONTADO.format(
+        texto_montado=texto_montado,
+    )))
+    return msgs
+
+
+def _handle_revisando_texto_montado(
+    msg: InboundMessage, aluno: Dict[str, Any], estado: str,
+) -> List[OutboundMessage]:
+    """Aluno em REVISANDO_TEXTO_MONTADO mandou mensagem — esperamos
+    texto da reescrita.
+
+    - Imagem: redireciona ("essa atividade pede texto")
+    - Texto >= 50 chars: persiste e volta READY
+    - Texto < 50 chars: avisa "tem certeza?" sem persistir (precisa
+      reenviar). Bot fica em REVISANDO.
+
+    Avaliação Redato (modo jogo_redacao) é Passo 5 — aqui
+    `redato_output` fica null. UI do professor mostra "aguardando
+    avaliação".
+    """
+    from redato_backend.whatsapp import portal_link as PL
+
+    partida_id = _decode_partida_id_do_estado(estado)
+    if partida_id is None:
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(
+            "Estado da partida corrompido. Manda *cancelar* e começa "
+            "de novo."
+        )]
+
+    partida = PL.get_partida_by_id(partida_id, phone=msg.phone)
+    if partida is None:
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(
+            "Essa partida não está mais ativa pra você. Fala com o "
+            "professor."
+        )]
+
+    # Defesa: aluno já submeteu (caso raro de race condition).
+    if PL.find_reescrita_existente(
+        partida_id=partida.partida_id,
+        aluno_turma_id=partida.aluno_turma_id,
+    ):
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(MSG_JOGO_REESCRITA_JA_ENVIADA)]
+
+    # Prazo expirado durante a digitação? Bloqueia.
+    if partida.prazo_reescrita < datetime.now(timezone.utc):
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(MSG_JOGO_PRAZO_EXPIRADO.format(
+            prazo_pt=_format_prazo_brt(partida.prazo_reescrita),
+        ))]
+
+    if msg.image_path:
+        return [OutboundMessage(MSG_JOGO_FOTO_EM_REESCRITA)]
+
+    texto = (msg.text or "").strip()
+    if not texto:
+        return [OutboundMessage(
+            "Manda o texto da sua reescrita."
+        )]
+
+    n_chars = len(texto)
+    # Heurística: < 50 chars muito curto. Bot avisa mas NÃO persiste —
+    # aluno reenvia versão completa. Bot fica em REVISANDO.
+    if n_chars < 50:
+        return [OutboundMessage(MSG_JOGO_REESCRITA_CURTA_AVISO.format(
+            n_chars=n_chars,
+        ))]
+
+    try:
+        PL.persist_reescrita(
+            partida_id=partida.partida_id,
+            aluno_turma_id=partida.aluno_turma_id,
+            texto=texto,
+        )
+    except Exception as exc:  # noqa: BLE001
+        # IntegrityError aqui é race — outra requisição persistiu
+        # primeiro. Resposta neutra: avisa que já foi enviada.
+        from sqlalchemy.exc import IntegrityError as _IE
+        if isinstance(exc, _IE):
+            P.upsert_aluno(msg.phone, estado=READY)
+            return [OutboundMessage(MSG_JOGO_REESCRITA_JA_ENVIADA)]
+        import logging as _logging
+        _logging.getLogger(__name__).exception(
+            "persist_reescrita falhou: %r", exc,
+        )
+        return [OutboundMessage(
+            "Tive um problema pra salvar a reescrita. Tenta de novo "
+            "em alguns segundos."
+        )]
+
+    # Sucesso — volta READY. NÃO chama Redato (Passo 5).
+    P.upsert_aluno(msg.phone, estado=READY)
+    return [OutboundMessage(MSG_JOGO_REESCRITA_RECEBIDA.format(
+        n_chars=n_chars,
+    ))]
 
 
 # ──────────────────────────────────────────────────────────────────────

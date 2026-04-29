@@ -532,3 +532,337 @@ def marcar_notificacao_enviada(atividade_id: uuid.UUID) -> None:
         if ativ is not None:
             ativ.notificacao_enviada_em = _utc_now()
             session.commit()
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Fase 2 passo 4 — partidas do jogo
+# ──────────────────────────────────────────────────────────────────────
+
+@dataclass
+class PartidaPendenteContext:
+    """Snapshot de uma partida pendente pro aluno (sem cartas escolhidas
+    ou sem reescrita). Bot usa pra decidir entre fluxo M9.2 (foto) e
+    fluxo de partida.
+
+    Estado:
+    - "aguardando_cartas": texto_montado vazio, cartas ainda não escolhidas
+    - "aguardando_reescrita": texto_montado preenchido, aluno ainda não
+      mandou reescrita
+    """
+    partida_id: uuid.UUID
+    atividade_id: uuid.UUID
+    aluno_turma_id: uuid.UUID
+    minideck_id: uuid.UUID
+    minideck_tema: str
+    minideck_nome_humano: str
+    grupo_codigo: str
+    missao_codigo: str
+    missao_titulo: str
+    prazo_reescrita: datetime
+    estado_partida: str  # "aguardando_cartas" | "aguardando_reescrita" | "concluida"
+    texto_montado: str   # vazio se estado=aguardando_cartas
+
+
+def find_partida_pendente_para_aluno(
+    phone: str,
+) -> Optional[PartidaPendenteContext]:
+    """Encontra a primeira partida pendente pro aluno em alguma das
+    suas turmas:
+
+    - Atividade ATIVA (data_inicio <= now <= data_fim)
+    - Aluno na lista `cartas_escolhidas._alunos_turma_ids` da partida
+    - Prazo da reescrita > now
+    - Aluno ainda NÃO submeteu reescrita
+
+    Retorna None se aluno não tem nenhuma partida pendente. Caller
+    (bot) usa pra decidir entre fluxo de partida e fluxo M9.2 normal.
+
+    Decisão G.1.4: sem partida → fluxo normal de foto.
+    """
+    from redato_backend.portal.models import (
+        JogoMinideck, PartidaJogo, ReescritaIndividual,
+    )
+
+    agora = _utc_now()
+    with _open_session() as session:
+        # Vínculos do aluno
+        aluno_rows = session.execute(
+            select(AlunoTurma).where(
+                AlunoTurma.telefone == phone,
+                AlunoTurma.ativo.is_(True),
+            )
+        ).scalars().all()
+        if not aluno_rows:
+            return None
+
+        aluno_ids = [a.id for a in aluno_rows]
+        turma_ids = [a.turma_id for a in aluno_rows]
+
+        # Partidas em atividades ativas pras turmas do aluno, com
+        # prazo no futuro. Filtrar "aluno faz parte" e "ainda sem
+        # reescrita" em Python — `cartas_escolhidas` é JSONB com
+        # estrutura conhecida pelo jogo_api.
+        rows = session.execute(
+            select(PartidaJogo, Atividade, Missao, JogoMinideck)
+            .join(Atividade, Atividade.id == PartidaJogo.atividade_id)
+            .join(Missao, Missao.id == Atividade.missao_id)
+            .join(
+                JogoMinideck,
+                JogoMinideck.id == PartidaJogo.minideck_id,
+            )
+            .where(
+                Atividade.turma_id.in_(turma_ids),
+                Atividade.deleted_at.is_(None),
+                Atividade.data_inicio <= agora,
+                Atividade.data_fim >= agora,
+                PartidaJogo.prazo_reescrita > agora,
+            )
+            .order_by(PartidaJogo.created_at.asc())
+        ).all()
+        if not rows:
+            return None
+
+        # Pra cada partida, decidir se é pendente pra esse aluno
+        for partida, ativ, missao, minideck in rows:
+            cartas_dict = partida.cartas_escolhidas or {}
+            if isinstance(cartas_dict, list):
+                # Formato antigo, sem campo _alunos — pula (sem
+                # vínculo direto).
+                continue
+            alunos_da_partida_raw = cartas_dict.get(
+                "_alunos_turma_ids", [],
+            )
+            try:
+                alunos_da_partida = {
+                    uuid.UUID(str(s)) for s in alunos_da_partida_raw
+                }
+            except (ValueError, TypeError):
+                continue
+
+            # Match com algum vínculo do aluno
+            aluno_match = next(
+                (aid for aid in aluno_ids if aid in alunos_da_partida),
+                None,
+            )
+            if aluno_match is None:
+                continue
+
+            # Aluno já submeteu reescrita? Se sim, partida não é
+            # pendente PRA ele (mesmo que outros do grupo ainda
+            # devam) — bot fica em READY e fluxo de foto.
+            existe_reescrita = session.execute(
+                select(ReescritaIndividual.id).where(
+                    ReescritaIndividual.partida_id == partida.id,
+                    ReescritaIndividual.aluno_turma_id == aluno_match,
+                )
+            ).first()
+            if existe_reescrita is not None:
+                continue
+
+            estado_partida = (
+                "aguardando_cartas"
+                if not (partida.texto_montado or "").strip()
+                else "aguardando_reescrita"
+            )
+
+            return PartidaPendenteContext(
+                partida_id=partida.id,
+                atividade_id=ativ.id,
+                aluno_turma_id=aluno_match,
+                minideck_id=minideck.id,
+                minideck_tema=minideck.tema,
+                minideck_nome_humano=minideck.nome_humano,
+                grupo_codigo=partida.grupo_codigo,
+                missao_codigo=missao.codigo,
+                missao_titulo=missao.titulo,
+                prazo_reescrita=partida.prazo_reescrita,
+                estado_partida=estado_partida,
+                texto_montado=partida.texto_montado or "",
+            )
+    return None
+
+
+def get_partida_by_id(
+    partida_id: uuid.UUID, *, phone: str,
+) -> Optional[PartidaPendenteContext]:
+    """Re-resolve uma partida pelo id pro aluno (após FSM cache).
+    Garante autorização: phone deve estar em alunos_turma_ids da
+    partida. Retorna None senão (não autorizado ou não existe)."""
+    from redato_backend.portal.models import (
+        JogoMinideck, PartidaJogo,
+    )
+
+    agora = _utc_now()
+    with _open_session() as session:
+        partida = session.get(PartidaJogo, partida_id)
+        if partida is None:
+            return None
+        ativ = session.get(Atividade, partida.atividade_id)
+        if ativ is None or ativ.deleted_at is not None:
+            return None
+        missao = session.get(Missao, ativ.missao_id)
+        minideck = session.get(JogoMinideck, partida.minideck_id)
+        if missao is None or minideck is None:
+            return None
+
+        cartas_dict = partida.cartas_escolhidas or {}
+        if isinstance(cartas_dict, list):
+            return None
+        alunos_da_partida_raw = cartas_dict.get(
+            "_alunos_turma_ids", [],
+        )
+        try:
+            alunos_da_partida = {
+                uuid.UUID(str(s)) for s in alunos_da_partida_raw
+            }
+        except (ValueError, TypeError):
+            return None
+
+        # Vínculos desse phone
+        aluno_rows = session.execute(
+            select(AlunoTurma).where(
+                AlunoTurma.telefone == phone,
+                AlunoTurma.ativo.is_(True),
+            )
+        ).scalars().all()
+        aluno_match = next(
+            (a.id for a in aluno_rows if a.id in alunos_da_partida),
+            None,
+        )
+        if aluno_match is None:
+            return None
+
+        estado_partida = (
+            "aguardando_cartas"
+            if not (partida.texto_montado or "").strip()
+            else "aguardando_reescrita"
+        )
+        return PartidaPendenteContext(
+            partida_id=partida.id,
+            atividade_id=ativ.id,
+            aluno_turma_id=aluno_match,
+            minideck_id=minideck.id,
+            minideck_tema=minideck.tema,
+            minideck_nome_humano=minideck.nome_humano,
+            grupo_codigo=partida.grupo_codigo,
+            missao_codigo=missao.codigo,
+            missao_titulo=missao.titulo,
+            prazo_reescrita=partida.prazo_reescrita,
+            estado_partida=estado_partida,
+            texto_montado=partida.texto_montado or "",
+        )
+
+
+def carregar_contexto_validacao(
+    minideck_id: uuid.UUID,
+):
+    """Carrega snapshot do catálogo (estruturais + lacunas do minideck)
+    em forma `ContextoValidacao` pronto pra `validar_partida` e
+    `montar_texto_montado`. Roda 2 SELECTs.
+
+    Returns: ContextoValidacao (do módulo jogo_partida) ou None se
+    minideck não existe."""
+    from redato_backend.portal.models import (
+        CartaEstrutural, CartaLacuna, JogoMinideck,
+    )
+    from redato_backend.whatsapp.jogo_partida import (
+        CartaEstruturalSnapshot, CartaLacunaSnapshot, ContextoValidacao,
+    )
+
+    with _open_session() as session:
+        minideck = session.get(JogoMinideck, minideck_id)
+        if minideck is None:
+            return None
+
+        estr_rows = session.execute(
+            select(CartaEstrutural)
+            .order_by(CartaEstrutural.codigo.asc())
+        ).scalars().all()
+        lac_rows = session.execute(
+            select(CartaLacuna)
+            .where(CartaLacuna.minideck_id == minideck_id)
+            .order_by(CartaLacuna.codigo.asc())
+        ).scalars().all()
+
+        estruturais = {
+            e.codigo: CartaEstruturalSnapshot(
+                codigo=e.codigo, secao=e.secao, cor=e.cor,
+                texto=e.texto,
+                lacunas=tuple(e.lacunas or []),
+            )
+            for e in estr_rows
+        }
+        lacunas = {
+            l.codigo: CartaLacunaSnapshot(
+                codigo=l.codigo, tipo=l.tipo, conteudo=l.conteudo,
+            )
+            for l in lac_rows
+        }
+        return ContextoValidacao(
+            estruturais_por_codigo=estruturais,
+            lacunas_por_codigo=lacunas,
+            minideck_tema=minideck.tema,
+            minideck_nome_humano=minideck.nome_humano,
+        )
+
+
+def persist_cartas_e_texto(
+    *,
+    partida_id: uuid.UUID,
+    codigos: List[str],
+    texto_montado: str,
+) -> None:
+    """Atualiza partida_jogo após validação das cartas:
+    - cartas_escolhidas[codigos] = lista de codes (preserva _alunos_turma_ids)
+    - texto_montado = redação cooperativa expandida
+    Não muda alunos vinculados (campo _alunos_turma_ids preservado)."""
+    from redato_backend.portal.models import PartidaJogo
+
+    with _open_session() as session:
+        partida = session.get(PartidaJogo, partida_id)
+        if partida is None:
+            raise RuntimeError(f"Partida {partida_id} não encontrada")
+        cartas = dict(partida.cartas_escolhidas or {})
+        cartas["codigos"] = list(codigos)
+        partida.cartas_escolhidas = cartas
+        partida.texto_montado = texto_montado
+        session.commit()
+
+
+def persist_reescrita(
+    *,
+    partida_id: uuid.UUID,
+    aluno_turma_id: uuid.UUID,
+    texto: str,
+) -> uuid.UUID:
+    """Cria ReescritaIndividual. Levanta se UNIQUE constraint barrar
+    (aluno tentando resubmeter reescrita)."""
+    from redato_backend.portal.models import ReescritaIndividual
+
+    with _open_session() as session:
+        r = ReescritaIndividual(
+            partida_id=partida_id,
+            aluno_turma_id=aluno_turma_id,
+            texto=texto,
+            redato_output=None,  # Passo 5 popula
+        )
+        session.add(r)
+        session.commit()
+        session.refresh(r)
+        return r.id
+
+
+def find_reescrita_existente(
+    *, partida_id: uuid.UUID, aluno_turma_id: uuid.UUID,
+) -> bool:
+    """True se aluno já submeteu reescrita pra essa partida (UNIQUE)."""
+    from redato_backend.portal.models import ReescritaIndividual
+
+    with _open_session() as session:
+        n = session.execute(
+            select(ReescritaIndividual.id).where(
+                ReescritaIndividual.partida_id == partida_id,
+                ReescritaIndividual.aluno_turma_id == aluno_turma_id,
+            )
+        ).first()
+        return n is not None

@@ -151,10 +151,10 @@ def pg_session():
     with engine.connect() as conn:
         conn.execute(text(f'CREATE SCHEMA "{test_schema}"'))
         conn.commit()
-    # Aplica todas as tabelas do metadata (equivalente a alembic upgrade
-    # head pra esse schema isolado).
-    for table in Base.metadata.tables.values():
-        table.schema = test_schema
+    # search_path no connect_args garante que CREATE TABLE / SELECT /
+    # INSERT usam test_schema. NÃO mutamos Base.metadata.tables[*]
+    # .schema porque mutação global vaza pra outros módulos quando o
+    # suite roda inteiro.
     Base.metadata.create_all(engine)
 
     session = Session(engine)
@@ -164,8 +164,6 @@ def pg_session():
     with engine.connect() as conn:
         conn.execute(text(f'DROP SCHEMA "{test_schema}" CASCADE'))
         conn.commit()
-    for table in Base.metadata.tables.values():
-        table.schema = None
 
 
 @pytestmark_db
