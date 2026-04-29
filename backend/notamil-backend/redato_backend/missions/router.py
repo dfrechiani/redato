@@ -116,6 +116,92 @@ def _missao_id_for(mode: MissionMode) -> str:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Construção do user_msg — função pura, testável
+# ──────────────────────────────────────────────────────────────────────
+
+def _build_user_msg(
+    *,
+    mode: MissionMode,
+    activity_id: str,
+    content: str,
+    theme: str,
+    pre_flags_block: str = "",
+    palavra_dia_block: str = "",
+) -> str:
+    """Monta o user_msg enviado ao Claude. Função pura — testável sem
+    mock de SDK.
+
+    Bug que motivou (interaction id=3, 2026-04-29): foco_c2 tem 2
+    missões no enum (RJ2_OF04_MF, RJ2_OF06_MF). O contexto da oficina
+    em prompts.py menciona AMBAS, então o LLM podia escolher a errada.
+
+    Fix: injetar header explícito com a `missao_id` específica no topo
+    do user_msg + reforçar a instrução final. Defesa em profundidade
+    porque o router também sobrescreve `tool_args['missao_id']` pós-
+    resposta (ver `_enforce_missao_id`).
+    """
+    canonical = _canonicalize(activity_id)
+    canonical_dotted = canonical.replace("_", "·") if canonical else activity_id
+    tool = TOOLS_BY_MODE[mode.value]
+
+    # Header explícito da missão a avaliar — reduz ambiguidade quando
+    # o tool tem >1 valor no enum de `missao_id` (caso foco_c2).
+    header = (
+        f"## Missão a avaliar\n\n"
+        f"Esta correção é especificamente da **`{canonical_dotted}`** "
+        f"(missao_id no tool: `{canonical}`).\n\n"
+        f"---\n\n"
+    )
+
+    return (
+        f"{header}"
+        f"{context_block_for(mode.value)}\n"
+        f"---\n\n"
+        f"## Texto do aluno\n\n"
+        f"**Tema/contexto:** {theme}\n\n"
+        f"```\n{content}\n```\n"
+        f"{palavra_dia_block}"
+        f"{pre_flags_block}"
+        f"\n---\n\n"
+        f"Avalie agora chamando a ferramenta `{tool['name']}` "
+        f"com TODOS os campos obrigatórios. "
+        f"**`missao_id` DEVE ser exatamente `{canonical}`** — é a "
+        f"missão declarada no topo deste prompt."
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Defesa em profundidade — força missao_id correto se LLM divergir
+# ──────────────────────────────────────────────────────────────────────
+
+def _enforce_missao_id(
+    tool_args: Dict[str, Any], activity_id: str,
+) -> Optional[Dict[str, Any]]:
+    """Garante que `tool_args['missao_id']` bate com a missão que o bot
+    decidiu processar (vinda de activity_id).
+
+    Bug que motivou (interaction id=3, 2026-04-29): bot resolveu
+    RJ2·OF06·MF como atividade ativa, mas LLM emitiu RJ2_OF04_MF no
+    tool_use porque o enum aceitava ambos. Resultado: campo
+    `interactions.missao_id` (pelo bot) divergente do JSON
+    `redato_output.missao_id` (do LLM) na mesma row.
+
+    Fix: sobrescrever in-place. Caller loga divergência separadamente
+    via `_log_missao_id_divergence` pra auditoria.
+
+    Retorna None se não houve divergência, dict com info caso contrário.
+    """
+    expected = _canonicalize(activity_id)
+    if not expected:
+        return None
+    emitted = tool_args.get("missao_id")
+    if emitted == expected:
+        return None
+    tool_args["missao_id"] = expected
+    return {"emitido": emitted, "esperado": expected}
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Entry point — chamado por dev_offline._claude_grade_essay
 # ──────────────────────────────────────────────────────────────────────
 
@@ -155,17 +241,9 @@ def grade_mission(data: Dict[str, Any]) -> Dict[str, Any]:
                   "`palavra_dia_uso_errado` accordingly.\n"
             )
 
-    user_msg = (
-        f"{context_block_for(mode.value)}\n"
-        f"---\n\n"
-        f"## Texto do aluno\n\n"
-        f"**Tema/contexto:** {theme}\n\n"
-        f"```\n{content}\n```\n"
-        f"{palavra_dia_block}"
-        f"{pre_flags_block}"
-        f"\n---\n\n"
-        f"Avalie agora chamando a ferramenta `{TOOLS_BY_MODE[mode.value]['name']}` "
-        f"com TODOS os campos obrigatórios."
+    user_msg = _build_user_msg(
+        mode=mode, activity_id=activity_id, content=content, theme=theme,
+        pre_flags_block=pre_flags_block, palavra_dia_block=palavra_dia_block,
     )
 
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
@@ -209,6 +287,16 @@ def grade_mission(data: Dict[str, Any]) -> Dict[str, Any]:
             + ", ".join(str(getattr(b, "type", "?")) for b in message.content)
         )
 
+    # Defesa em profundidade — força missao_id correto quando o LLM
+    # diverge (caso foco_c2 com 2 valores no enum). Aplicar ANTES do
+    # apply_override porque a nota emitida pode depender de qual
+    # missão o LLM achou que estava avaliando — log preserva ambos.
+    missao_id_div = _enforce_missao_id(tool_args, activity_id)
+    if missao_id_div:
+        _log_missao_id_divergence(
+            mode.value, activity_id, missao_id_div, tool_args,
+        )
+
     # Override determinístico: nota ENEM final é Python, não LLM. Reduz
     # oscilação onde scores REJ idênticos geravam notas distintas
     # (incidente real id=9/id=10, 2026-04-27).
@@ -234,6 +322,46 @@ def grade_mission(data: Dict[str, Any]) -> Dict[str, Any]:
     return tool_args
 
 
+def _log_missao_id_divergence(
+    mode: str, activity_id: str, divergence: Dict[str, Any],
+    tool_args: Dict[str, Any],
+) -> None:
+    """Auditoria de divergência LLM × bot na chave `missao_id`.
+
+    Mesmo arquivo `data/whatsapp/divergences.jsonl` do `_log_divergence`
+    (notas), distinguido por `kind: "missao_id"`. Útil pra detectar
+    oscilação do LLM quando há ambiguidade no enum (caso foco_c2)
+    e calibrar o prompt se a frequência subir.
+    """
+    import json as _json
+    from datetime import datetime as _datetime, timezone as _tz
+    from pathlib import Path as _Path
+
+    backend = _Path(__file__).resolve().parents[1]
+    default_path = backend.parent / "data" / "whatsapp" / "divergences.jsonl"
+    log_path = _Path(os.getenv("REDATO_DIVERGENCES_FILE", str(default_path)))
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    record = {
+        "ts": _datetime.now(_tz.utc).isoformat(),
+        "kind": "missao_id",
+        "mode": mode,
+        "activity_id": activity_id,
+        "missao_id_emitido_llm": divergence.get("emitido"),
+        "missao_id_esperado": divergence.get("esperado"),
+        "rubrica_rej": tool_args.get("rubrica_rej"),
+        "flags": tool_args.get("flags"),
+    }
+    try:
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(_json.dumps(record, ensure_ascii=False, default=str) + "\n")
+    except Exception as exc:  # noqa: BLE001
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "Falha ao registrar missao_id divergence: %r", exc
+        )
+
+
 def _log_divergence(
     mode: str, activity_id: str, override_result: Dict[str, Any],
     tool_args: Dict[str, Any],
@@ -254,6 +382,7 @@ def _log_divergence(
 
     record = {
         "ts": _datetime.now(_tz.utc).isoformat(),
+        "kind": "nota",   # M9.2 — distingue de divergências de missao_id
         "mode": mode,
         "activity_id": activity_id,
         "nota_emitida_llm": override_result["nota_emitida_llm"],
