@@ -373,9 +373,19 @@ export interface MinideckResumo {
   total_cartas: number;  // ~104 quando completo
 }
 
+/** Status da reescrita pra um aluno em uma partida (Fase 2 passo 6).
+ *  Populado em `PartidaResumo.alunos[]` (dashboard); em
+ *  `PartidaDetail.alunos[]` fica null porque já tem `reescritas[]`
+ *  separado. */
+export type ReescritaStatus =
+  | "pendente"          // aluno ainda não enviou
+  | "em_avaliacao"      // bot persistiu mas Claude falhou
+  | "avaliada";         // reescrita + redato_output presentes
+
 export interface AlunoResumoPartida {
   aluno_turma_id: string;
   nome: string;
+  reescrita_status?: ReescritaStatus | null;
 }
 
 export interface TentativaReescritaResumo {
@@ -432,4 +442,98 @@ export interface PartidaUpdatePayload {
 export interface PartidaCreateResponse {
   id: string;
   partida: PartidaDetail;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Fase 2 passo 6 — detalhe de reescrita (UI do professor)
+// Espelha schemas em
+// `redato_backend/portal/jogo_api.py::ReescritaDetail`.
+// ──────────────────────────────────────────────────────────────────────
+
+/** Carta escolhida pelo grupo. `secao` e `cor` populados apenas pra
+ *  estruturais (tipo='ESTRUTURAL'); cartas de lacuna (PROBLEMA,
+ *  REPERTORIO, etc.) têm null nesses campos. */
+export interface CartaEscolhidaDetail {
+  codigo: string;
+  tipo:
+    | "ESTRUTURAL"
+    | "PROBLEMA"
+    | "REPERTORIO"
+    | "PALAVRA_CHAVE"
+    | "AGENTE"
+    | "ACAO"
+    | "MEIO"
+    | "FIM";
+  conteudo: string;
+  secao: string | null;  // só pra ESTRUTURAL
+  cor: string | null;    // só pra ESTRUTURAL — AZUL/AMARELO/VERDE/LARANJA
+}
+
+/** Notas + métricas + flags + feedback do redato_output do
+ *  jogo_redacao. Forma do JSONB persistido em reescrita.redato_output.
+ *  Pode ser null se Claude falhou no bot — UI mostra estado pendente. */
+export interface JogoRedatoOutput {
+  modo: "jogo_redacao";
+  tema_minideck: string;
+  notas_enem: {
+    c1: number;
+    c2: number;
+    c3: number;
+    c4: number;
+    c5: number;
+  };
+  nota_total_enem: number;
+  transformacao_cartas: number;     // 0-100, decisão G.1.6
+  sugestoes_cartas_alternativas: Array<{
+    codigo_original: string;
+    codigo_sugerido: string;
+    motivo: string;
+  }>;
+  flags: {
+    copia_literal_das_cartas: boolean;
+    cartas_mal_articuladas: boolean;
+    fuga_do_tema_do_minideck: boolean;
+    tipo_textual_inadequado: boolean;
+    desrespeito_direitos_humanos: boolean;
+  };
+  feedback_aluno: {
+    acertos: string[];
+    ajustes: string[];
+  };
+  feedback_professor: {
+    pontos_fortes: string[];
+    pontos_fracos: string[];
+    padrao_falha: string;
+    transferencia_competencia: string;
+  };
+  _mission?: {
+    mode: string;
+    model?: string;
+    [k: string]: unknown;
+  };
+}
+
+/** GET /portal/partidas/{id}/reescritas/{aluno_turma_id} */
+export interface ReescritaDetail {
+  partida: {
+    id: string;
+    atividade_id: string;
+    atividade_nome: string;        // ex.: "OF13 — Jogo de Redação"
+    tema: string;                  // slug snake_case
+    nome_humano_tema: string;      // ex.: "Saúde Mental"
+    grupo_codigo: string;
+    prazo_reescrita: string;       // ISO UTC
+  };
+  aluno: AlunoResumoPartida;
+  cartas_escolhidas: CartaEscolhidaDetail[];
+  texto_montado: string;
+  reescrita: {
+    id: string;
+    enviado_em: string;            // ISO UTC; UI converte pra BRT
+    texto: string;
+    /** null se bot persistiu mas Claude falhou (timeout/erro). UI
+     *  trata como "avaliação pendente". */
+    redato_output: JogoRedatoOutput | null;
+    elapsed_ms: number | null;
+  };
 }

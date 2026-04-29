@@ -50,8 +50,8 @@ from redato_backend.portal.auth.permissions import (
 )
 from redato_backend.portal.db import get_engine
 from redato_backend.portal.models import (
-    AlunoTurma, Atividade, CartaLacuna, JogoMinideck, PartidaJogo,
-    Professor, ReescritaIndividual, Turma,
+    AlunoTurma, Atividade, CartaEstrutural, CartaLacuna, JogoMinideck,
+    Missao, PartidaJogo, Professor, ReescritaIndividual, Turma,
 )
 
 
@@ -93,9 +93,20 @@ class PartidaUpdate(BaseModel):
 
 class AlunoResumo(BaseModel):
     """Resumo de aluno vinculado à partida — frontend renderiza
-    avatar/nome sem precisar fetch extra."""
+    avatar/nome sem precisar fetch extra.
+
+    Campo `reescrita_status` (Fase 2 passo 6): populado em
+    PartidaResumo (dashboard) — UI mostra badge por aluno. Em
+    PartidaDetail fica null porque já tem `reescritas[]` array
+    completo. Valores:
+    - "pendente": aluno ainda não enviou reescrita
+    - "em_avaliacao": reescrita persistida mas Claude falhou
+      (redato_output=null)
+    - "avaliada": reescrita + redato_output presentes
+    """
     aluno_turma_id: str
     nome: str
+    reescrita_status: Optional[str] = None
 
 
 class TentativaReescritaResumo(BaseModel):
@@ -281,6 +292,38 @@ def _to_partida_resumo(
 ) -> PartidaResumo:
     aluno_ids = _alunos_ids_da_partida(partida)
     alunos = _carregar_alunos_resumo(session, aluno_ids)
+    # Status por aluno (Fase 2 passo 6) — 1 query por partida pegando
+    # todas as reescritas + redato_output. Volume baixo (~6 alunos
+    # por partida × poucas partidas por atividade), N+1 aceitável.
+    reescritas_rows = session.execute(
+        select(
+            ReescritaIndividual.aluno_turma_id,
+            ReescritaIndividual.redato_output,
+        ).where(ReescritaIndividual.partida_id == partida.id)
+    ).all()
+    status_por_aluno: Dict[uuid.UUID, str] = {}
+    for aluno_id, redato_out in reescritas_rows:
+        status_por_aluno[aluno_id] = (
+            "avaliada" if redato_out is not None else "em_avaliacao"
+        )
+    # Atualiza in-place a lista `alunos` com o status (default
+    # "pendente" pros que não têm row em reescritas).
+    alunos_com_status: List[AlunoResumo] = []
+    for a in alunos:
+        try:
+            aid = uuid.UUID(a.aluno_turma_id)
+        except (ValueError, TypeError):
+            aid = None
+        st = (
+            status_por_aluno.get(aid, "pendente")
+            if aid is not None else "pendente"
+        )
+        alunos_com_status.append(AlunoResumo(
+            aluno_turma_id=a.aluno_turma_id, nome=a.nome,
+            reescrita_status=st,
+        ))
+    alunos = alunos_com_status
+
     n_reescritas = session.execute(
         select(func.count(ReescritaIndividual.id))
         .where(ReescritaIndividual.partida_id == partida.id)
@@ -816,3 +859,251 @@ def deletar_partida(
             partida_id, auth.user_id,
         )
         return _DeletePartidaResponse(deleted_id=str(partida_id))
+
+
+# ──────────────────────────────────────────────────────────────────────
+# GET /portal/partidas/{partida_id}/reescritas/{aluno_turma_id}
+# Detalhe completo da reescrita de um aluno (Fase 2 passo 6).
+# ──────────────────────────────────────────────────────────────────────
+
+
+class CartaEscolhidaDetail(BaseModel):
+    """Carta que o grupo escolheu — view denormalizada com tudo que a
+    UI precisa pra renderizar sem fetch adicional. `secao` e `cor` só
+    aparecem em estruturais (E##); cartas de lacuna (P/R/K/A/AC/ME/F)
+    têm None nesses campos.
+
+    Campo `tipo` é o enum DB ('ESTRUTURAL', 'PROBLEMA', 'REPERTORIO',
+    etc.). Frontend distingue estrutural × lacuna por esse campo.
+    """
+    codigo: str
+    tipo: str
+    conteudo: str
+    secao: Optional[str] = None
+    cor: Optional[str] = None
+
+
+class _ReescritaPartidaContexto(BaseModel):
+    """Subset de PartidaResumo pro detalhe da reescrita. Inclui dados
+    da atividade pai pra UI mostrar cabeçalho sem fetch extra."""
+    id: str
+    atividade_id: str
+    atividade_nome: str       # missao_titulo + oficina_numero
+    tema: str
+    nome_humano_tema: str
+    grupo_codigo: str
+    prazo_reescrita: str      # ISO UTC
+
+
+class _ReescritaCorpo(BaseModel):
+    """Corpo da reescrita autoral + avaliação."""
+    id: str
+    enviado_em: str           # ISO UTC; frontend converte pra BRT
+    texto: str
+    # Pode ser None quando bot persistiu mas Claude falhou (timeout
+    # ou erro genérico). UI mostra estado "avaliação pendente".
+    redato_output: Optional[Dict[str, Any]] = None
+    elapsed_ms: Optional[int] = None
+
+
+class ReescritaDetail(BaseModel):
+    """GET /portal/partidas/{id}/reescritas/{aluno_id} — full detail."""
+    partida: _ReescritaPartidaContexto
+    aluno: AlunoResumo
+    cartas_escolhidas: List[CartaEscolhidaDetail]
+    texto_montado: str
+    reescrita: _ReescritaCorpo
+
+
+def _carregar_cartas_escolhidas_detail(
+    session: Session, codigos: List[str], minideck_id: uuid.UUID,
+) -> List[CartaEscolhidaDetail]:
+    """Carrega snapshots completos de cada carta escolhida pelo grupo
+    em uma query (split entre estruturais compartilhadas e lacunas
+    do minideck). Preserva a ordem dos `codigos` recebidos — bate com
+    a ordem que o bot persistiu.
+    """
+    if not codigos:
+        return []
+
+    # Sets pra split rápido — estruturais começam com E, lacunas
+    # começam com P/R/K/A/AC/ME/F.
+    cods_estr: List[str] = []
+    cods_lac: List[str] = []
+    for cod in codigos:
+        cu = (cod or "").upper()
+        if cu.startswith("E"):
+            cods_estr.append(cu)
+        else:
+            cods_lac.append(cu)
+
+    estr_rows = []
+    if cods_estr:
+        estr_rows = session.execute(
+            select(CartaEstrutural).where(
+                CartaEstrutural.codigo.in_(cods_estr),
+            )
+        ).scalars().all()
+    lac_rows = []
+    if cods_lac:
+        lac_rows = session.execute(
+            select(CartaLacuna).where(
+                CartaLacuna.minideck_id == minideck_id,
+                CartaLacuna.codigo.in_(cods_lac),
+            )
+        ).scalars().all()
+
+    by_codigo: Dict[str, CartaEscolhidaDetail] = {}
+    for e in estr_rows:
+        by_codigo[e.codigo.upper()] = CartaEscolhidaDetail(
+            codigo=e.codigo, tipo="ESTRUTURAL", conteudo=e.texto,
+            secao=e.secao, cor=e.cor,
+        )
+    for l in lac_rows:
+        by_codigo[l.codigo.upper()] = CartaEscolhidaDetail(
+            codigo=l.codigo, tipo=l.tipo, conteudo=l.conteudo,
+            secao=None, cor=None,
+        )
+
+    # Preserva ordem original; ignora codes que sumiram do catálogo
+    # (catalog drift — carta editada/removida após a partida começar).
+    out: List[CartaEscolhidaDetail] = []
+    for cod in codigos:
+        cu = (cod or "").upper()
+        c = by_codigo.get(cu)
+        if c is not None:
+            out.append(c)
+    return out
+
+
+@router.get(
+    "/partidas/{partida_id}/reescritas/{aluno_turma_id}",
+    response_model=ReescritaDetail,
+)
+def detalhe_reescrita(
+    partida_id: uuid.UUID,
+    aluno_turma_id: uuid.UUID,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> ReescritaDetail:
+    """Detalhe completo de uma reescrita pra UI do professor (Fase 2
+    passo 6 — proposta D.1, decisões adendo G).
+
+    Inclui: contexto da partida (atividade + tema + grupo + prazo),
+    aluno, cartas escolhidas com texto/conteúdo completo, texto
+    montado, reescrita autoral + redato_output (full JSONB).
+
+    `redato_output` pode ser `null` se Claude falhou no bot (timeout
+    ou erro genérico) — UI deve renderizar estado "avaliação pendente".
+
+    Permissão: mesma de `detalhe_partida` (professor da turma OU
+    coordenador da escola, e — futuro — aluno do grupo). Aluno ainda
+    não tem JWT no portal (M9), então essa parte fica preparada via
+    `can_view_turma`.
+
+    Erros:
+    - 404: partida ou aluno não encontrado, ou aluno não pertence à
+      partida, ou reescrita inexistente
+    - 403: usuário sem permissão sobre a turma
+    """
+    with Session(get_engine()) as session:
+        partida = session.get(PartidaJogo, partida_id)
+        if partida is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Partida não encontrada",
+            )
+        ativ = session.get(Atividade, partida.atividade_id)
+        if ativ is None or ativ.deleted_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Atividade da partida não disponível",
+            )
+        turma = session.get(Turma, ativ.turma_id)
+        if turma is None or not can_view_turma(auth, turma):
+            # 403 = permissão; 404 = não existe. Misturamos pra não
+            # vazar metadata (existência de partida em turma alheia).
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Sem permissão pra essa partida",
+            )
+
+        # Aluno tem que estar vinculado à partida (via _alunos_turma_ids
+        # do JSONB cartas_escolhidas) E pertencer à turma da atividade.
+        alunos_da_partida = set(_alunos_ids_da_partida(partida))
+        if aluno_turma_id not in alunos_da_partida:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Aluno não pertence a essa partida",
+            )
+
+        aluno = session.get(AlunoTurma, aluno_turma_id)
+        if aluno is None or aluno.turma_id != turma.id:
+            # Defensivo: aluno apagado ou em outra turma — trate como
+            # 404 (não diferenciamos pra UI).
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Aluno não encontrado",
+            )
+
+        # Reescrita
+        reescrita = session.execute(
+            select(ReescritaIndividual).where(
+                ReescritaIndividual.partida_id == partida_id,
+                ReescritaIndividual.aluno_turma_id == aluno_turma_id,
+            )
+        ).scalar_one_or_none()
+        if reescrita is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    "Reescrita não encontrada. Aluno pode ainda não "
+                    "ter respondido ou houve erro de persistência."
+                ),
+            )
+
+        # Contexto: atividade + missão + tema
+        missao = session.get(Missao, ativ.missao_id)
+        atividade_nome = (
+            f"OF{missao.oficina_numero:02d} — {missao.titulo}"
+            if missao else f"Atividade {ativ.id}"
+        )
+        minideck = session.get(JogoMinideck, partida.minideck_id)
+        if minideck is None:
+            # Catalog drift — minideck removido após criação da partida.
+            # Render mostra placeholder em vez de 500 pra não trancar
+            # a tela.
+            tema_slug = "?"
+            tema_humano = "(minideck removido)"
+        else:
+            tema_slug = minideck.tema
+            tema_humano = minideck.nome_humano
+
+        # Cartas escolhidas — full snapshot
+        codigos = _codigos_da_partida(partida)
+        cartas = _carregar_cartas_escolhidas_detail(
+            session, codigos, partida.minideck_id,
+        )
+
+        return ReescritaDetail(
+            partida=_ReescritaPartidaContexto(
+                id=str(partida.id),
+                atividade_id=str(ativ.id),
+                atividade_nome=atividade_nome,
+                tema=tema_slug,
+                nome_humano_tema=tema_humano,
+                grupo_codigo=partida.grupo_codigo,
+                prazo_reescrita=partida.prazo_reescrita.isoformat(),
+            ),
+            aluno=AlunoResumo(
+                aluno_turma_id=str(aluno.id), nome=aluno.nome,
+            ),
+            cartas_escolhidas=cartas,
+            texto_montado=partida.texto_montado or "",
+            reescrita=_ReescritaCorpo(
+                id=str(reescrita.id),
+                enviado_em=reescrita.created_at.isoformat(),
+                texto=reescrita.texto,
+                redato_output=reescrita.redato_output,
+                elapsed_ms=reescrita.elapsed_ms,
+            ),
+        )

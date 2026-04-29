@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -14,7 +15,8 @@ import {
 } from "@/lib/portal-client";
 import { formatPrazo } from "@/lib/format";
 import type {
-  MinideckResumo, PartidaResumo, StatusPartida,
+  AlunoResumoPartida, MinideckResumo, PartidaResumo,
+  ReescritaStatus, StatusPartida,
 } from "@/types/portal";
 
 interface AlunoSimples {
@@ -133,18 +135,6 @@ export function PartidasView({
                           <dd>{p.nome_humano_tema}</dd>
                         </div>
                         <div className="flex gap-2">
-                          <dt className="text-ink-400 w-24">Alunos:</dt>
-                          <dd>
-                            {p.alunos.length === 0 ? (
-                              <span className="text-ink-400 italic">
-                                (nenhum aluno)
-                              </span>
-                            ) : (
-                              p.alunos.map((a) => a.nome).join(", ")
-                            )}
-                          </dd>
-                        </div>
-                        <div className="flex gap-2">
                           <dt className="text-ink-400 w-24">Prazo:</dt>
                           <dd>{formatPrazo(p.prazo_reescrita)}</dd>
                         </div>
@@ -155,6 +145,21 @@ export function PartidasView({
                           </dd>
                         </div>
                       </dl>
+                      {/* Sub-lista de alunos do grupo com status da
+                          reescrita (Fase 2 passo 6). Cada aluno
+                          AVALIADO vira link pra detalhe. */}
+                      {p.alunos.length > 0 && (
+                        <ul className="mt-3 space-y-1.5">
+                          {p.alunos.map((a) => (
+                            <AlunoStatusItem
+                              key={a.aluno_turma_id}
+                              atividadeId={atividadeId}
+                              partidaId={p.id}
+                              aluno={a}
+                            />
+                          ))}
+                        </ul>
+                      )}
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
                       <Button
@@ -437,5 +442,68 @@ function PartidaFormModal({
         </form>
       </div>
     </div>
+  );
+}
+
+
+// ──────────────────────────────────────────────────────────────────────
+// AlunoStatusItem — sub-item da lista de alunos em cada partida
+// ──────────────────────────────────────────────────────────────────────
+
+interface AlunoStatusProps {
+  atividadeId: string;
+  partidaId: string;
+  aluno: AlunoResumoPartida;
+}
+
+/** Mapeia status da reescrita → variant de Badge + label.
+ *  Default "pendente" cobre AlunoResumoPartida sem reescrita_status
+ *  (compat com PartidaDetail.alunos[] e dashboards antigos). */
+function reescritaBadge(s?: ReescritaStatus | null): {
+  variant: "neutral" | "warning" | "ativa";
+  label: string;
+} {
+  if (s === "avaliada") {
+    return { variant: "ativa", label: "Avaliada" };
+  }
+  if (s === "em_avaliacao") {
+    return { variant: "warning", label: "Em avaliação" };
+  }
+  return { variant: "neutral", label: "Pendente" };
+}
+
+function AlunoStatusItem({
+  atividadeId, partidaId, aluno,
+}: AlunoStatusProps) {
+  const sb = reescritaBadge(aluno.reescrita_status);
+  const isClickable = aluno.reescrita_status === "avaliada";
+  // Inner content (nome + badge). Vira <Link> se a reescrita estiver
+  // avaliada — caminho pra ReescritaDetailView. Senão, fica estático.
+  const inner = (
+    <>
+      <span className="text-sm">{aluno.nome}</span>
+      <Badge variant={sb.variant}>{sb.label}</Badge>
+    </>
+  );
+  if (isClickable) {
+    const href =
+      `/atividade/${atividadeId}` +
+      `/partidas/${partidaId}` +
+      `/aluno/${aluno.aluno_turma_id}`;
+    return (
+      <li>
+        <Link
+          href={href}
+          className="flex items-center justify-between gap-2 rounded px-2 py-1 hover:bg-muted/50 transition-colors"
+        >
+          {inner}
+        </Link>
+      </li>
+    );
+  }
+  return (
+    <li className="flex items-center justify-between gap-2 px-2 py-1">
+      {inner}
+    </li>
   );
 }

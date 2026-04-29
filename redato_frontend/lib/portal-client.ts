@@ -24,6 +24,7 @@ import type {
   PartidaResumo,
   PartidaUpdatePayload,
   PatchAtividadeRequest,
+  ReescritaDetail,
   TurmaDashboard,
   TurmaDetail,
   TurmaListItem,
@@ -323,5 +324,16 @@ export async function deletarPartida(
 ): Promise<{ deleted_id: string }> {
   return fetchJson<{ deleted_id: string }>(
     `/api/portal/partidas/${partidaId}`, { method: "DELETE" },
+  );
+}
+
+/** Detalhe completo de uma reescrita pra UI do professor (Fase 2 passo 6).
+ *  Retorna 404 se aluno não tem reescrita ainda (esperado quando bot
+ *  ainda não recebeu submissão). UI trata isso com mensagem específica. */
+export async function detalheReescrita(
+  partidaId: string, alunoTurmaId: string,
+): Promise<ReescritaDetail> {
+  return fetchJson<ReescritaDetail>(
+    `/api/portal/partidas/${partidaId}/reescritas/${alunoTurmaId}`,
   );
 }
