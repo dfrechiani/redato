@@ -354,3 +354,82 @@ export interface PdfHistoricoItem {
   tamanho_bytes: number;
   download_url: string;
 }
+
+// ──────────────────────────────────────────────────────────────────────
+// Fase 2 — Jogo "Redação em Jogo"
+// Espelha schemas em `redato_backend/portal/jogo_api.py`.
+// ──────────────────────────────────────────────────────────────────────
+
+export type StatusPartida =
+  | "aguardando_cartas"
+  | "aguardando_reescritas"
+  | "concluida";
+
+export interface MinideckResumo {
+  tema: string;          // slug snake_case (saude_mental, ...)
+  nome_humano: string;   // "Saúde Mental"
+  serie: string | null;  // "2S"
+  descricao: string | null;
+  total_cartas: number;  // ~104 quando completo
+}
+
+export interface AlunoResumoPartida {
+  aluno_turma_id: string;
+  nome: string;
+}
+
+export interface TentativaReescritaResumo {
+  id: string;
+  aluno_turma_id: string;
+  aluno_nome: string;
+  tem_redato_output: boolean;
+  enviado_em: string;  // ISO UTC
+}
+
+export interface PartidaResumo {
+  id: string;
+  atividade_id: string;
+  tema: string;
+  nome_humano_tema: string;
+  grupo_codigo: string;
+  alunos: AlunoResumoPartida[];
+  prazo_reescrita: string;  // ISO UTC
+  status_partida: StatusPartida;
+  n_reescritas: number;
+  n_alunos: number;
+  created_at: string;
+}
+
+export interface PartidaDetail {
+  id: string;
+  atividade_id: string;
+  tema: string;
+  nome_humano_tema: string;
+  grupo_codigo: string;
+  alunos: AlunoResumoPartida[];
+  cartas_escolhidas: string[];   // codes E##/P##/etc — vazia até bot popular
+  texto_montado: string;          // vazio até bot popular
+  prazo_reescrita: string;
+  status_partida: StatusPartida;
+  reescritas: TentativaReescritaResumo[];
+  created_at: string;
+}
+
+export interface PartidaCreatePayload {
+  atividade_id: string;
+  tema: string;
+  grupo_codigo: string;
+  alunos_turma_ids: string[];
+  prazo_reescrita: string;  // ISO 8601 com offset (BRT)
+}
+
+export interface PartidaUpdatePayload {
+  grupo_codigo?: string;
+  alunos_turma_ids?: string[];
+  prazo_reescrita?: string;
+}
+
+export interface PartidaCreateResponse {
+  id: string;
+  partida: PartidaDetail;
+}

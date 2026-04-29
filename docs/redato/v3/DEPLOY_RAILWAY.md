@@ -466,13 +466,75 @@ validador) NÃO bloqueia os outros — script reporta no resumo final.
 Dentro de UM tema, falha em qualquer carta dispara rollback do tema
 inteiro (não deixa minideck órfão sem cartas).
 
-**Gap conhecido — Meio Ambiente:** o xlsx commitado tem 108 cartas
-em apenas 5 tipos (P, R, K, A, AC); MEIO e FIM ausentes. Sem esses
-tipos o jogo trava em qualquer carta de proposta E51-E63 que tenha
-`[ACAO_MEIO]`. Decisão atual: bloquear seed até o xlsx ser
-completado. Pra forçar seed (ex.: testar UI com tema parcial),
-relaxar `TIPOS_OBRIGATORIOS` em `seed_minideck.py` ou completar o
-xlsx.
+**Gap conhecido — Meio Ambiente:** ~~108 cartas em 5 tipos~~ **Resolvido em
+`5d2f831`**: deck completo com 104 cartas (15 P + 15 R + 30 K + 10 A +
+12 AC + 12 ME + 10 F). Ver `data/seeds/cartas_redacao_em_jogo.bak_pre_meioambiente.xlsx`
+pra histórico pré-mudança.
+
+## Smoke E2E — partidas (Passo 3 da Fase 2)
+
+Os endpoints REST de partidas (POST/GET/PATCH/DELETE) estão registrados
+no `unified_app` automaticamente. Smoke pós-deploy via curl:
+
+```bash
+# Pré-requisitos: ambiente local rodando OU prod com tabelas do jogo
+# (migration h0a1b2c3d4e5 + seed dos minidecks). Você precisa de:
+#   - PORTAL_URL: ex. https://redato-backend.up.railway.app
+#   - JWT_TOKEN: token de professor responsável por uma turma com
+#                ao menos 1 atividade ativa e ≥ 1 aluno.
+#                (gere via POST /auth/login)
+#   - ATIV_ID: UUID da atividade
+#   - ALUNO_A, ALUNO_B: UUIDs de aluno_turma da turma da atividade
+
+# 1. Lista minidecks ativos (popular dropdown UI)
+curl -fsS "$PORTAL_URL/portal/jogos/minidecks" \
+  -H "Authorization: Bearer $JWT_TOKEN" | jq '.[].tema'
+# expected: ["saude_mental", "inclusao_digital", ..., "familia_sociedade"]
+
+# 2. Cria partida
+curl -fsS -X POST "$PORTAL_URL/portal/partidas" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"atividade_id\": \"$ATIV_ID\",
+    \"tema\": \"saude_mental\",
+    \"grupo_codigo\": \"Grupo Smoke\",
+    \"alunos_turma_ids\": [\"$ALUNO_A\", \"$ALUNO_B\"],
+    \"prazo_reescrita\": \"2026-05-06T22:00:00-03:00\"
+  }" | jq '.id'
+# expected: UUID da partida criada — guarda em $PARTIDA_ID
+
+# 3. Lista partidas da atividade (1:N decisão G.1.2)
+curl -fsS "$PORTAL_URL/portal/atividades/$ATIV_ID/partidas" \
+  -H "Authorization: Bearer $JWT_TOKEN" | jq '.[].grupo_codigo'
+# expected: ["Grupo Smoke"]
+
+# 4. Edita prazo
+curl -fsS -X PATCH "$PORTAL_URL/portal/partidas/$PARTIDA_ID" \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"prazo_reescrita": "2026-05-13T22:00:00-03:00"}' | jq '.prazo_reescrita'
+
+# 5. Apaga (só se não houver reescritas)
+curl -fsS -X DELETE "$PORTAL_URL/portal/partidas/$PARTIDA_ID" \
+  -H "Authorization: Bearer $JWT_TOKEN"
+# expected: {"deleted_id": "<uuid>"}
+```
+
+Erros comuns:
+- **403** "professor responsável" → seu JWT não é do professor dono
+  da turma. Coordenador também recebe 403 em POST/PATCH/DELETE
+  (visualiza dashboards mas não opera partidas).
+- **400** "minideck ativo" → `tema` não bate com slug. Use o GET
+  /portal/jogos/minidecks pra ver os disponíveis.
+- **409** "Já existe" → tentativa de criar 2ª partida com mesmo
+  `grupo_codigo` na mesma atividade. UI deve mostrar isso.
+- **409** "reescritas de alunos" no DELETE → partida tem trabalho
+  do aluno. Use PATCH pra ajustar prazo.
+
+Tela do professor: `https://<frontend>/atividade/<atividade_id>/partidas`
+— botão "Cadastrar partida", modal com tema/grupo/alunos/prazo,
+edit/delete inline.
 
 ## Rollback
 

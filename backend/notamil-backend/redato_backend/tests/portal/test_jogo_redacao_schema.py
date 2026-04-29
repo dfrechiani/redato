@@ -129,8 +129,13 @@ pytestmark_db = pytest.mark.skipif(
 @pytest.fixture(scope="module")
 def pg_session():
     """Cria schema isolado, aplica migrations até head, retorna
-    Session SQLAlchemy. Schema é dropado no teardown."""
-    pytestmark_db.func()  # força skip se sem DATABASE_URL
+    Session SQLAlchemy. Schema é dropado no teardown.
+
+    Se chamado sem DATABASE_URL, falha defensiva via pytest.skip —
+    isso bate com o decorator `@pytestmark_db` em cada teste mas
+    cobre também acessos diretos à fixture sem o decorator."""
+    if not os.getenv("DATABASE_URL"):
+        pytest.skip("DATABASE_URL não definido")
 
     from sqlalchemy import create_engine, text
     from sqlalchemy.orm import Session
@@ -246,7 +251,8 @@ def test_unique_partida_aluno_em_reescritas_individuais(pg_session):
 
     turma = Turma(
         escola_id=escola.id, codigo="T1", serie="2S",
-        nome="T1", professor_id=prof.id,
+        codigo_join=f"TURMA-{uuid.uuid4().hex[:6]}", ano_letivo=2026,
+        professor_id=prof.id,
     )
     pg_session.add(turma); pg_session.flush()
 
@@ -313,7 +319,9 @@ def test_multiplas_partidas_pra_mesma_atividade_passam(pg_session):
     pg_session.add(prof); pg_session.flush()
 
     turma = Turma(escola_id=escola.id, codigo=f"T{uuid.uuid4().hex[:6]}",
-                   serie="2S", nome="T2", professor_id=prof.id)
+                   serie="2S",
+                   codigo_join=f"TURMA-{uuid.uuid4().hex[:6]}",
+                   ano_letivo=2026, professor_id=prof.id)
     pg_session.add(turma); pg_session.flush()
 
     missao = Missao(codigo=f"M2{uuid.uuid4().hex[:6]}", serie="2S",

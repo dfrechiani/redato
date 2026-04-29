@@ -37,11 +37,13 @@ _bootstrap()
 from redato_backend.portal.admin_api import router as admin_router  # noqa: E402
 from redato_backend.portal.auth.api import router as auth_router  # noqa: E402
 from redato_backend.portal.portal_api import router as portal_router  # noqa: E402
+from redato_backend.portal.jogo_api import router as jogo_router  # noqa: E402
 
 app = FastAPI(title="Redato Portal — Admin + Auth + Portal API (M8)")
 app.include_router(admin_router)
 app.include_router(auth_router)
 app.include_router(portal_router)
+app.include_router(jogo_router)
 
 
 @app.get("/")

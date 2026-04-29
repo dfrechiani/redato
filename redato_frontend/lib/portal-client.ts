@@ -16,7 +16,13 @@ import type {
   CriarAtividadeResponse,
   EnvioFeedback,
   EscolaDashboard,
+  MinideckResumo,
   Missao,
+  PartidaCreatePayload,
+  PartidaCreateResponse,
+  PartidaDetail,
+  PartidaResumo,
+  PartidaUpdatePayload,
   PatchAtividadeRequest,
   TurmaDashboard,
   TurmaDetail,
@@ -273,3 +279,49 @@ export async function sairTodasSessoes(): Promise<void> {
 // callers existentes não precisem ajustar imports.
 
 export { formatDateInput, formatPrazo, formatPrazoCurto } from "./format";
+
+// ──────────────────────────────────────────────────────────────────────
+// Fase 2 — Jogo (Redação em Jogo)
+// ──────────────────────────────────────────────────────────────────────
+
+export async function listarMinidecks(): Promise<MinideckResumo[]> {
+  return fetchJson<MinideckResumo[]>("/api/portal/jogos/minidecks");
+}
+
+export async function listarPartidasDaAtividade(
+  atividadeId: string,
+): Promise<PartidaResumo[]> {
+  return fetchJson<PartidaResumo[]>(
+    `/api/portal/atividades/${atividadeId}/partidas`,
+  );
+}
+
+export async function criarPartida(
+  body: PartidaCreatePayload,
+): Promise<PartidaCreateResponse> {
+  return fetchJson<PartidaCreateResponse>("/api/portal/partidas", {
+    method: "POST", body,
+  });
+}
+
+export async function detalhePartida(
+  partidaId: string,
+): Promise<PartidaDetail> {
+  return fetchJson<PartidaDetail>(`/api/portal/partidas/${partidaId}`);
+}
+
+export async function patchPartida(
+  partidaId: string, body: PartidaUpdatePayload,
+): Promise<PartidaDetail> {
+  return fetchJson<PartidaDetail>(`/api/portal/partidas/${partidaId}`, {
+    method: "PATCH", body,
+  });
+}
+
+export async function deletarPartida(
+  partidaId: string,
+): Promise<{ deleted_id: string }> {
+  return fetchJson<{ deleted_id: string }>(
+    `/api/portal/partidas/${partidaId}`, { method: "DELETE" },
+  );
+}

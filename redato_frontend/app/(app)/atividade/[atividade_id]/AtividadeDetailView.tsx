@@ -125,6 +125,15 @@ export function AtividadeDetailView({ initial }: Props) {
         </div>
         {data.pode_editar && (
           <div className="flex flex-wrap gap-2">
+            {/* Acesso à tela de partidas (Fase 2 do jogo). Visível
+                pra qualquer atividade — atividades não-jogo terão
+                lista vazia, sem custo. */}
+            <Link
+              href={`/atividade/${data.id}/partidas`}
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium px-4 py-2 transition-colors bg-transparent text-ink hover:bg-ink-100 active:bg-ink-200"
+            >
+              Partidas do jogo
+            </Link>
             <Button variant="ghost" onClick={() => setEditOpen(true)}>
               Editar prazo
             </Button>

@@ -75,13 +75,15 @@ app = FastAPI(
     ),
 )
 
-# Portal routers (admin, auth, portal)
+# Portal routers (admin, auth, portal, jogo)
 from redato_backend.portal.admin_api import router as admin_router  # noqa: E402
 from redato_backend.portal.auth.api import router as auth_router  # noqa: E402
 from redato_backend.portal.portal_api import router as portal_router  # noqa: E402
+from redato_backend.portal.jogo_api import router as jogo_router  # noqa: E402
 app.include_router(admin_router)
 app.include_router(auth_router)
 app.include_router(portal_router)
+app.include_router(jogo_router)
 
 # Bot router (webhook Twilio)
 from redato_backend.whatsapp.webhook import router as twilio_router  # noqa: E402
