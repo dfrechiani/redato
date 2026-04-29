@@ -764,14 +764,16 @@ def _handle_ocr_errado(
 
 
 def _format_data_pt(iso_str: Optional[str]) -> str:
-    """Converte ISO timestamp em 'DD/MM às HH:MM'."""
-    if not iso_str:
-        return "data anterior"
-    try:
-        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-        return dt.strftime("%d/%m às %H:%M")
-    except Exception:
-        return "data anterior"
+    """Converte ISO timestamp em 'DD/MM às HH:MM' em horário de
+    Brasília (M9.5, 2026-04-29).
+
+    Bug original: fazia `dt.strftime(...)` direto no datetime UTC do
+    banco. Aluno mandava às 13:45 BRT (16:45 UTC), bot dizia "Recebi
+    em 16:45". Fix: delegar pra `fmt_brt_iso_to_brt` que aplica
+    America/Sao_Paulo antes do strftime.
+    """
+    from redato_backend.utils.timezone import fmt_brt_iso_to_brt
+    return fmt_brt_iso_to_brt(iso_str, short=True)
 
 
 def _handle_duplicate_choice(
@@ -831,7 +833,11 @@ def _process_photo_force(
 
 
 def _format_data_pt_dt(dt: datetime) -> str:
-    return dt.strftime("%d/%m %H:%M")
+    """Formata datetime UTC como '29/04 13:45' em horário de Brasília
+    (M9.5). Usado em MSG_ATIVIDADE_AGENDADA / MSG_ATIVIDADE_ENCERRADA.
+    Antes fazia strftime direto no UTC — mesmo bug do _format_data_pt."""
+    from redato_backend.utils.timezone import fmt_brt
+    return fmt_brt(dt, "%d/%m %H:%M")
 
 
 def _format_choice_msg(vinculos: list) -> str:

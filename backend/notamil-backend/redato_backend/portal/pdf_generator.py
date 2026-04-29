@@ -106,10 +106,12 @@ def _on_page(c: rl_canvas.Canvas, doc):
     c.setFont("Helvetica", 8)
     c.drawString(margin_x + 2.1 * cm, height - 1.3 * cm,
                  "· Projeto ATO — Portal do Professor")
-    # Data ISO no canto direito
+    # Data no canto direito — exibe BRT pro professor brasileiro
+    # ler "agora" em horário local (M9.5).
+    from redato_backend.utils.timezone import now_brt
     c.drawRightString(
         width - margin_x, height - 1.3 * cm,
-        datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M UTC"),
+        now_brt().strftime("%d/%m/%Y %H:%M BRT"),
     )
     c.setStrokeColor(BORDER)
     c.line(margin_x, height - 1.6 * cm,
@@ -464,8 +466,9 @@ def gerar_pdf_dashboard_turma(
         f"Professor(a): {ctx.professor_nome}", s["MutedSmall"]
     ))
     if periodo_inicio or periodo_fim:
-        ini = periodo_inicio.strftime("%d/%m/%Y") if periodo_inicio else "início"
-        fim = periodo_fim.strftime("%d/%m/%Y") if periodo_fim else "agora"
+        from redato_backend.utils.timezone import fmt_brt
+        ini = fmt_brt(periodo_inicio, "%d/%m/%Y") if periodo_inicio else "início"
+        fim = fmt_brt(periodo_fim, "%d/%m/%Y") if periodo_fim else "agora"
         flow.append(Paragraph(f"Período: {ini} → {fim}", s["MutedSmall"]))
     flow.append(Spacer(1, 10))
 
@@ -499,8 +502,9 @@ def gerar_pdf_dashboard_turma(
 
     # 5. Evolução
     flow.append(Paragraph("Evolução temporal", s["SectionH"]))
+    from redato_backend.utils.timezone import fmt_brt
     pontos_chart = [
-        (datetime.fromisoformat(p["data"]).strftime("%d/%m"), p["nota_media"])
+        (fmt_brt(datetime.fromisoformat(p["data"]), "%d/%m"), p["nota_media"])
         for p in dashboard["evolucao_turma"]
     ]
     if pontos_chart:
@@ -539,8 +543,9 @@ def gerar_pdf_dashboard_escola(
         s["MutedSmall"],
     ))
     if periodo_inicio or periodo_fim:
-        ini = periodo_inicio.strftime("%d/%m/%Y") if periodo_inicio else "início"
-        fim = periodo_fim.strftime("%d/%m/%Y") if periodo_fim else "agora"
+        from redato_backend.utils.timezone import fmt_brt
+        ini = fmt_brt(periodo_inicio, "%d/%m/%Y") if periodo_inicio else "início"
+        fim = fmt_brt(periodo_fim, "%d/%m/%Y") if periodo_fim else "agora"
         flow.append(Paragraph(f"Período: {ini} → {fim}", s["MutedSmall"]))
     flow.append(Spacer(1, 10))
 
@@ -575,8 +580,9 @@ def gerar_pdf_dashboard_escola(
 
     # Evolução
     flow.append(Paragraph("Evolução agregada", s["SectionH"]))
+    from redato_backend.utils.timezone import fmt_brt
     pontos = [
-        (datetime.fromisoformat(p["data"]).strftime("%d/%m"), p["nota_media"])
+        (fmt_brt(datetime.fromisoformat(p["data"]), "%d/%m"), p["nota_media"])
         for p in dashboard["evolucao_escola"]
     ]
     if pontos:
@@ -649,8 +655,9 @@ def gerar_pdf_evolucao_aluno(
             e.get("modo", "").startswith("foco_") for e in envios
         )
         y_max = 200 if todos_foco else 1000
+        from redato_backend.utils.timezone import fmt_brt
         chart_data = [
-            (datetime.fromisoformat(p["data"]).strftime("%d/%m"), p["nota"])
+            (fmt_brt(datetime.fromisoformat(p["data"]), "%d/%m"), p["nota"])
             for p in pontos
         ]
         flow.append(LineChart(chart_data, y_max=y_max, y_label="Nota"))
@@ -663,9 +670,10 @@ def gerar_pdf_evolucao_aluno(
     if not evolucao["envios"]:
         flow.append(Paragraph("Nenhum envio.", s["MutedSmall"]))
     else:
+        from redato_backend.utils.timezone import fmt_brt
         rows = [["Data", "Missão", "Nota", "Faixa"]]
         for e in evolucao["envios"]:
-            data_pt = datetime.fromisoformat(e["data"]).strftime("%d/%m/%Y")
+            data_pt = fmt_brt(datetime.fromisoformat(e["data"]), "%d/%m/%Y")
             label = format_missao_label_humana(
                 oficina_numero=e.get("oficina_numero"),
                 titulo=e.get("missao_titulo"),
@@ -691,9 +699,10 @@ def gerar_pdf_evolucao_aluno(
     # Missões pendentes
     if evolucao["missoes_pendentes"]:
         flow.append(Paragraph("Missões pendentes", s["SectionH"]))
+        from redato_backend.utils.timezone import fmt_brt
         rows = [["Missão", "Prazo", "Status"]]
         for m in evolucao["missoes_pendentes"]:
-            data_fim = datetime.fromisoformat(m["data_fim"]).strftime("%d/%m/%Y")
+            data_fim = fmt_brt(datetime.fromisoformat(m["data_fim"]), "%d/%m/%Y")
             label = format_missao_label_humana(
                 oficina_numero=m.get("oficina_numero"),
                 titulo=m.get("missao_titulo"),

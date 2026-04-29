@@ -80,7 +80,11 @@ def _audit(record: dict) -> None:
 
 
 def _format_data_pt(dt: datetime) -> str:
-    return dt.strftime("%d/%m %H:%M")
+    """Formata datetime UTC como '29/04 13:45' em horário de Brasília
+    (M9.5). Usado em MSG_NOTIFICACAO_NOVA_ATIVIDADE — texto enviado
+    via WhatsApp pra alunos quando professor abre nova atividade."""
+    from redato_backend.utils.timezone import fmt_brt
+    return fmt_brt(dt, "%d/%m %H:%M")
 
 
 def _check_permission_atividade(
