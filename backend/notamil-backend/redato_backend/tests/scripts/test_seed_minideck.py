@@ -216,21 +216,25 @@ def test_valida_minideck_104_cartas_completo_passa():
 # Parser real (xlsx commitado) — smoke por tema
 # ──────────────────────────────────────────────────────────────────────
 
-# 6 dos 7 temas têm os 7 tipos obrigatórios completos. Meio Ambiente
-# tem só 5 tipos (MEIO + FIM ausentes no xlsx — gap conhecido).
+# Os 7 temas estão completos com os 7 tipos obrigatórios (M9.6.1,
+# 2026-04-29 — Meio Ambiente foi atualizado de 108 cartas em 5 tipos
+# pro padrão 104 em 7 tipos via reclassificação manual aprovada por
+# Daniel). Backup do xlsx pré-mudança fica em
+# data/seeds/cartas_redacao_em_jogo.bak_pre_meioambiente.xlsx pra
+# auditoria.
 @pytest.mark.parametrize("aba,tema,esperado_min", [
     ("Saúde Mental", "saude_mental", 100),
     ("Inclusão Digital", "inclusao_digital", 100),
     ("Violência contra a Mulher", "violencia_contra_mulher", 100),
     ("Educação Financeira", "educacao_financeira", 100),
     ("Gênero e Diversidade", "genero_diversidade", 100),
+    ("Meio Ambiente", "meio_ambiente", 100),
     ("Família e Sociedade", "familia_sociedade", 100),
 ])
 def test_parse_aba_real_xlsx_temas_completos(aba, tema, esperado_min):
-    """Smoke: cada tema completo tem >=100 cartas, 0 erros de parse,
-    e todos os tipos obrigatórios presentes. Meio Ambiente excluído
-    (tem MEIO + FIM ausentes no xlsx — ver
-    `test_meio_ambiente_xlsx_incompleto_documentado`)."""
+    """Smoke: cada um dos 7 temas tem >=100 cartas, 0 erros de parse,
+    e todos os tipos obrigatórios presentes — validador semântico
+    passa."""
     from seed_minideck import (
         DEFAULT_XLSX, TIPOS_OBRIGATORIOS, _resumir_por_tipo,
         parse_aba, valida_minideck,
@@ -249,44 +253,20 @@ def test_parse_aba_real_xlsx_temas_completos(aba, tema, esperado_min):
     assert valida_minideck(rows, tema) == []
 
 
-def test_meio_ambiente_xlsx_incompleto_documentado():
-    """Documenta o gap: aba 'Meio Ambiente' tem 108 cartas em apenas
-    5 tipos (PROBLEMA, REPERTORIO, PALAVRA_CHAVE, AGENTE, ACAO).
-    MEIO e FIM estão ausentes no xlsx — `seed_minideck.py` vai
-    abortar esse tema com erro semântico (tipo obrigatório ausente).
-
-    Este teste guarda contra REGRESSÃO: se um dia Daniel completar
-    o xlsx, esse teste FAIL e a gente sabe que pode mover Meio
-    Ambiente pra `test_parse_aba_real_xlsx_temas_completos`. Até lá,
-    `--all` vai pular Meio Ambiente (1 erro reportado, 6 sucessos)."""
+def test_meio_ambiente_atualizado_para_padrao_104():
+    """Distribuição esperada após atualização (2026-04-29): bate com
+    os outros 6 temas — 15 P + 15 R + 30 K + 10 A + 12 AC + 12 ME +
+    10 F = 104 cartas. Pre-update tinha 108 em 5 tipos sem MEIO/FIM."""
     from seed_minideck import (
-        DEFAULT_XLSX, _resumir_por_tipo, parse_aba, valida_minideck,
+        DEFAULT_XLSX, _resumir_por_tipo, parse_aba,
     )
     rows, erros = parse_aba(DEFAULT_XLSX, "Meio Ambiente")
     assert erros == []
-    por_tipo = _resumir_por_tipo(rows)
-    # Tipos presentes
-    assert por_tipo.get("PROBLEMA", 0) > 0
-    assert por_tipo.get("REPERTORIO", 0) > 0
-    assert por_tipo.get("PALAVRA_CHAVE", 0) > 0
-    assert por_tipo.get("AGENTE", 0) > 0
-    assert por_tipo.get("ACAO", 0) > 0
-    # Tipos AUSENTES — gap conhecido. Se algum dia ganhar > 0, o
-    # validador passa a aceitar e este teste sinaliza pra mudar a
-    # parametrização do teste anterior.
-    assert por_tipo.get("MEIO", 0) == 0, (
-        "Meio Ambiente ganhou cartas MEIO! Move pra teste de temas "
-        "completos."
-    )
-    assert por_tipo.get("FIM", 0) == 0, (
-        "Meio Ambiente ganhou cartas FIM! Move pra teste de temas "
-        "completos."
-    )
-    # Validador semântico AINDA falha (por design — minideck
-    # incompleto não deve ir pra prod até completar)
-    problemas = valida_minideck(rows, "meio_ambiente")
-    assert any("MEIO" in p for p in problemas)
-    assert any("FIM" in p for p in problemas)
+    assert len(rows) == 104
+    assert _resumir_por_tipo(rows) == {
+        "PROBLEMA": 15, "REPERTORIO": 15, "PALAVRA_CHAVE": 30,
+        "AGENTE": 10, "ACAO": 12, "MEIO": 12, "FIM": 10,
+    }
 
 
 def test_parse_aba_inexistente_raise():
