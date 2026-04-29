@@ -395,9 +395,84 @@ O script é **idempotente**: re-rodar `--apply` é seguro. Match por
 (Daniel reescreveu uma frase), `--apply` atualiza. Se nada mudou, é
 no-op (`updated=0`).
 
-Os minidecks temáticos (`cartas_lacuna`) ficam em script separado
-(`scripts/seed_minideck.py`, Fase 5). Por enquanto, só
-`cartas_estruturais` é populada.
+### Seed dos 7 minidecks temáticos (Passo 2 da Fase 2)
+
+A migration `h0a1b2c3d4e5` cria as tabelas `jogos_minideck` e
+`cartas_lacuna` mas as deixa vazias. Cada minideck temático (Saúde
+Mental, Inclusão Digital, Violência contra a Mulher, Educação
+Financeira, Gênero e Diversidade, Meio Ambiente, Família e Sociedade)
+tem ~104 cartas que substituem os placeholders das estruturais
+(`[PROBLEMA]`, `[REPERTORIO]`, `[PALAVRA_CHAVE]`, `[AGENTE]`,
+`[ACAO_MEIO]`).
+
+Sequência recomendada — seedar Saúde Mental primeiro pra validar
+end-to-end, depois os 6 restantes via `--all`:
+
+```bash
+# Pré-condição: migration h0a1b2c3d4e5 aplicada e seed das 63
+# cartas_estruturais já feito (passo anterior).
+cd /app
+
+# 1. Listar temas disponíveis (sanity)
+python scripts/seed_minideck.py --list
+
+# 2. Saúde Mental — primeiro tema (validação focada)
+python scripts/seed_minideck.py saude_mental
+# expected: TOTAL = 104 distribuído como 15 P + 15 R + 30 K + 10 A
+#                                       + 12 AC + 12 ME + 10 F
+
+bash scripts/backup_postgres.sh
+python scripts/seed_minideck.py saude_mental --apply
+
+# 3. Verificação no Postgres
+psql "$DATABASE_URL" -c "
+  SELECT m.tema, m.nome_humano, COUNT(c.*) AS qtd_cartas
+  FROM jogos_minideck m
+  LEFT JOIN cartas_lacuna c ON c.minideck_id = m.id
+  GROUP BY m.id, m.tema, m.nome_humano
+  ORDER BY m.tema;
+"
+# expected (depois de saude_mental):
+#   saude_mental | Saúde Mental | 104
+
+# 4. Demais 6 temas — primeiro dry-run pra revisar antes de commitar
+python scripts/seed_minideck.py --all
+# Atenção: 'meio_ambiente' VAI FALHAR com erro semântico — o xlsx
+# atual tem MEIO + FIM ausentes (gap conhecido). Se Daniel completou
+# o xlsx desde o último report, o tema passa; senão, fica bloqueado
+# no validador (decisão consciente: não seedar minideck quebrado em
+# prod).
+python scripts/seed_minideck.py --all --apply
+# expected resumo: 6 temas OK · 1 com erro (meio_ambiente)
+
+# 5. Verificação final
+psql "$DATABASE_URL" -c "
+  SELECT m.tema, COUNT(c.*) AS qtd_cartas
+  FROM jogos_minideck m
+  LEFT JOIN cartas_lacuna c ON c.minideck_id = m.id
+  GROUP BY m.id, m.tema
+  ORDER BY m.tema;
+"
+# expected: 6 rows, cada uma com qtd_cartas entre 100-108.
+```
+
+**Idempotência:** `--apply` é seguro de re-rodar. Match por
+`(minideck_id, codigo)`. Editar o conteúdo de uma carta no xlsx e
+re-rodar atualiza só ela (`cartas_updated=1`).
+
+**Wrapping transacional:** cada tema roda na própria transação. Em
+`--all`, falha de um tema (ex.: meio_ambiente bloqueado pelo
+validador) NÃO bloqueia os outros — script reporta no resumo final.
+Dentro de UM tema, falha em qualquer carta dispara rollback do tema
+inteiro (não deixa minideck órfão sem cartas).
+
+**Gap conhecido — Meio Ambiente:** o xlsx commitado tem 108 cartas
+em apenas 5 tipos (P, R, K, A, AC); MEIO e FIM ausentes. Sem esses
+tipos o jogo trava em qualquer carta de proposta E51-E63 que tenha
+`[ACAO_MEIO]`. Decisão atual: bloquear seed até o xlsx ser
+completado. Pra forçar seed (ex.: testar UI com tema parcial),
+relaxar `TIPOS_OBRIGATORIOS` em `seed_minideck.py` ou completar o
+xlsx.
 
 ## Rollback
 
