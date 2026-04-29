@@ -26,7 +26,7 @@ interface Params {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Params },
 ): Promise<Response> {
   const token = getSessionToken();
@@ -37,9 +37,15 @@ export async function GET(
     );
   }
 
+  // M9.6 (2026-04-29): forward `?envio_id=xxx` pro backend pra ele
+  // saber qual tentativa serve a foto. Sem o param, backend devolve
+  // a tentativa mais recente (preserva backward-compat com clientes
+  // pré-M9.6 que não conheciam tentativa_n).
+  const envioId = req.nextUrl.searchParams.get("envio_id");
+  const qs = envioId ? `?envio_id=${encodeURIComponent(envioId)}` : "";
   const url =
     `${API_BASE}/portal/atividades/${encodeURIComponent(params.atividade_id)}` +
-    `/envios/${encodeURIComponent(params.aluno_id)}/foto`;
+    `/envios/${encodeURIComponent(params.aluno_id)}/foto${qs}`;
 
   let upstream: Response;
   try {

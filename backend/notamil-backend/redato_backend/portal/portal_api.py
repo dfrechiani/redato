@@ -542,8 +542,15 @@ def detalhe_turma(
 
         alunos: List[AlunoTurmaSchema] = []
         for a in alunos_rows:
+            # Count distinct atividade_id — pré-M9.6 era 1 envio por
+            # par (atividade, aluno), então count(Envio.id) bastava.
+            # Pós-M9.6 múltiplas tentativas inflariam o número
+            # ("aluno X tem 5 envios" virava confuso quando ele
+            # tentou 1 atividade 5 vezes). Distinct atividade_id
+            # preserva o significado original ("em quantas atividades
+            # esse aluno já entregou alguma coisa").
             n = session.execute(
-                select(func.count(Envio.id)).where(
+                select(func.count(func.distinct(Envio.atividade_id))).where(
                     Envio.aluno_turma_id == a.id,
                 )
             ).scalar() or 0
@@ -566,8 +573,10 @@ def detalhe_turma(
 
         atividades: List[AtividadeListItem] = []
         for ativ, missao in atv_rows:
+            # Count distinct aluno_turma_id (M9.6) — quantos alunos
+            # entregaram, não quantas tentativas houve.
             n_envios = session.execute(
-                select(func.count(Envio.id)).where(
+                select(func.count(func.distinct(Envio.aluno_turma_id))).where(
                     Envio.atividade_id == ativ.id,
                 )
             ).scalar() or 0
@@ -1069,16 +1078,24 @@ def detalhe_atividade(
             ).order_by(AlunoTurma.nome)
         ).scalars().all()
 
-        # Envios + interactions associados.
+        # Envios + interactions associados. M9.6: aluno pode ter mais
+        # de uma tentativa (`tentativa_n`); pra esse dashboard só
+        # interessa a mais recente. Order by tentativa_n asc + dict
+        # overwrite garante que o último insert no dict é a maior
+        # tentativa (a "atual"). Interactions também só puxam da
+        # tentativa atual, pra distribuição/top_detectores não
+        # contarem 2x quando o aluno reenviou.
         envios_rows = session.execute(
-            select(Envio).where(Envio.atividade_id == ativ.id)
+            select(Envio)
+            .where(Envio.atividade_id == ativ.id)
+            .order_by(Envio.tentativa_n.asc())
         ).scalars().all()
 
-        envio_por_aluno: Dict[uuid.UUID, Envio] = {
-            e.aluno_turma_id: e for e in envios_rows
-        }
-        interactions: List[Interaction] = []
+        envio_por_aluno: Dict[uuid.UUID, Envio] = {}
         for e in envios_rows:
+            envio_por_aluno[e.aluno_turma_id] = e
+        interactions: List[Interaction] = []
+        for e in envio_por_aluno.values():
             if e.interaction_id:
                 it = session.get(Interaction, e.interaction_id)
                 if it is not None:
@@ -1194,8 +1211,10 @@ def patch_atividade(
         session.commit()
         session.refresh(ativ)
         missao = session.get(Missao, ativ.missao_id)
+        # M9.6: count distinct alunos, não tentativas.
         n_envios = session.execute(
-            select(func.count(Envio.id)).where(Envio.atividade_id == ativ.id)
+            select(func.count(func.distinct(Envio.aluno_turma_id)))
+            .where(Envio.atividade_id == ativ.id)
         ).scalar() or 0
         _audit({
             "op": "atividade-editada",
@@ -1254,8 +1273,10 @@ def encerrar_atividade(
         session.commit()
         session.refresh(ativ)
         missao = session.get(Missao, ativ.missao_id)
+        # M9.6: count distinct alunos, não tentativas.
         n_envios = session.execute(
-            select(func.count(Envio.id)).where(Envio.atividade_id == ativ.id)
+            select(func.count(func.distinct(Envio.aluno_turma_id)))
+            .where(Envio.atividade_id == ativ.id)
         ).scalar() or 0
         _audit({
             "op": "atividade-encerrada",
@@ -1288,6 +1309,19 @@ class FaixaQualitativa(BaseModel):
     competencia: str
     nota: Optional[int]
     faixa: str  # "Insuficiente" | "Bom" | etc.
+
+
+class TentativaResumo(BaseModel):
+    """Resumo curto de uma tentativa anterior do aluno na mesma atividade
+    (M9.6, 2026-04-29). Frontend usa pra renderizar lista "Ver tentativas
+    anteriores" — clicar carrega a tentativa específica via
+    `?envio_id=xxx` no `detalhe_envio`."""
+    envio_id: str
+    tentativa_n: int
+    enviado_em: str  # ISO UTC (frontend converte pra BRT pra display)
+    nota_total: Optional[int]
+    # Preview do texto transcrito (~120 chars). None se sem OCR.
+    texto_curto: Optional[str]
 
 
 class EnvioFeedbackResponse(BaseModel):
@@ -1324,6 +1358,17 @@ class EnvioFeedbackResponse(BaseModel):
     detectores: List[Dict[str, Any]]
     ocr_quality_issues: List[str]
     raw_output: Optional[Dict[str, Any]]
+    # M9.6 (2026-04-29): suporte a múltiplas tentativas. Por padrão a
+    # response carrega a tentativa mais recente. `tentativa_n` é o
+    # número da tentativa exibida; `tentativa_total` quantas existem.
+    # `tentativas_anteriores` lista as anteriores (sem a atual), do
+    # mais recente pro mais antigo. `envio_id` identifica a tentativa
+    # atual — frontend manda `?envio_id=xxx` pra trocar de tentativa
+    # sem reaplicar a regra "mais recente".
+    envio_id: Optional[str] = None
+    tentativa_n: int = 1
+    tentativa_total: int = 1
+    tentativas_anteriores: List[TentativaResumo] = []
 
 
 def _faixa_qualitativa(nota: Optional[int]) -> str:
@@ -1343,6 +1388,14 @@ def _faixa_qualitativa(nota: Optional[int]) -> str:
 def detalhe_envio(
     atividade_id: uuid.UUID,
     aluno_turma_id: uuid.UUID,
+    envio_id: Optional[uuid.UUID] = Query(
+        None,
+        description=(
+            "ID de uma tentativa específica. Se omitido, retorna a "
+            "tentativa mais recente. Frontend usa pra navegar entre "
+            "tentativas anteriores (M9.6)."
+        ),
+    ),
     auth: AuthenticatedUser = Depends(get_current_user),
 ) -> EnvioFeedbackResponse:
     """Feedback completo do aluno na atividade.
@@ -1350,6 +1403,11 @@ def detalhe_envio(
     Inclui: foto, transcrição OCR, nota total, competências (C1-C5
     com faixa qualitativa), audit pedagógico em prosa e detectores
     acionados.
+
+    Se aluno enviou redação mais de uma vez (reavaliação como nova
+    tentativa, M9.6), por padrão retorna a mais recente. Lista todas
+    as tentativas em `tentativas_anteriores`. Frontend pode passar
+    `?envio_id=<uuid>` pra carregar uma tentativa específica.
     """
     _check_permission_atividade(auth, atividade_id)
     with Session(get_engine()) as session:
@@ -1358,13 +1416,19 @@ def detalhe_envio(
         aluno = session.get(AlunoTurma, aluno_turma_id)
         if aluno is None or aluno.turma_id != ativ.turma_id:
             raise HTTPException(status_code=404, detail="Aluno não encontrado nessa turma")
-        envio = session.execute(
+
+        # Busca TODOS os envios desse aluno nessa atividade. Ordena
+        # desc por tentativa_n — primeiro item é a tentativa atual
+        # quando `envio_id` não foi especificado. Pré-M9.6 cada par
+        # (atividade_id, aluno_turma_id) tinha 1 envio só (tentativa_n
+        # default=1); pós-M9.6 pode ter N.
+        envios_all = session.execute(
             select(Envio).where(
                 Envio.atividade_id == atividade_id,
                 Envio.aluno_turma_id == aluno_turma_id,
-            )
-        ).scalar_one_or_none()
-        if envio is None:
+            ).order_by(Envio.tentativa_n.desc())
+        ).scalars().all()
+        if not envios_all:
             return EnvioFeedbackResponse(
                 atividade_id=str(atividade_id),
                 missao_codigo=missao.codigo if missao else "",
@@ -1378,7 +1442,65 @@ def detalhe_envio(
                 nota_total=None, faixas=[],
                 analise_da_redacao=_analise_da_redacao_de(None),
                 detectores=[], ocr_quality_issues=[], raw_output=None,
+                envio_id=None, tentativa_n=1, tentativa_total=0,
+                tentativas_anteriores=[],
             )
+
+        # Resolve qual envio renderizar como "principal":
+        # - Se `envio_id` veio e existe nessa lista, usa esse.
+        # - Se `envio_id` veio mas não pertence a esse par, 404.
+        # - Sem `envio_id`, usa o de maior tentativa_n.
+        if envio_id is not None:
+            envio = next(
+                (e for e in envios_all if e.id == envio_id), None,
+            )
+            if envio is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        "Tentativa não encontrada (envio_id não pertence "
+                        "a essa atividade/aluno)"
+                    ),
+                )
+        else:
+            envio = envios_all[0]  # já ordenado desc por tentativa_n
+
+        # Constrói tentativas_anteriores: todas as outras tentativas
+        # (excluindo a atual). Ordem desc por tentativa_n já vem da
+        # query. Pra texto_curto puxa do interaction.texto_transcrito
+        # com truncamento defensivo.
+        tentativas_anteriores: List[TentativaResumo] = []
+        for e_outro in envios_all:
+            if e_outro.id == envio.id:
+                continue
+            outro_it = (
+                session.get(Interaction, e_outro.interaction_id)
+                if e_outro.interaction_id else None
+            )
+            outro_out = _parse_redato_output(
+                outro_it.redato_output if outro_it else None,
+            )
+            outro_nota = _nota_total_de(outro_out)
+            outro_texto_full = (
+                outro_it.texto_transcrito if outro_it else None
+            )
+            outro_texto_curto: Optional[str] = None
+            if outro_texto_full:
+                # Trunca em ~120 chars com reticências quando excede.
+                # Quebra em espaço pra não cortar palavra ao meio.
+                texto = outro_texto_full.strip()
+                if len(texto) <= 120:
+                    outro_texto_curto = texto
+                else:
+                    cut = texto[:120].rsplit(" ", 1)[0]
+                    outro_texto_curto = cut + "…"
+            tentativas_anteriores.append(TentativaResumo(
+                envio_id=str(e_outro.id),
+                tentativa_n=e_outro.tentativa_n,
+                enviado_em=e_outro.enviado_em.isoformat(),
+                nota_total=outro_nota,
+                texto_curto=outro_texto_curto,
+            ))
         interaction = (
             session.get(Interaction, envio.interaction_id)
             if envio.interaction_id else None
@@ -1454,9 +1576,16 @@ def detalhe_envio(
                 backend_root = Path(__file__).resolve().parents[2]
                 foto_path = (backend_root / foto_path).resolve()
             if foto_path.exists() and foto_path.is_file():
+                # M9.6: passa envio_id como query param pro proxy de foto
+                # — quando aluno tem múltiplas tentativas, frontend
+                # precisa apontar pra foto da tentativa correta. Sem o
+                # query param o backend retornaria a tentativa mais
+                # recente (que pode não ser a renderizada na tela quando
+                # o usuário navega pra anterior).
                 foto_url = (
                     f"/api/portal/atividades/{atividade_id}"
                     f"/envios/{aluno_turma_id}/foto"
+                    f"?envio_id={envio.id}"
                 )
             else:
                 foto_status = "file_missing"
@@ -1484,6 +1613,10 @@ def detalhe_envio(
             detectores=detectores,
             ocr_quality_issues=issues if isinstance(issues, list) else [],
             raw_output=out,
+            envio_id=str(envio.id),
+            tentativa_n=envio.tentativa_n,
+            tentativa_total=len(envios_all),
+            tentativas_anteriores=tentativas_anteriores,
         )
 
 
@@ -1508,6 +1641,14 @@ _FOTO_MIME_BY_EXT = {
 def baixar_foto_envio(
     atividade_id: uuid.UUID,
     aluno_turma_id: uuid.UUID,
+    envio_id: Optional[uuid.UUID] = Query(
+        None,
+        description=(
+            "ID de uma tentativa específica. Se omitido, retorna a "
+            "foto da tentativa mais recente. Frontend passa esse "
+            "param quando renderiza tentativa anterior (M9.6)."
+        ),
+    ),
     auth: AuthenticatedUser = Depends(get_current_user),
 ) -> FileResponse:
     """Stream da foto da redação enviada pelo aluno.
@@ -1515,6 +1656,10 @@ def baixar_foto_envio(
     Permission: mesma do `detalhe_envio` — professor da turma OU
     admin/coordenador da escola. Frontend usa via proxy
     `/api/portal/...` que injeta o JWT do cookie httpOnly.
+
+    Multi-tentativas (M9.6): aceita `?envio_id=xxx` pra apontar pra
+    foto de uma tentativa específica. Sem o param, retorna a mais
+    recente — preserva backward-compat com clientes pré-M9.6.
 
     Retorna:
     - 404 se atividade/aluno não existe ou não há envio
@@ -1532,12 +1677,25 @@ def baixar_foto_envio(
                 status_code=404,
                 detail="Aluno não encontrado nessa turma",
             )
-        envio = session.execute(
-            select(Envio).where(
-                Envio.atividade_id == atividade_id,
-                Envio.aluno_turma_id == aluno_turma_id,
-            )
-        ).scalar_one_or_none()
+        # Resolve envio: se envio_id veio na query, usa esse específico;
+        # senão, pega o de maior tentativa_n (mais recente). Pré-M9.6
+        # cada par tinha só 1 row, então `order_by` + `.first()` é
+        # equivalente ao antigo `scalar_one_or_none`.
+        if envio_id is not None:
+            envio = session.execute(
+                select(Envio).where(
+                    Envio.id == envio_id,
+                    Envio.atividade_id == atividade_id,
+                    Envio.aluno_turma_id == aluno_turma_id,
+                )
+            ).scalar_one_or_none()
+        else:
+            envio = session.execute(
+                select(Envio).where(
+                    Envio.atividade_id == atividade_id,
+                    Envio.aluno_turma_id == aluno_turma_id,
+                ).order_by(Envio.tentativa_n.desc())
+            ).scalars().first()
         if envio is None or envio.interaction_id is None:
             raise HTTPException(status_code=404, detail="Envio não encontrado")
         interaction = session.get(Interaction, envio.interaction_id)
@@ -1698,11 +1856,18 @@ def _coletar_envios_full(
         interaction (Interaction|None)
 
     Usado pelos dashboards. Uma única query pra interactions evita N+1.
+
+    M9.6 (2026-04-29): aluno pode ter múltiplas tentativas na mesma
+    atividade. Dashboards são por (atividade, aluno) — só faz sentido
+    contar uma tentativa por par. Filtramos pra manter apenas a de
+    maior `tentativa_n` (a "atual" da perspectiva do professor).
+    Tentativas antigas só são acessíveis via `detalhe_envio` com
+    `?envio_id=xxx` explícito.
     """
     if not atividade_ids:
         return []
 
-    rows = session.execute(
+    rows_all = session.execute(
         select(Envio, Atividade, Missao, AlunoTurma)
         .join(Atividade, Atividade.id == Envio.atividade_id)
         .join(Missao, Missao.id == Atividade.missao_id)
@@ -1710,6 +1875,17 @@ def _coletar_envios_full(
         .where(Envio.atividade_id.in_(atividade_ids))
         .order_by(Envio.enviado_em)
     ).all()
+
+    # Filtra pra manter apenas o envio de maior tentativa_n por
+    # (atividade_id, aluno_turma_id). Um aluno que tentou 3x aparece
+    # uma vez nos dashboards, com nota da 3ª tentativa.
+    by_pair: Dict[Tuple[uuid.UUID, uuid.UUID], Tuple[Any, ...]] = {}
+    for envio, ativ, missao, aluno in rows_all:
+        key = (envio.atividade_id, envio.aluno_turma_id)
+        cur = by_pair.get(key)
+        if cur is None or envio.tentativa_n > cur[0].tentativa_n:
+            by_pair[key] = (envio, ativ, missao, aluno)
+    rows = list(by_pair.values())
 
     interaction_ids = [
         e.interaction_id for (e, _, _, _) in rows if e.interaction_id

@@ -11,6 +11,11 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: { atividade_id: string; aluno_id: string };
+  // M9.6 (2026-04-29): `?envio_id=xxx` carrega tentativa específica.
+  // Sem o param o backend devolve a mais recente — comportamento
+  // padrão pra quem chega pela tela da turma sem clicar em tentativa
+  // anterior.
+  searchParams?: { envio_id?: string };
 }
 
 function faixaBadgeVariant(faixa: string) {
@@ -21,14 +26,32 @@ function faixaBadgeVariant(faixa: string) {
   return "neutral" as const;
 }
 
-export default async function FeedbackAlunoPage({ params }: Props) {
+export default async function FeedbackAlunoPage({
+  params, searchParams,
+}: Props) {
   const token = getSessionToken();
-  const data = await fetchBackend<EnvioFeedback>(
-    `/portal/atividades/${params.atividade_id}/envios/${params.aluno_id}`,
-    { bearer: token! },
-  );
+  // Monta URL do backend com `?envio_id=xxx` quando presente. O backend
+  // valida que o envio pertence a (atividade_id, aluno_id) — se não
+  // pertencer, devolve 404. Encoded URI evita injection caso o param
+  // venha mal-formado.
+  const envioIdParam = searchParams?.envio_id;
+  const url =
+    `/portal/atividades/${params.atividade_id}/envios/${params.aluno_id}` +
+    (envioIdParam ? `?envio_id=${encodeURIComponent(envioIdParam)}` : "");
+  const data = await fetchBackend<EnvioFeedback>(url, { bearer: token! });
 
   const semEnvio = data.enviado_em === null;
+  // É tentativa anterior se o envio_id renderizado não é o mais recente.
+  // Backend ordena `tentativas_anteriores` desc por tentativa_n, e o
+  // mais recente = o de maior tentativa_n. Se a atual não é a maior,
+  // estamos vendo histórico.
+  const maxTentativa = Math.max(
+    data.tentativa_n,
+    ...data.tentativas_anteriores.map((t) => t.tentativa_n),
+    1,
+  );
+  const vendoTentativaAnterior = data.tentativa_n < maxTentativa;
+  const temMultiplasTentativas = data.tentativa_total > 1;
 
   return (
     <div className="space-y-6">
@@ -49,13 +72,43 @@ export default async function FeedbackAlunoPage({ params }: Props) {
             modo_correcao: data.modo_correcao,
           })}
         </p>
-        <h1 className="font-display text-3xl mt-1">{data.aluno_nome}</h1>
+        <h1 className="font-display text-3xl mt-1">
+          {data.aluno_nome}
+          {temMultiplasTentativas && (
+            // Badge inline pro professor saber que essa tela tem
+            // histórico antes mesmo de scrollar pra ver o expansor.
+            <span className="ml-3 align-middle">
+              <Badge variant="neutral">
+                Tentativa {data.tentativa_n} de {data.tentativa_total}
+              </Badge>
+            </span>
+          )}
+        </h1>
         {!semEnvio && (
           <p className="mt-1 text-sm text-ink-400">
             Enviado em {formatPrazo(data.enviado_em!)}
           </p>
         )}
       </header>
+
+      {/* Banner de "vendo tentativa anterior" — amarelo pra contrastar
+          e botão pra voltar pro padrão (drop do `?envio_id` da URL). */}
+      {vendoTentativaAnterior && (
+        <div className="rounded border border-amber-300 bg-amber-50 px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm text-amber-900">
+            👁️ Você está vendo a <strong>tentativa {data.tentativa_n}</strong>
+            {" "}— versão antiga. A tentativa mais recente é a {maxTentativa}.
+          </p>
+          <Link
+            href={
+              `/atividade/${params.atividade_id}/aluno/${params.aluno_id}`
+            }
+            className="shrink-0 text-sm font-medium text-amber-900 underline-offset-4 hover:underline"
+          >
+            Voltar pra mais recente
+          </Link>
+        </div>
+      )}
 
       {semEnvio ? (
         <Card>
@@ -261,6 +314,61 @@ export default async function FeedbackAlunoPage({ params }: Props) {
                   </li>
                 ))}
               </ul>
+            </Card>
+          )}
+
+          {/* Histórico de tentativas (M9.6). Native <details> evita
+              precisar de Client Component só pra um expansor. Cada
+              item é um Link — clica e o servidor recarrega com
+              `?envio_id=xxx`. Ordem desc por tentativa_n vem do
+              backend. */}
+          {data.tentativas_anteriores.length > 0 && (
+            <Card>
+              <details className="group">
+                <summary className="cursor-pointer list-none flex items-center justify-between">
+                  <p className="font-mono text-xs uppercase tracking-wider text-ink-400">
+                    Tentativas anteriores ({data.tentativas_anteriores.length})
+                  </p>
+                  <span className="text-ink-400 text-sm transition-transform group-open:rotate-180">
+                    ▾
+                  </span>
+                </summary>
+                <ul className="mt-3 space-y-2 divide-y divide-border">
+                  {data.tentativas_anteriores.map((t) => (
+                    <li key={t.envio_id} className="pt-2 first:pt-0">
+                      <Link
+                        href={
+                          `/atividade/${params.atividade_id}` +
+                          `/aluno/${params.aluno_id}` +
+                          `?envio_id=${encodeURIComponent(t.envio_id)}`
+                        }
+                        className="block hover:bg-muted/50 -mx-2 px-2 py-2 rounded transition-colors"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-mono text-xs text-ink-400">
+                            Tentativa {t.tentativa_n}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            {t.nota_total !== null && (
+                              <span className="font-semibold tabular-nums text-sm">
+                                {t.nota_total}/1000
+                              </span>
+                            )}
+                            <span className="text-xs text-ink-400">
+                              {formatPrazo(t.enviado_em)}
+                            </span>
+                          </span>
+                        </div>
+                        {t.texto_curto && (
+                          <p className="text-xs text-ink-400 italic line-clamp-2">
+                            “{t.texto_curto}”
+                          </p>
+                        )}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </details>
             </Card>
           )}
 

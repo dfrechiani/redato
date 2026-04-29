@@ -453,6 +453,16 @@ class Envio(Base):
     enviado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, nullable=False,
     )
+    # M9.6 (2026-04-29): número da tentativa do aluno nessa atividade.
+    # Antes desse milestone, havia constraint UNIQUE (atividade_id,
+    # aluno_turma_id) que bloqueava reenvios — quando aluno escolhia
+    # "reavaliar como nova tentativa" no bot, o INSERT do novo envio
+    # falhava silenciosamente. Agora a constraint inclui tentativa_n,
+    # permitindo histórico completo. Default 1 cobre rows pré-M9.6
+    # (backfilled pela migration g0a1b2c3d4e5).
+    tentativa_n: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=1, server_default="1",
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, nullable=False,
@@ -475,8 +485,8 @@ class Envio(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "atividade_id", "aluno_turma_id",
-            name="uq_envio_atividade_aluno",
+            "atividade_id", "aluno_turma_id", "tentativa_n",
+            name="uq_envio_atividade_aluno_tentativa",
         ),
     )
 

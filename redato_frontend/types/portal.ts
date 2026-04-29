@@ -136,6 +136,19 @@ export interface FaixaQualitativa {
   faixa: string;
 }
 
+/** Resumo curto de uma tentativa anterior do aluno na mesma atividade
+ *  (M9.6, 2026-04-29). Frontend renderiza no expansor "Ver tentativas
+ *  anteriores"; clicar em uma carrega `?envio_id=xxx` no detalhe. */
+export interface TentativaResumo {
+  envio_id: string;
+  tentativa_n: number;
+  /** ISO UTC. UI converte pra BRT pra exibição. */
+  enviado_em: string;
+  nota_total: number | null;
+  /** Preview ~120 chars do texto transcrito. `null` se sem OCR. */
+  texto_curto: string | null;
+}
+
 export interface EnvioFeedback {
   atividade_id: string;
   missao_codigo: string;
@@ -184,6 +197,15 @@ export interface EnvioFeedback {
   }>;
   ocr_quality_issues: string[];
   raw_output: Record<string, unknown> | null;
+  /** M9.6 (2026-04-29): suporte a múltiplas tentativas. Por padrão
+   *  carrega a tentativa mais recente; `?envio_id=xxx` no detalhe_envio
+   *  troca pra uma específica. Pré-M9.6 sempre `tentativa_n=1`,
+   *  `tentativa_total=1`, `tentativas_anteriores=[]` — backward-compat.
+   *  `envio_id` é null quando aluno não enviou nada ainda. */
+  envio_id: string | null;
+  tentativa_n: number;
+  tentativa_total: number;
+  tentativas_anteriores: TentativaResumo[];
 }
 
 // ──────────────────────────────────────────────────────────────────────

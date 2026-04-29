@@ -1050,10 +1050,14 @@ def _process_photo(
     )
 
     # M4: cria Interaction + Envio em Postgres pra agregação por turma
-    # (dashboard, PDF). Falha aqui não invalida o feedback ao aluno —
-    # SQLite legado tem source of truth pro bot.
+    # (dashboard, PDF). M9.6 (2026-04-29): se for reavaliação
+    # (skip_duplicate_check=True) o Postgres calcula tentativa_n =
+    # max+1; em caso de falha, **raise** com log ERROR — antes era
+    # warning silencioso que escondia state inconsistente por dias.
+    tentativa_n: int = 1
+    postgres_falhou = False
     try:
-        PL.criar_interaction_e_envio_postgres(
+        _, _, tentativa_n = PL.criar_interaction_e_envio_postgres(
             aluno_phone=phone,
             aluno_turma_id=aluno_vinculo.aluno_turma_id,
             atividade_id=atividade.atividade_id,
@@ -1070,15 +1074,53 @@ def _process_photo(
         )
     except Exception as exc:  # noqa: BLE001
         import logging as _logging
-        _logging.getLogger(__name__).warning(
+        _logging.getLogger(__name__).error(
             "Falha ao persistir Interaction/Envio em Postgres "
             "(SQLite legado já salvou): %r", exc,
         )
+        postgres_falhou = True
 
     # Volta pro estado READY (limpa pending)
     P.upsert_aluno(phone, estado=READY)
 
-    return [OutboundMessage(resposta)]
+    return _build_messages_pos_correcao(
+        resposta=resposta,
+        skip_duplicate_check=skip_duplicate_check,
+        postgres_falhou=postgres_falhou,
+        tentativa_n=tentativa_n,
+    )
+
+
+def _build_messages_pos_correcao(
+    *,
+    resposta: str,
+    skip_duplicate_check: bool,
+    postgres_falhou: bool,
+    tentativa_n: int,
+) -> List[OutboundMessage]:
+    """Monta a sequência de OutboundMessages depois que o pipeline de
+    correção terminou. Extraído de `_process_photo` em M9.6 pra ser
+    testável sem mockar webhook + Twilio + Anthropic.
+
+    Regra:
+    - Sempre retorna ao menos 1 OutboundMessage (a `resposta`).
+    - Quando aluno escolheu reavaliação (`skip_duplicate_check=True`)
+      E o Postgres registrou nova tentativa (`tentativa_n >= 2` e
+      `postgres_falhou=False`), prepende um ack curto avisando o
+      número da tentativa. Isso evita o aluno achar que reenviou
+      "no vácuo" quando o feedback chega — bug de UX do M9.6.
+    - Se Postgres falhou na nova tentativa, NÃO mostra o ack pra
+      não comunicar um número que pode estar errado (a contagem em
+      Postgres ficou inconsistente).
+    """
+    msgs: List[OutboundMessage] = []
+    if skip_duplicate_check and not postgres_falhou and tentativa_n > 1:
+        msgs.append(OutboundMessage(
+            f"📬 *Tentativa {tentativa_n} registrada.* Avaliando sua "
+            f"nova versão..."
+        ))
+    msgs.append(OutboundMessage(resposta))
+    return msgs
 
 
 # ──────────────────────────────────────────────────────────────────────

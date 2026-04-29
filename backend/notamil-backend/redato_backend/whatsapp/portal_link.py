@@ -332,6 +332,22 @@ def registrar_envio(
         return envio.id
 
 
+def _proxima_tentativa_n(
+    session: Session, atividade_id: uuid.UUID,
+    aluno_turma_id: uuid.UUID,
+) -> int:
+    """Calcula `tentativa_n` pra novo Envio. Retorna `max(tentativa_n) + 1`
+    ou 1 se não houver envio anterior. M9.6."""
+    from sqlalchemy import func as _func
+    n = session.execute(
+        select(_func.max(Envio.tentativa_n)).where(
+            Envio.atividade_id == atividade_id,
+            Envio.aluno_turma_id == aluno_turma_id,
+        )
+    ).scalar()
+    return (n or 0) + 1
+
+
 def criar_interaction_e_envio_postgres(
     *,
     aluno_phone: str,
@@ -347,19 +363,33 @@ def criar_interaction_e_envio_postgres(
     redato_output: Optional[dict],
     resposta_aluno: Optional[str],
     elapsed_ms: Optional[int],
-) -> tuple[int, uuid.UUID]:
+) -> tuple[int, uuid.UUID, int]:
     """Cria Interaction (Postgres) + Envio + cross-link em uma transação.
 
-    Retorna (interaction_id, envio_id). Se falhar, raise — caller já
-    persistiu no SQLite legado, então o estado fica consistente lá
-    mesmo se Postgres pifar.
+    Retorna (interaction_id, envio_id, tentativa_n).
+
+    M9.6 (2026-04-29): suporta múltiplas tentativas do mesmo aluno na
+    mesma atividade. `tentativa_n` é calculado como `max+1` na hora.
+    Em caso de race condition (2 processes inserindo simultâneo com
+    mesmo `tentativa_n`), retry automático 1x com `tentativa_n+1`.
+    Se falhar de novo, **raise IntegrityError barulhento** — não
+    engole mais como warning silencioso (bug que escondeu o problema
+    de tentativas órfãs por dias antes do M9.6).
+
+    Caller continua sendo responsável pelo SQLite legado — se essa
+    função raise, SQLite já salvou e bot pode mostrar feedback ao
+    aluno mesmo com Postgres inconsistente. Mas vai surgir log ERROR
+    bem visível no Railway pra Daniel investigar.
     """
     import json as _json
-    with _open_session() as session:
-        interaction = Interaction(
+    from sqlalchemy.exc import IntegrityError
+    import logging as _logging
+
+    logger = _logging.getLogger(__name__)
+    payload = {
+        "interaction": dict(
             aluno_phone=aluno_phone,
             aluno_turma_id=aluno_turma_id,
-            envio_id=None,           # será setado após criar Envio
             source="whatsapp_portal",
             missao_id=missao_codigo,
             activity_id=activity_id,
@@ -373,23 +403,65 @@ def criar_interaction_e_envio_postgres(
                                        ensure_ascii=False, default=str),
             resposta_aluno=resposta_aluno,
             elapsed_ms=elapsed_ms,
+        ),
+        "atividade_id": atividade_id,
+        "aluno_turma_id": aluno_turma_id,
+    }
+
+    def _tentar(tentativa_n_forcado: Optional[int] = None) -> tuple[int, uuid.UUID, int]:
+        with _open_session() as session:
+            tentativa_n = (
+                tentativa_n_forcado
+                if tentativa_n_forcado is not None
+                else _proxima_tentativa_n(
+                    session, atividade_id, aluno_turma_id,
+                )
+            )
+            interaction = Interaction(envio_id=None, **payload["interaction"])
+            session.add(interaction)
+            session.flush()
+
+            envio = Envio(
+                atividade_id=atividade_id,
+                aluno_turma_id=aluno_turma_id,
+                interaction_id=interaction.id,
+                enviado_em=_utc_now(),
+                tentativa_n=tentativa_n,
+            )
+            session.add(envio)
+            session.flush()
+
+            interaction.envio_id = envio.id
+            session.commit()
+            return interaction.id, envio.id, tentativa_n
+
+    try:
+        return _tentar()
+    except IntegrityError as exc:
+        # Race condition: outro processo criou tentativa_n=N entre
+        # nosso SELECT max e INSERT. Retry 1x com tentativa_n+1.
+        logger.warning(
+            "criar_interaction_e_envio_postgres: race em "
+            "tentativa_n (atividade=%s aluno=%s). Retry 1x: %s",
+            atividade_id, aluno_turma_id, exc.orig,
         )
-        session.add(interaction)
-        session.flush()
-
-        envio = Envio(
-            atividade_id=atividade_id,
-            aluno_turma_id=aluno_turma_id,
-            interaction_id=interaction.id,
-            enviado_em=_utc_now(),
-        )
-        session.add(envio)
-        session.flush()
-
-        interaction.envio_id = envio.id
-        session.commit()
-
-        return interaction.id, envio.id
+        try:
+            with _open_session() as session:
+                novo_n = _proxima_tentativa_n(
+                    session, atividade_id, aluno_turma_id,
+                )
+            return _tentar(tentativa_n_forcado=novo_n)
+        except IntegrityError as retry_exc:
+            # Falhou 2x — raise barulhento (não engolir!).
+            logger.error(
+                "criar_interaction_e_envio_postgres FALHOU 2x mesmo "
+                "com retry de race condition. atividade=%s aluno=%s "
+                "missao=%s phone=%s. SQLite legado já salvou — "
+                "Postgres ficou inconsistente. Investigar urgente.",
+                atividade_id, aluno_turma_id, missao_codigo,
+                aluno_phone,
+            )
+            raise
 
 
 # ──────────────────────────────────────────────────────────────────────
