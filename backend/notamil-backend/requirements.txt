@@ -7,6 +7,12 @@ pytz>=2024.2
 tenacity>=9.0
 anthropic>=0.45
 
+# OpenAI — usado pelo grader OF14 (modo completo_integral) via GPT
+# fine-tuned ft:gpt-4.1-2025-04-14:redato:redato-enem:BTBOS5VF.
+# Migração 2026-04-30 baseada em A/B + experimento prompt-enriched.
+# Rollback rápido via REDATO_OF14_BACKEND=claude (env var em runtime).
+openai>=1.50
+
 # WhatsApp / OCR (Fase A)
 twilio>=9.4
 requests>=2.32

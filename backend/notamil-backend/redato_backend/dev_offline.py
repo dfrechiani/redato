@@ -2815,6 +2815,64 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
     if _mission_mode is not None and _mission_mode != MissionMode.COMPLETO_INTEGRAL:
         return grade_mission(data)
 
+    # OF14 (completo_integral) usa GPT-FT BTBOS5VF como backend padrão desde
+    # 2026-04-30 (commit feat(of14)). Decisão baseada em:
+    #   - A/B 30/abr (commit 174ceab): FT 21.5% ±40 vs Sonnet 19.3%
+    #   - Experimento prompt-enriched (commit 6080d4d): FT 28.5% ±40,
+    #     100% parse_ok, $0.05/redação, 13.8s latência
+    #   - Investigação MIGRATION_FT_OF14_AUDIT.md: gap = 0 campos ativos
+    #     perdidos (frontend prod só consome cN_audit.nota)
+    # Rollback rápido: REDATO_OF14_BACKEND=claude (1 env var, sem deploy).
+    # Fallback automático: se FT falha (timeout, key missing, parser),
+    # cai pro Claude path abaixo (graceful degradation).
+    if (
+        _mission_mode == MissionMode.COMPLETO_INTEGRAL
+        and os.getenv("REDATO_OF14_BACKEND", "ft") == "ft"
+    ):
+        try:
+            from redato_backend.missions.openai_ft_grader import (
+                grade_of14_with_ft,
+            )
+            tool_args = grade_of14_with_ft(content=content, theme=theme)
+            print(
+                f"[dev_offline] OF14 graded via FT BTBOS5VF "
+                f"(request_id={essay_id})"
+            )
+            # _persist_grading_to_bq é defensive contra schema parcial
+            # (_dict_or_empty em campos faltantes — priorization,
+            # preanulation_checks, etc. não vêm do FT).
+            _persist_grading_to_bq(
+                tool_args=tool_args,
+                essay_id=essay_id,
+                user_id=user_id,
+                content=content,
+                activity_id=data.get("activity_id"),
+            )
+            try:
+                from redato_backend.shared.job_tracker import EssayJobTracker
+                tracker = EssayJobTracker()
+                tracker._collection.document(essay_id).set(  # type: ignore[union-attr]
+                    {"raw_audit": tool_args, "updated_at": datetime.now(timezone.utc)},
+                    merge=True,
+                )
+            except Exception as exc_ft:  # noqa: BLE001
+                print(
+                    f"[dev_offline] could not stash raw_audit for {essay_id}: "
+                    f"{exc_ft!r}"
+                )
+            return tool_args
+        except Exception as exc_ft:  # noqa: BLE001
+            print(
+                f"[dev_offline] FT path failed for {essay_id}: "
+                f"{type(exc_ft).__name__}: {exc_ft!r}"
+            )
+            print(
+                "[dev_offline] falling back to Claude Sonnet 4.6 v2 "
+                "(graceful degradation; set REDATO_OF14_BACKEND=claude "
+                "to silence this fallback)"
+            )
+            # Cai pro Claude path abaixo.
+
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     model = os.getenv("REDATO_CLAUDE_MODEL", "claude-sonnet-4-6")
 

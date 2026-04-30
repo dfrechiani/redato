@@ -7,6 +7,9 @@ pytz>=2024.2
 tenacity>=9.0
 anthropic>=0.45
 
+# OpenAI — grader OF14 via FT (mesma situação do requirements.txt prod).
+openai>=1.50
+
 # WhatsApp / OCR (Fase A)
 twilio>=9.4
 requests>=2.32

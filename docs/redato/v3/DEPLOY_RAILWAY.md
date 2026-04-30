@@ -300,9 +300,24 @@ lock file.)
 | `TWILIO_AUTH_TOKEN` | Twilio Console → Account | Esconda — nunca commit. |
 | `TWILIO_WHATSAPP_NUMBER` | Sandbox: `whatsapp:+14155238886` | Sem o "whatsapp:" pra alguns helpers. |
 | `TWILIO_VALIDATE_SIGNATURE` | `0` no boot, depois `1` | Inicia em `0` pra debugar webhook com `curl`. **Promove pra `1` só após smoke E2E passar** — ver [Sequência Twilio](#sequência-twilio--de-0-pra-1). |
-| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Pro grading real. |
+| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Pro grading real. **Pra Foco/Parcial e fallback de OF14**, ainda obrigatório. |
+| `OPENAI_API_KEY` | platform.openai.com → API keys | **Obrigatório se REDATO_OF14_BACKEND=ft (default)**. Sem ela, FT path levanta erro e `_claude_grade_essay` faz fallback automático pro Sonnet (gera log de aviso a cada correção OF14 — verificar Railway logs após deploy). |
+| `REDATO_OF14_BACKEND` | omitir = `ft` (default) | Backend de OF14 (modo completo_integral). `ft` = GPT-FT BTBOS5VF (vencedor A/B 30/abr — 28.5% ±40, $0.05/red, 13.8s). `claude` = rollback pro Sonnet 4.6 v2 sem deploy (latência 65s, ±40 19.3%). |
 | `REDATO_DEV_OFFLINE` | `0` | **0 em prod**. 1 em dev local. |
 | `LOG_LEVEL` | `INFO` | `DEBUG` se precisar diagnosticar. `WARNING` em prod estável reduz volume de logs. |
+
+**Fluxo de validação OF14 pós-deploy:**
+
+1. Antes do push, confirmar no Railway dashboard (`Backend service > Variables`)
+   que `OPENAI_API_KEY` está setada com chave válida da OpenAI.
+2. Após o deploy, mandar 1 redação real OF14 e verificar o log do backend.
+   Esperado: `[dev_offline] OF14 graded via FT BTBOS5VF (request_id=...)`.
+3. Se aparecer `[dev_offline] FT path failed ... falling back to Claude
+   Sonnet 4.6 v2`, **investigar imediatamente** o motivo da falha
+   (key inválida, rate limit, modelo fora do ar). Fallback é graceful
+   mas custo + latência ficam piores que pretendido.
+4. Pra rollback temporário sem deploy: setar `REDATO_OF14_BACKEND=claude`
+   na UI do Railway → Restart do serviço → Sonnet volta a ser default.
 
 > **Não setar `ALEMBIC_AUTO_UPGRADE` em produção.** Manter a variável
 > ausente. Migrations rodam **sempre manualmente** via shell do

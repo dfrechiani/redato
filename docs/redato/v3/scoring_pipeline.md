@@ -122,9 +122,88 @@ Caps:
 
 ### Modo Completo Integral (OF14)
 
-**Não passa pelo override.** OF14 usa o pipeline v2 da Redato em
-produção (audit-first, two-stage, ensemble). A derivação Python lá já
-existe há ciclos de calibração — `_derive_cN_nota` em `dev_offline.py`.
+**Não passa pelo override do `apply_override`.** OF14 tem caminho próprio,
+selecionado via env var `REDATO_OF14_BACKEND`:
+
+#### Backend `ft` (default desde 2026-04-30 — commit feat(of14))
+
+GPT fine-tuned `ft:gpt-4.1-2025-04-14:redato:redato-enem:BTBOS5VF` com
+prompt audit-enriched. Implementado em
+[`redato_backend/missions/openai_ft_grader.py`](../../../backend/notamil-backend/redato_backend/missions/openai_ft_grader.py)
+e roteado em
+[`dev_offline.py:_claude_grade_essay`](../../../backend/notamil-backend/redato_backend/dev_offline.py)
+(linha ~2814 em diante).
+
+**Decisão da migração:**
+
+- A/B 30/abr (commit `174ceab`): FT 21.5% ±40 vs Sonnet 4.6 v2 19.3%
+  vs Opus 4.7 + fewshot 14.0%. Ver
+  `scripts/ab_models/results/REPORT_AB_20260430_*.md` (gitignored).
+- Experimento prompt-enriched (commit `6080d4d`): FT com prompt pedindo
+  audit estruturado deu 28.5% ±40, 100% parse_ok, $0.05/redação,
+  13.8s latência. 5 amostras qualitativas julgadas úteis.
+- Investigação [`MIGRATION_FT_OF14_AUDIT.md`](MIGRATION_FT_OF14_AUDIT.md):
+  gap = **0 campos ativos perdidos** no `redato_frontend` prod (consome
+  apenas `cN_audit.nota`). Frontend legacy `frontend/notamil-frontend`
+  é morto (sem commits desde initial).
+
+**Schema retornado pelo FT:**
+
+```json
+{
+  "c1_audit": {
+    "nota": 0|40|80|120|160|200,
+    "feedback_text": "<2-3 parágrafos>",
+    "evidencias": [{"trecho": "<literal>", "comentario": "<por quê>"}]
+  },
+  "c2_audit": {...}, "c3_audit": {...}, "c4_audit": {...}, "c5_audit": {...}
+}
+```
+
+Compatível com `_persist_grading_to_bq` (defensive contra schema parcial
+— campos `priorization`, `essay_analysis`, `meta_checks`, `feedback_text`
+solto não vêm do FT e não são consumidos pelo frontend prod).
+
+**Performance esperada em prod:**
+
+| Métrica | Antes (Sonnet 4.6 v2) | Depois (FT BTBOS5VF) |
+|---|---|---|
+| ±40% (concordância INEP) | 19.3% | **28.5%** (+9.2pp) |
+| Custo/redação | $0.030 | **$0.05** (1.7×, ainda 6× menor que Opus tuned) |
+| Latência média | 65s | **13.8s** (-79%) |
+| Schema retornado | v2 completo (12+ campos por cN) | v2 reduzido (3 campos por cN) |
+
+**Fallback graceful:** se o FT falhar (timeout, OPENAI_API_KEY missing,
+parser não casa), `_claude_grade_essay` captura a `OpenAIFTGradingError`,
+loga o motivo e cai pro path Claude Sonnet original. A correção sempre
+termina — apenas com latência/custo do fallback. Logs:
+
+```
+[dev_offline] FT path failed for <id>: <ErrorType>: <message>
+[dev_offline] falling back to Claude Sonnet 4.6 v2 (graceful degradation;
+              set REDATO_OF14_BACKEND=claude to silence this fallback)
+```
+
+#### Backend `claude` (rollback)
+
+Setar `REDATO_OF14_BACKEND=claude` desativa o ramo FT — `_claude_grade_essay`
+segue direto pro path Sonnet 4.6 v2 (audit-first, two-stage, ensemble).
+Rollback rápido sem deploy: editar env var no Railway dashboard +
+restart. Útil pra investigar incidentes ou comparar com baseline.
+
+A derivação Python (`_derive_cN_nota` em `dev_offline.py`) só roda no
+path Claude — o FT path retorna notas direto do modelo sem passar por
+two-stage (FT não emite os campos auditoriais que a derivação consome).
+
+#### Pendência conhecida
+
+`cN_audit.feedback_text` e `cN_audit.evidencias` vêm do FT mas o
+`redato_frontend` ainda não os renderiza. São info pedagógica
+pré-pronta por competência que hoje viaja pelo backend mas é jogada
+fora pelos helpers do portal (`_analise_da_redacao_de` procura
+`feedback_professor` que OF14 não tem). Render dessas duas chaves no
+portal está em backlog — ver `MIGRATION_FT_OF14_AUDIT.md` cenário A
+"próximos passos".
 
 ## Logger de divergências
 
