@@ -218,6 +218,67 @@ Checklist:
 - [ ] Gerar PDF com sucesso.
 - [ ] Email enviado via SendGrid (não jsonl dry-run).
 
+## Frontend — Nixpacks e devDependencies
+
+**Armadilha conhecida.** Railway/Nixpacks roda o build do frontend
+com `NODE_ENV=production` injetado automaticamente. Esse env var faz
+o `npm ci` **pular `devDependencies`** (comportamento padrão do npm,
+ver [npm-ci docs](https://docs.npmjs.com/cli/v10/commands/npm-ci)).
+Resultado: qualquer pacote necessário pro `next build` que esteja em
+`devDependencies` não é instalado, e o build aborta.
+
+**Regra dura:** todo pacote necessário em build-time vai em
+`dependencies`, NÃO em `devDependencies`. Inclui:
+
+- Compilador TypeScript (`typescript`).
+- TODOS os `@types/*` que aparecem no código TS (não só os do
+  Next/React — `@types/diff-match-patch`, `@types/lodash`, etc.).
+- Compiladores/loaders do CSS (`tailwindcss`, `postcss`, `autoprefixer`).
+- Plugins de lint/build necessários se `next build` rodar lint
+  (default em produção).
+
+**`devDependencies` legítimas** são as que rodam só localmente: test
+runners (`@playwright/test`, `vitest`), formatters/lint puros
+(`eslint`, `prettier`, `eslint-config-next` quando usado só em
+`next lint` separado).
+
+### Strikes históricos
+
+| Commit | Pacote | Sintoma do build |
+|---|---|---|
+| `d98432b` | `typescript` | Cannot find module 'typescript' |
+| `e1ffc8d` | `@types/diff-match-patch` | Could not find a declaration file for module 'diff-match-patch' |
+
+### Validação local antes de push
+
+Reproduzir a condição exata do Railway antes de commitar adições no
+`package.json` do frontend:
+
+```bash
+cd redato_frontend
+rm -rf node_modules .next
+NODE_ENV=production npm ci      # pula devDependencies
+NODE_ENV=production npm run build
+```
+
+Resultado esperado:
+
+```
+✓ Compiled successfully
+✓ Generating static pages (XX/XX)
+```
+
+Se ver `Cannot find module ...` ou `Could not find a declaration
+file for module ...`, o pacote em questão está em `devDependencies`
+e precisa ir pra `dependencies`. Mover via:
+
+```bash
+npm uninstall <pkg> && npm install --save <pkg>
+```
+
+(ou edição direta no `package.json` + `npm install` pra recalcular o
+lock file.)
+
 ## Env vars
 
 ### Postgres (auto-injetado pelo serviço Postgres)
