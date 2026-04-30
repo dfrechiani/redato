@@ -168,12 +168,115 @@ def send_text(phone: str, text: str) -> str:
     return msg.sid
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Fragmentação de mensagens longas (hotfix 2026-04-29)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Bug: Twilio recusa mensagens >1600 chars com HTTP 400 ("The
+# concatenated message body exceeds the 1600 character limit"). No fluxo
+# do jogo Redato, texto cooperativo montado pelas cartas chegou a ~2300
+# chars. Bot processou cartas + persistiu partida mas falhou no envio →
+# aluno fica sem feedback.
+#
+# Solução: fragmentar SOMENTE em \n\n (parágrafo). Nunca corta no meio
+# de um parágrafo. Regra: ceiling=1500 chars (folga sobre o limite duro
+# de 1600 que o Twilio aplica).
+
+# Limite seguro pra cada chunk. Twilio bloqueia em 1600 — 1500 dá
+# margem pra prefixo "(parte N de M)\n\n" (~20 chars) sem ultrapassar.
+_TWILIO_CHUNK_CEILING = 1500
+
+
+def split_by_paragraph(
+    text: str, max_chars: int = _TWILIO_CHUNK_CEILING,
+) -> List[str]:
+    """Divide texto em chunks de até `max_chars` quebrando APENAS em
+    `\\n\\n` (parágrafo). Empacotamento greedy: cada chunk recebe
+    parágrafos enquanto couber.
+
+    Caso limite — parágrafo único > max_chars: log.warning e retorna
+    parágrafo intacto (sem hard-split). Twilio vai recusar nesse caso
+    mas o erro fica explícito no log, e a investigação aponta pro
+    conteúdo da carta que gerou o parágrafo gigante.
+
+    Retorna lista com 1+ elementos. Texto curto retorna [text] sem
+    modificação (caller decide se aplica prefixo).
+    """
+    if len(text) <= max_chars:
+        return [text]
+
+    paragrafos = text.split("\n\n")
+    chunks: List[str] = []
+    atual = ""
+
+    for p in paragrafos:
+        # Caso limite: parágrafo único > max_chars. Fecha chunk atual
+        # (se houver) e emite o parágrafo gigante sozinho. Twilio vai
+        # falhar mas a falha fica clara em log + telemetria.
+        if len(p) > max_chars:
+            logger.warning(
+                "split_by_paragraph: parágrafo único de %d chars excede "
+                "ceiling de %d — Twilio provavelmente vai rejeitar. "
+                "Investigar conteúdo da carta que gerou esse parágrafo.",
+                len(p), max_chars,
+            )
+            if atual:
+                chunks.append(atual)
+                atual = ""
+            chunks.append(p)
+            continue
+
+        # Tenta adicionar `p` ao chunk atual (com \n\n entre se já
+        # tem conteúdo).
+        candidato = f"{atual}\n\n{p}" if atual else p
+        if len(candidato) <= max_chars:
+            atual = candidato
+        else:
+            # Não cabe — fecha atual, começa novo chunk com `p`.
+            if atual:
+                chunks.append(atual)
+            atual = p
+
+    if atual:
+        chunks.append(atual)
+    return chunks
+
+
+def format_chunked(chunks: List[str]) -> List[str]:
+    """Adiciona prefixo "(parte N de M)\\n\\n" em CADA chunk quando há
+    mais de 1. Chunk único é retornado intacto (sem ruído visual de
+    "(parte 1 de 1)").
+    """
+    if len(chunks) <= 1:
+        return list(chunks)
+    n = len(chunks)
+    return [
+        f"(parte {i + 1} de {n})\n\n{chunk}"
+        for i, chunk in enumerate(chunks)
+    ]
+
+
 def send_replies(phone: str, replies: List[str]) -> List[str]:
     """Envia múltiplas respostas em ordem. Pequeno delay entre cada uma
-    pra preservar ordem percebida no app do destinatário."""
+    pra preservar ordem percebida no app do destinatário (WhatsApp
+    pode reordenar mensagens em rajada com gap < ~100ms).
+
+    Hotfix 2026-04-29: cada `reply` > 1500 chars é fragmentado em
+    chunks por parágrafo via `split_by_paragraph` + `format_chunked`.
+    Chunks são enviados na ordem, com 300ms de pausa entre TODOS os
+    envios consecutivos (incluindo entre chunks da mesma reply).
+    """
+    # 1. Fragmenta cada reply (passa direto se <= ceiling)
+    all_chunks: List[str] = []
+    for reply in replies:
+        chunks = split_by_paragraph(reply)
+        formatted = format_chunked(chunks)
+        all_chunks.extend(formatted)
+
+    # 2. Envia na ordem com pausa de 300ms entre consecutivos
     sids: List[str] = []
-    for i, t in enumerate(replies):
+    for i, chunk in enumerate(all_chunks):
         if i > 0:
             time.sleep(0.3)
-        sids.append(send_text(phone, t))
+        sids.append(send_text(phone, chunk))
     return sids
