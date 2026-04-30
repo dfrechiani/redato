@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { ReescritaDiffView } from "@/components/ReescritaDiffView";
 import { formatPrazo } from "@/lib/format";
 import type {
   CartaEscolhidaDetail, JogoRedatoOutput, ReescritaDetail,
@@ -76,30 +77,15 @@ export function ReescritaDetailView({ data }: Props) {
       )}
 
       {/* Bloco principal — texto montado vs reescrita autoral.
-          Lado-a-lado simples (sem diff visual ainda — fica como
-          pendência pra próxima iteração se professor pedir). */}
-      <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <p className="font-mono text-xs uppercase tracking-wider text-ink-400 mb-3">
-            Texto montado pelo grupo
-          </p>
-          <p className="text-sm leading-relaxed whitespace-pre-line font-body">
-            {texto_montado || (
-              <span className="text-ink-400 italic">
-                (texto montado ainda não disponível)
-              </span>
-            )}
-          </p>
-        </Card>
-        <Card>
-          <p className="font-mono text-xs uppercase tracking-wider text-ink-400 mb-3">
-            Reescrita autoral
-          </p>
-          <p className="text-sm leading-relaxed whitespace-pre-line font-body">
-            {reescrita.texto}
-          </p>
-        </Card>
-      </section>
+          Passo 7a: substituiu lado-a-lado simples por diff visual
+          verde/vermelho por palavra. Cabeçalho mostra "Texto autoral:
+          X%" calculado mecanicamente sobre o diff (complementar à
+          transformacao_cartas qualitativa do Claude). */}
+      <ReescritaDiffView
+        textoMontado={texto_montado}
+        reescritaTexto={reescrita.texto}
+        transformacaoCartas={r?.transformacao_cartas ?? null}
+      />
 
       {/* Notas + transformação. Quando avaliação disponível, mostra 5
           competências + total + badge transformação. Senão, placeholder. */}
