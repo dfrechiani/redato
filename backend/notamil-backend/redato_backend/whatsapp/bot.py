@@ -1472,8 +1472,36 @@ def _handle_aguardando_cartas_partida(
             "professor."
         )]
 
-    resultado = validar_partida(codigos, ctx)
+    # Passo 7b (2026-05-01): merge com códigos válidos parciais da
+    # tentativa anterior, persistidos em
+    # `partida.cartas_escolhidas.codigos_parciais`. Aluno corrige só o
+    # errado em vez de redigitar tudo. `partida` aqui é
+    # `PartidaPendenteContext` (dataclass sem `cartas_escolhidas`),
+    # então delegamos a leitura ao helper que faz o SELECT direto.
+    codigos_parciais = PL.get_codigos_parciais(partida_id)
+
+    resultado = validar_partida(
+        codigos, ctx,
+        codigos_existentes_acumulados=codigos_parciais or None,
+    )
     if not resultado.ok:
+        # Persiste codigos_aceitos pra próxima tentativa acumular.
+        # Vazio é aceitável: aluno mandou só códigos inválidos, não
+        # tem o que persistir; a próxima tentativa parte do zero.
+        if resultado.codigos_aceitos:
+            try:
+                PL.persist_codigos_parciais(
+                    partida_id=partida_id,
+                    codigos_aceitos=resultado.codigos_aceitos,
+                )
+            except Exception as exc_pp:  # noqa: BLE001
+                # Não derrubamos a correção do aluno por causa de
+                # falha de persistência — UX é resposta de erro pra
+                # ele, parciais ficam pro próximo turno se conseguir.
+                import logging as _logging
+                _logging.getLogger(__name__).exception(
+                    "persist_codigos_parciais falhou: %r", exc_pp,
+                )
         return [OutboundMessage(resultado.mensagem_erro or "Validação falhou.")]
 
     texto_montado = montar_texto_montado(

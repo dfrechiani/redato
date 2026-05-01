@@ -812,8 +812,9 @@ def persist_cartas_e_texto(
     codigos: List[str],
     texto_montado: str,
 ) -> None:
-    """Atualiza partida_jogo após validação das cartas:
-    - cartas_escolhidas[codigos] = lista de codes (preserva _alunos_turma_ids)
+    """Atualiza partida_jogo após validação das cartas (caminho feliz):
+    - cartas_escolhidas[codigos] = lista de codes finais
+    - cartas_escolhidas[codigos_parciais] = [] (limpo — Passo 7b 2026-05-01)
     - texto_montado = redação cooperativa expandida
     Não muda alunos vinculados (campo _alunos_turma_ids preservado)."""
     from redato_backend.portal.models import PartidaJogo
@@ -824,8 +825,67 @@ def persist_cartas_e_texto(
             raise RuntimeError(f"Partida {partida_id} não encontrada")
         cartas = dict(partida.cartas_escolhidas or {})
         cartas["codigos"] = list(codigos)
+        # Validação completa passou — limpa parciais que viviam aqui
+        # entre tentativas. Passo 7b: sem isso, parciais ficariam
+        # órfãos e poderiam confundir tentativas posteriores numa
+        # partida re-aberta (cenário hipotético, mas higiene importa).
+        cartas["codigos_parciais"] = []
         partida.cartas_escolhidas = cartas
         partida.texto_montado = texto_montado
+        session.commit()
+
+
+def get_codigos_parciais(partida_id: uuid.UUID) -> List[str]:
+    """Lê códigos válidos parciais de tentativa anterior (Passo 7b).
+
+    Retorna `cartas_escolhidas["codigos_parciais"]` da partida ou
+    lista vazia se nunca foi populado / partida inexistente. Usado
+    pelo handler em `bot.py` antes de chamar `validar_partida` —
+    permite acumular com a mensagem atual em vez de redigitar tudo.
+
+    Não toca em outros campos da partida; pure read.
+    """
+    from redato_backend.portal.models import PartidaJogo
+
+    with _open_session() as session:
+        partida = session.get(PartidaJogo, partida_id)
+        if partida is None:
+            return []
+        cartas = partida.cartas_escolhidas or {}
+        if not isinstance(cartas, dict):
+            return []
+        parciais = cartas.get("codigos_parciais")
+        if not isinstance(parciais, list):
+            return []
+        return [str(c) for c in parciais if c]
+
+
+def persist_codigos_parciais(
+    *,
+    partida_id: uuid.UUID,
+    codigos_aceitos: List[str],
+) -> None:
+    """Persiste códigos válidos parciais entre tentativas (Passo 7b).
+
+    Usado pelo handler `_handle_aguardando_cartas_partida` quando
+    `validar_partida` retorna `ok=False` mas `codigos_aceitos` não é
+    vazio (Step 1+ produziu lista de códigos que existem no minideck).
+    Próxima mensagem do aluno acumula esses parciais antes de
+    re-validar — aluno corrige só o errado em vez de redigitar tudo.
+
+    Sobrescreve `cartas_escolhidas[codigos_parciais]` com a lista nova
+    (que já vem mergeada pelo `validar_partida`, não acumula aqui).
+    Outros campos (`codigos`, `_alunos_turma_ids`) preservados.
+    """
+    from redato_backend.portal.models import PartidaJogo
+
+    with _open_session() as session:
+        partida = session.get(PartidaJogo, partida_id)
+        if partida is None:
+            raise RuntimeError(f"Partida {partida_id} não encontrada")
+        cartas = dict(partida.cartas_escolhidas or {})
+        cartas["codigos_parciais"] = list(codigos_aceitos)
+        partida.cartas_escolhidas = cartas
         session.commit()
 
 

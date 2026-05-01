@@ -174,6 +174,11 @@ class ResultadoValidacao:
     estruturais_em_ordem: List[str] = field(default_factory=list)
     lacunas_por_tipo: Dict[str, List[str]] = field(default_factory=dict)
     placeholders_vazios: List[str] = field(default_factory=list)
+    # Códigos que existem no minideck (passaram Step 1) — populados
+    # mesmo quando ok=False. Consumer (bot.py) persiste em
+    # `cartas_escolhidas.codigos_parciais` pra próxima tentativa
+    # acumular em vez de redigitar tudo. Resolve Passo 7b.
+    codigos_aceitos: List[str] = field(default_factory=list)
 
 
 def _ordem_secao(secao: str) -> int:
@@ -187,6 +192,7 @@ def _ordem_secao(secao: str) -> int:
 
 def validar_partida(
     codigos: List[str], ctx: ContextoValidacao,
+    codigos_existentes_acumulados: Optional[List[str]] = None,
 ) -> ResultadoValidacao:
     """Valida lista de codigos contra catálogo do minideck. Aplica:
 
@@ -203,9 +209,27 @@ def validar_partida(
     Retorna `ResultadoValidacao` com `ok=False, mensagem_erro=...` no
     primeiro erro fatal; ou `ok=True, warnings=[...]` se passou com
     avisos.
+
+    `codigos_existentes_acumulados` (opcional, Passo 7b 2026-05-01):
+    códigos válidos parciais persistidos em
+    `partida.cartas_escolhidas.codigos_parciais` de uma tentativa
+    anterior. Quando presente, são unidos com `codigos` da mensagem
+    atual antes de qualquer validação — aluno corrige só o errado em
+    vez de redigitar tudo. Dedup automático (set comprehension)
+    impede dobrar código que já era válido. Em qualquer return
+    `ok=False`, o resultado popula `codigos_aceitos` com os códigos
+    que passaram Step 1 (existem no minideck), pra caller persistir.
     """
+    # Passo 7b: merge com códigos válidos parciais da tentativa
+    # anterior (se houver) ANTES da dedup defensiva. Ordem: parciais
+    # primeiro (preserva ordem do tabuleiro original), novos depois.
+    if codigos_existentes_acumulados:
+        codigos = list(codigos_existentes_acumulados) + list(codigos)
+
     # Dedup defensivo: aluno mandou "E01, E01, E10" — ignoramos a
-    # 2ª aparição mas guardamos pra warning.
+    # 2ª aparição mas guardamos pra warning. Mesma dedup absorve o
+    # caso "aluno re-enviou E01 que já estava nos parciais" (idempotente
+    # entre tentativas, não vira duplicata fatal).
     codigos_unicos: List[str] = []
     duplicados: List[str] = []
     seen: set = set()
@@ -242,6 +266,15 @@ def validar_partida(
             else:
                 lacunas_escolhidas.append(lac)
 
+    # Passo 7b: lista de códigos que existem no minideck — usada pra
+    # popular `codigos_aceitos` em qualquer return ok=False/ok=True.
+    # `estruturais_escolhidas` e `lacunas_escolhidas` são preenchidos
+    # ao longo do loop acima mesmo quando `desconhecidos` tem itens.
+    codigos_aceitos = (
+        [e.codigo for e in estruturais_escolhidas]
+        + [l.codigo for l in lacunas_escolhidas]
+    )
+
     if desconhecidos:
         return ResultadoValidacao(
             ok=False,
@@ -251,6 +284,7 @@ def validar_partida(
                 f"está certo e se você está jogando o tema dessa "
                 f"partida."
             ),
+            codigos_aceitos=codigos_aceitos,
         )
 
     warnings: List[str] = []
@@ -285,6 +319,7 @@ def validar_partida(
                 f"Faltou seção {_secao_humana(secao)}. Escolha uma "
                 f"carta entre {prefixo} e {ultimo}."
             ),
+            codigos_aceitos=codigos_aceitos,
         )
 
     secoes_excedentes = [
@@ -344,6 +379,7 @@ def validar_partida(
                         f"Sua {pediu} pede [{ph}] mas você não "
                         f"escolheu carta {prefixo_pra_aluno}."
                     ),
+                    codigos_aceitos=codigos_aceitos,
                 )
 
     # Step 4: proposta — A/AC/ME/F. Conta tipos PRESENTES na lacuna
@@ -367,6 +403,7 @@ def validar_partida(
                 f"Você precisa de pelo menos 2 cartas entre AGENTE, "
                 f"AÇÃO, MEIO e FIM."
             ),
+            codigos_aceitos=codigos_aceitos,
         )
     # Faltar 1-2 → warning
     if tipos_proposta_presentes < 4:
@@ -387,6 +424,7 @@ def validar_partida(
         estruturais_em_ordem=estruturais_em_ordem,
         lacunas_por_tipo=lacunas_por_tipo,
         placeholders_vazios=placeholders_vazios,
+        codigos_aceitos=codigos_aceitos,
     )
 
 

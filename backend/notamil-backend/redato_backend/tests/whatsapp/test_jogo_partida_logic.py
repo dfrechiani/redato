@@ -381,3 +381,138 @@ def test_classificar_codigos_agrupa_por_tipo():
     assert out["PALAVRA_CHAVE"] == ["K11"]
     assert out["ACAO"] == ["AC07"]
     assert "AGENTE" not in out  # não tem A##
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Passo 7b — Acumulação de códigos parciais entre tentativas
+# (commit fix(jogo) 2026-05-01). Bug original: quando aluno mandava
+# 17 códigos com 1 inválido, validar_partida fazia fail-fast, descartava
+# os 16 válidos. Aluno corrigia só o errado — mas os 16 válidos não
+# estavam mais em lugar nenhum, então a 2ª chamada falhava por falta
+# de estruturais.
+# Fix: validar_partida aceita `codigos_existentes_acumulados` e popula
+# `codigos_aceitos` em qualquer return ok=False — caller (bot.py)
+# persiste em `cartas_escolhidas.codigos_parciais` e merge na próxima.
+# ──────────────────────────────────────────────────────────────────────
+
+def test_validar_partida_acumula_parciais_step1_falha():
+    """1ª tentativa: 16 válidos + 1 desconhecido (X99). Validação falha
+    no Step 1 mas codigos_aceitos traz os 16 válidos."""
+    from redato_backend.whatsapp.jogo_partida import validar_partida
+    ctx = _ctx_minimo()
+    out = validar_partida(
+        ["E01", "E10", "E17", "E19", "E21", "E33", "E35", "E37",
+         "E49", "E51", "P01", "R01", "K01", "A01", "AC07", "ME04",
+         "X99"],  # X99 não existe
+        ctx,
+    )
+    assert out.ok is False
+    assert "X99" in (out.mensagem_erro or "")
+    # 16 válidos populam codigos_aceitos (ordem de aparição)
+    aceitos = set(out.codigos_aceitos)
+    assert "E01" in aceitos and "E51" in aceitos
+    assert "P01" in aceitos and "AC07" in aceitos
+    assert "X99" not in aceitos
+    assert len(aceitos) == 16
+
+
+def test_validar_partida_acumula_parciais_step2_falha():
+    """1ª tentativa: 9 estruturais (sem PROPOSTA) + algumas lacunas.
+    Validação falha no Step 2 (seção faltando). codigos_aceitos inclui
+    os 9 estruturais + as lacunas."""
+    from redato_backend.whatsapp.jogo_partida import validar_partida
+    ctx = _ctx_minimo()
+    # Pula E51 (PROPOSTA) — vai dar "Faltou seção Proposta"
+    out = validar_partida(
+        ["E01", "E10", "E17", "E19", "E21", "E33", "E35", "E37", "E49",
+         "P01", "R01", "K01"],
+        ctx,
+    )
+    assert out.ok is False
+    assert "Proposta" in (out.mensagem_erro or "")
+    # Os 9 estruturais + 3 lacunas estão em codigos_aceitos
+    aceitos = set(out.codigos_aceitos)
+    assert len(aceitos) == 12
+    assert "E51" not in aceitos
+
+
+def test_validar_partida_acumula_parciais_passa_quando_completa():
+    """2ª tentativa: aluno corrige 1 código. validar_partida com
+    codigos_existentes_acumulados=16_validos + ["K22"] (1 corrigido)
+    monta os 17 e passa."""
+    from redato_backend.whatsapp.jogo_partida import validar_partida
+    ctx = _ctx_minimo()
+
+    # Simula 16 válidos parciais persistidos da 1ª tentativa
+    # (que falhou por causa de "X99" inválido — Cenário A do briefing).
+    parciais = [
+        "E01", "E10", "E17", "E19", "E21", "E33", "E35", "E37",
+        "E49", "E51", "P01", "R01", "A01", "AC07", "ME04", "F02",
+    ]
+    # Aluno corrige só o que estava errado (manda K22 — antes faltava K)
+    novos = ["K22"]
+
+    out = validar_partida(
+        novos, ctx,
+        codigos_existentes_acumulados=parciais,
+    )
+    assert out.ok is True
+    # codigos_aceitos no caminho feliz lista todos os 17 (16 parciais
+    # + 1 novo, dedup automático preservando ordem)
+    assert "K22" in out.codigos_aceitos
+    assert "E01" in out.codigos_aceitos
+    assert len(out.codigos_aceitos) == 17
+
+
+def test_validar_partida_idempotente_re_envio_de_codigo_valido():
+    """Aluno re-envia código que JÁ estava nos parciais junto com
+    a correção. Dedup do validar_partida impede duplicata fatal —
+    vira só warning. Cenário C do briefing."""
+    from redato_backend.whatsapp.jogo_partida import validar_partida
+    ctx = _ctx_minimo()
+
+    parciais = [
+        "E01", "E10", "E17", "E19", "E21", "E33", "E35", "E37",
+        "E49", "E51", "P01", "R01", "A01", "AC07", "ME04", "F02",
+    ]
+    # Aluno re-envia E01 (já estava válido) + K22 (correção)
+    novos = ["E01", "K22"]
+
+    out = validar_partida(
+        novos, ctx,
+        codigos_existentes_acumulados=parciais,
+    )
+    assert out.ok is True
+    # E01 não vira duplicata fatal; K22 entra normalmente
+    assert "K22" in out.codigos_aceitos
+    # Total ainda 17 (E01 não dobrou)
+    assert len(out.codigos_aceitos) == 17
+
+
+def test_validar_partida_codigos_aceitos_caminho_feliz_sem_acumulado():
+    """Aluno manda lista completa de 17 numa só mensagem (sem acumular
+    nada). codigos_aceitos no return ok=True espelha a lista válida
+    — caller usa pra limpar parciais."""
+    from redato_backend.whatsapp.jogo_partida import validar_partida
+    ctx = _ctx_minimo()
+    out = validar_partida(
+        ["E01", "E10", "E17", "E19", "E21", "E33", "E35", "E37",
+         "E49", "E51", "P01", "R01", "K01", "A01", "AC07", "ME04",
+         "F02"],
+        ctx,
+    )
+    assert out.ok is True
+    assert len(out.codigos_aceitos) == 17
+
+
+def test_validar_partida_codigos_existentes_acumulados_none_eh_default():
+    """Compatibilidade: chamadas legadas sem o param novo continuam
+    funcionando idênticas ao comportamento anterior do fix."""
+    from redato_backend.whatsapp.jogo_partida import validar_partida
+    ctx = _ctx_minimo()
+    # Sem o param novo
+    out = validar_partida(["E01", "X99"], ctx)
+    assert out.ok is False
+    # codigos_aceitos ainda é populado (mesmo sem o param novo)
+    assert "E01" in out.codigos_aceitos
+    assert "X99" not in out.codigos_aceitos
