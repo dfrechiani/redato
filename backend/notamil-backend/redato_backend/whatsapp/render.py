@@ -14,9 +14,17 @@ Formatação WhatsApp:
 """
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from redato_backend.missions.discretize import discretiza_score
+
+
+# Logger pros pontos de quebra no render. Bug do 01/05 (FT migration):
+# OF14 caía no fallback "Não consegui formatar" porque dispatch exigia
+# `essay_analysis` que o FT não retorna. Sem log, debug em prod era
+# adivinhação.
+logger = logging.getLogger(__name__)
 
 
 _MAX_CHARS = 1200          # cap WhatsApp pra leitura confortável em mobile
@@ -312,31 +320,222 @@ def _render_transformacao_badge(score: int) -> str:
     return f"{emoji} *Transformação das cartas:* {score}/100 — _{label}_"
 
 
+# ──────────────────────────────────────────────────────────────────────
+# OF14 (modo completo_integral) — renderizador
+# ──────────────────────────────────────────────────────────────────────
+#
+# 2 schemas suportados:
+#
+# A. Schema FT (default desde 30/04 — commit feat(of14) 8554146):
+#    {
+#      "c1_audit": {"nota": int, "feedback_text": str,
+#                   "evidencias": [{"trecho": str, "comentario": str}]},
+#      "c2_audit": {...}, ..., "c5_audit": {...}
+#    }
+#    Sem `feedback_text` top-level, sem `essay_analysis`,
+#    sem `priorization`, sem `flags`. Cada cN_audit traz seu
+#    próprio feedback + evidências.
+#
+# B. Schema v2 legado (fallback Claude — REDATO_OF14_BACKEND=claude):
+#    cN_audit com 12+ campos (desvios_gramaticais, threshold_check,
+#    marcas_oralidade, etc.) + `feedback_text` top-level + outros.
+#    Renderizador NÃO acessa esses campos extras — só `nota` e o
+#    eventual `feedback_text` top-level.
+#
+# Estratégia: ambos schemas têm `cN_audit.nota`. Renderizador prefere
+# `cN_audit.feedback_text` (FT) e cai em `args["feedback_text"]` solto
+# (v2) se o por-competência não vier.
+
+# Limite mais generoso pra OF14 — 5 competências × ~400 chars cada ainda
+# cabe nos 1600 chars/chunk do Twilio com chunking de bot.py.
+_OF14_MAX_CHARS = 2800
+_OF14_FB_CHARS = 200          # feedback_text resumido por competência
+_OF14_TRECHO_CHARS = 80       # citação literal
+_OF14_COMENT_CHARS = 100      # comentário sobre o trecho
+_OF14_EVID_PER_COMP = 2       # até 2 evidências por competência
+
+
+def _is_completo_integral(args: Dict[str, Any]) -> bool:
+    """Detecta payload OF14 sem depender de `modo` (FT não preenche
+    esse campo) nem de `essay_analysis` (FT não retorna). Critério:
+    ao menos 3 das 5 chaves cN_audit presentes como dicts com `nota`.
+    """
+    if not isinstance(args, dict):
+        return False
+    audits_validos = sum(
+        1 for c in ("c1_audit", "c2_audit", "c3_audit", "c4_audit", "c5_audit")
+        if isinstance(args.get(c), dict)
+        and isinstance(args[c].get("nota"), (int, float))
+    )
+    return audits_validos >= 3
+
+
+def _of14_nota(args: Dict[str, Any], chave: str) -> Optional[int]:
+    """Lê `cN_audit.nota` defensivamente. Retorna None se ausente
+    ou tipo errado — caller renderiza 'dados incompletos'."""
+    bloco = args.get(chave)
+    if not isinstance(bloco, dict):
+        return None
+    nota = bloco.get("nota")
+    if isinstance(nota, (int, float)):
+        return int(nota)
+    return None
+
+
+def _of14_feedback(args: Dict[str, Any], chave: str) -> str:
+    """Pega `cN_audit.feedback_text` (schema FT). Fallback pra
+    `args["feedback_text"]` top-level (schema v2) só se ausente."""
+    bloco = args.get(chave)
+    if isinstance(bloco, dict):
+        fb = bloco.get("feedback_text")
+        if isinstance(fb, str) and fb.strip():
+            return fb.strip()
+    return ""
+
+
+def _of14_evidencias(args: Dict[str, Any], chave: str) -> List[Tuple[str, str]]:
+    """Lista de (trecho, comentário) de `cN_audit.evidencias`. Tolera
+    formato inesperado (não é lista, item não é dict) — retorna []."""
+    bloco = args.get(chave)
+    if not isinstance(bloco, dict):
+        return []
+    evs = bloco.get("evidencias")
+    if not isinstance(evs, list):
+        return []
+    out: List[Tuple[str, str]] = []
+    for ev in evs:
+        if not isinstance(ev, dict):
+            continue
+        trecho = str(ev.get("trecho") or "").strip()
+        coment = str(ev.get("comentario") or "").strip()
+        if trecho or coment:
+            out.append((trecho, coment))
+    return out
+
+
+def _of14_bloco_competencia(
+    label: str, nota: Optional[int], feedback: str,
+    evidencias: List[Tuple[str, str]],
+) -> str:
+    """Renderiza 1 competência (~400 chars).
+
+    `nota=None` → "*C{N}*: dados incompletos" (não derruba o render
+    inteiro se schema veio quebrado em 1-2 competências).
+    """
+    if nota is None:
+        return f"*{label}*: _dados incompletos_"
+
+    linhas = [f"*{label} — {nota}* {_faixa_inep(nota)}"]
+    if feedback:
+        linhas.append(_truncate(feedback, _OF14_FB_CHARS))
+    for trecho, coment in evidencias[:_OF14_EVID_PER_COMP]:
+        trecho_curto = _truncate(trecho, _OF14_TRECHO_CHARS)
+        coment_curto = _truncate(coment, _OF14_COMENT_CHARS)
+        if trecho_curto and coment_curto:
+            linhas.append(f"- _\"{trecho_curto}\"_ → {coment_curto}")
+        elif trecho_curto:
+            linhas.append(f"- _\"{trecho_curto}\"_")
+        elif coment_curto:
+            linhas.append(f"- {coment_curto}")
+    return "\n".join(linhas)
+
+
 def _render_completo_integral(args: Dict[str, Any],
                                 transcript: Optional[str]) -> str:
-    c1 = (args.get("c1_audit") or {}).get("nota") or 0
-    c2 = (args.get("c2_audit") or {}).get("nota") or 0
-    c3 = (args.get("c3_audit") or {}).get("nota") or 0
-    c4 = (args.get("c4_audit") or {}).get("nota") or 0
-    c5 = (args.get("c5_audit") or {}).get("nota") or 0
-    total = c1 + c2 + c3 + c4 + c5
-    faixa = _faixa_total_1000(total)
-    feedback = (args.get("feedback_text") or "").strip()
+    """Render OF14 robusto pros 2 schemas (FT subset + v2 legado).
 
-    notas_inline = (
-        f"C1 {c1} · C2 {c2} · C3 {c3} · C4 {c4} · C5 {c5}"
+    Layout:
+      📊 *Redação completa* — {faixa} ({total}/1000)
+      _C1 {n1} · C2 {n2} · ... · C5 {n5}_
+
+      *C1 — {n1}* {faixa_qual}
+      {feedback resumido}
+      - "{trecho}" → {comentário}
+
+      *C2 — {n2}* ...
+      ...
+    """
+    logger.info(
+        "rendering OF14: keys=%s, has_evidencias_c1=%s",
+        sorted(args.keys()) if isinstance(args, dict) else type(args).__name__,
+        bool((args.get("c1_audit") or {}).get("evidencias"))
+            if isinstance(args, dict) else False,
     )
+
+    competencias = ("c1_audit", "c2_audit", "c3_audit", "c4_audit", "c5_audit")
+    notas: Dict[str, Optional[int]] = {
+        c: _of14_nota(args, c) for c in competencias
+    }
+    notas_int: List[int] = [n for n in notas.values() if n is not None]
+
+    # Total = soma das notas presentes (zera as ausentes pra não
+    # confundir aluno; faixa qualitativa cita só o número final).
+    total_explicito = args.get("nota_total")
+    if isinstance(total_explicito, (int, float)):
+        total = int(total_explicito)
+    else:
+        total = sum(notas_int)
+    faixa = _faixa_total_1000(total)
+
+    notas_inline_partes: List[str] = []
+    for idx, c in enumerate(competencias, 1):
+        n = notas[c]
+        notas_inline_partes.append(
+            f"C{idx} {n}" if n is not None else f"C{idx} —"
+        )
+    notas_inline = " · ".join(notas_inline_partes)
+
     parts: List[str] = []
     if transcript:
         parts.append(_bloco_transcricao(transcript))
     parts.append(f"📊 *Redação completa* — {faixa} ({total}/1000)")
     parts.append(f"_{notas_inline}_")
-    if feedback:
+
+    # Por-competência: mostra se temos pelo menos `nota` ou `feedback`
+    blocos: List[str] = []
+    for idx, c in enumerate(competencias, 1):
+        nota = notas[c]
+        feedback = _of14_feedback(args, c)
+        evidencias = _of14_evidencias(args, c)
+        if nota is None and not feedback and not evidencias:
+            # cN_audit ausente totalmente — pula em vez de poluir
+            continue
+        blocos.append(
+            _of14_bloco_competencia(
+                f"C{idx}", nota, feedback, evidencias,
+            )
+        )
+
+    # Fallback v2: se NENHUM cN_audit.feedback_text veio, usa
+    # `feedback_text` solto top-level (schema v2 legado de Sonnet).
+    sem_fb_por_comp = not any(
+        _of14_feedback(args, c) for c in competencias
+    )
+    fb_top = (args.get("feedback_text") or "").strip() if isinstance(args, dict) else ""
+    if sem_fb_por_comp and fb_top:
+        # Coloca após o cabeçalho, antes dos blocos por competência
         parts.append("")
-        budget = _MAX_CHARS - sum(len(p) + 1 for p in parts) - 4
-        if budget > 80:
-            parts.append(_truncate(feedback, budget))
-    return "\n".join(parts)
+        parts.append(_truncate(fb_top, 400))
+
+    # Junta blocos respeitando budget. Se estourar, trunca o último.
+    if blocos:
+        parts.append("")  # linha em branco antes
+        consumido = sum(len(p) + 1 for p in parts)
+        for bloco in blocos:
+            tamanho_provavel = consumido + len(bloco) + 2
+            if tamanho_provavel > _OF14_MAX_CHARS:
+                # Não cabe — tenta versão minimalista (só nota)
+                # ou pula. Pega primeira linha do bloco que é o header.
+                primeiro_linha = bloco.split("\n", 1)[0]
+                if consumido + len(primeiro_linha) + 2 <= _OF14_MAX_CHARS:
+                    parts.append(primeiro_linha)
+                    consumido += len(primeiro_linha) + 2
+                continue
+            parts.append(bloco)
+            parts.append("")  # separador entre competências
+            consumido = tamanho_provavel + 1
+
+    return "\n".join(parts).rstrip()
 
 
 def render_aluno_whatsapp(
@@ -350,29 +549,51 @@ def render_aluno_whatsapp(
     if not isinstance(args, dict):
         return "Algo deu errado na avaliação. Tenta mandar a foto de novo."
 
-    mode = args.get("modo")
-    if mode == "foco_c2":
-        # M9.2 (2026-04-29) — RJ2·OF04·MF e RJ2·OF06·MF.
-        # Reusa _render_foco genérico: nota_c2_enem (0-200) + rubrica
-        # de 3 critérios (compreensao_tema, tipo_textual, repertorio).
-        out = _render_foco(args, "c2", texto_transcrito)
-    elif mode == "foco_c3":
-        out = _render_foco(args, "c3", texto_transcrito)
-    elif mode == "foco_c4":
-        out = _render_foco(args, "c4", texto_transcrito)
-    elif mode == "foco_c5":
-        out = _render_foco(args, "c5", texto_transcrito)
-    elif mode == "completo_parcial":
-        out = _render_completo_parcial(args, texto_transcrito)
-    elif mode == "jogo_redacao":
-        # Fase 2 passo 5 — reescrita individual do jogo de redação.
-        # Não passa transcrição (reescrita é texto digitado).
-        out = _render_jogo_redacao(args, None)
-    elif "essay_analysis" in args:
-        out = _render_completo_integral(args, texto_transcrito)
-    else:
-        out = "Avaliação concluída. (Não consegui formatar o resumo.)"
+    try:
+        mode = args.get("modo")
+        if mode == "foco_c2":
+            # M9.2 (2026-04-29) — RJ2·OF04·MF e RJ2·OF06·MF.
+            # Reusa _render_foco genérico: nota_c2_enem (0-200) + rubrica
+            # de 3 critérios (compreensao_tema, tipo_textual, repertorio).
+            out = _render_foco(args, "c2", texto_transcrito)
+        elif mode == "foco_c3":
+            out = _render_foco(args, "c3", texto_transcrito)
+        elif mode == "foco_c4":
+            out = _render_foco(args, "c4", texto_transcrito)
+        elif mode == "foco_c5":
+            out = _render_foco(args, "c5", texto_transcrito)
+        elif mode == "completo_parcial":
+            out = _render_completo_parcial(args, texto_transcrito)
+        elif mode == "jogo_redacao":
+            # Fase 2 passo 5 — reescrita individual do jogo de redação.
+            # Não passa transcrição (reescrita é texto digitado).
+            out = _render_jogo_redacao(args, None)
+        elif _is_completo_integral(args):
+            # Detecta OF14 sem depender de `modo` (FT não preenche)
+            # nem de `essay_analysis` (FT não retorna). Cobre
+            # ambos schemas: FT subset + v2 legado.
+            out = _render_completo_integral(args, texto_transcrito)
+        else:
+            logger.warning(
+                "render fallback: modo desconhecido. mode=%r, keys=%s",
+                mode,
+                sorted(args.keys()) if isinstance(args, dict) else "—",
+            )
+            out = "Avaliação concluída. (Não consegui formatar o resumo.)"
+    except Exception:  # noqa: BLE001
+        # Defensa em profundidade: KeyError/AttributeError/TypeError em
+        # qualquer renderer não pode resultar em 500 silencioso. Loga
+        # com stack pro Railway, retorna fallback amigável pro aluno.
+        logger.exception(
+            "render_aluno_whatsapp failed. mode=%r, keys=%s",
+            args.get("modo") if isinstance(args, dict) else "—",
+            sorted(args.keys()) if isinstance(args, dict) else "—",
+        )
+        return "Avaliação concluída. (Não consegui formatar o resumo.)"
 
-    if len(out) > _MAX_CHARS:
-        out = _truncate(out, _MAX_CHARS)
+    # OF14 tem cap próprio (mensagem mais longa por design); demais
+    # modos seguem _MAX_CHARS=1200.
+    cap = _OF14_MAX_CHARS if _is_completo_integral(args) else _MAX_CHARS
+    if len(out) > cap:
+        out = _truncate(out, cap)
     return out
