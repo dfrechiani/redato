@@ -20,6 +20,7 @@ turma E recusa foto se não há atividade ativa pra (turma, missão).
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
 import time
@@ -29,6 +30,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from redato_backend.whatsapp import persistence as P
+
+
+# Logger pros 3 try/except que protegem o pipeline de pegar 500 (OCR,
+# grading OF14, grading foco/parcial). Antes do fix(of14) de 01/05,
+# essas exceções eram persistidas no banco mas NÃO logadas — em prod o
+# aluno via "Algo deu errado na correção" e ninguém sabia o motivo. Os
+# raises de _claude_grade_essay/grade_mission sobem até aqui e a stack
+# completa precisa aparecer nos logs Railway.
+logger = logging.getLogger(__name__)
 from redato_backend.whatsapp.ocr import (
     transcribe_with_quality_check,
     quality_issues_to_message,
@@ -1039,7 +1049,11 @@ def _process_photo(
     try:
         ocr = transcribe_with_quality_check(image_path)
     except Exception as exc:
-        # Persiste falha técnica
+        # Persiste falha técnica + LOGA pro Railway capturar stack
+        logger.exception(
+            "OCR failed for %s on %s (foto=%s)",
+            phone, missao_canon, image_path,
+        )
         P.save_interaction(
             aluno_phone=phone, turma_id=aluno.get("turma_id"),
             missao_id=missao_canon.replace("·", "_"),
@@ -1086,6 +1100,14 @@ def _process_photo(
         try:
             tool_args = _claude_grade_essay(data)
         except Exception as exc:
+            # Stack trace COMPLETO — antes só print() em dev_offline
+            # silenciava em prod async. Agora `_claude_grade_essay` levanta
+            # tanto se FT path falhar no parser quanto se Claude path
+            # falhar (ex.: ANTHROPIC_API_KEY missing, rate limit, etc.).
+            logger.exception(
+                "OF14 grading failed for %s on %s (request_id=%s)",
+                phone, missao_canon, data["request_id"],
+            )
             P.save_interaction(
                 aluno_phone=phone, turma_id=aluno.get("turma_id"),
                 missao_id=missao_canon.replace("·", "_"),
@@ -1111,6 +1133,10 @@ def _process_photo(
         try:
             tool_args = grade_mission(data)
         except Exception as exc:
+            logger.exception(
+                "Mission grading failed for %s on %s (request_id=%s)",
+                phone, missao_canon, data["request_id"],
+            )
             P.save_interaction(
                 aluno_phone=phone, turma_id=aluno.get("turma_id"),
                 missao_id=missao_canon.replace("·", "_"),
