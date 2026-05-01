@@ -117,6 +117,28 @@ def test_get_turma_ativa_aluno_inexistente_retorna_none():
     assert P.get_turma_ativa("+5500000000000") is None
 
 
+def test_set_turma_ativa_aceita_uuid(aluno_em_ready):
+    """Regressão do incidente 01/05 16h em prod (commit 789ed6e):
+
+        sqlite3.ProgrammingError: Error binding parameter 1:
+            type 'UUID' is not supported
+
+    `chosen.turma_id` em `_handle_turma_choice` vem do Postgres como
+    `uuid.UUID` (campo da `portal_link.AlunoVinculo`). SQLite Python
+    driver não tem adapter pra UUID. Fix: `set_turma_ativa` converte
+    via `str()` antes do bind. Caller não precisa converter.
+
+    Test: passa UUID cru, lê de volta como string canônica
+    (`str(uuid.UUID)`).
+    """
+    from uuid import UUID
+    from redato_backend.whatsapp import persistence as P
+
+    uuid_obj = UUID("550e8400-e29b-41d4-a716-446655440000")
+    P.set_turma_ativa(PHONE, uuid_obj)
+    assert P.get_turma_ativa(PHONE) == "550e8400-e29b-41d4-a716-446655440000"
+
+
 # ──────────────────────────────────────────────────────────────────────
 # _handle_trocar_turma
 # ──────────────────────────────────────────────────────────────────────

@@ -181,19 +181,27 @@ def upsert_aluno(
 TURMA_ATIVA_TTL_HOURS = 2
 
 
-def set_turma_ativa(phone: str, turma_id: str) -> None:
+def set_turma_ativa(phone: str, turma_id: Any) -> None:
     """Persiste a turma escolhida pelo aluno + timestamp da escolha.
 
     Usado depois que `_handle_turma_choice` (bot.py) recebe o número
     válido da lista de vínculos. Aceita múltiplas escolhas — sobrescreve
     timestamp pra renovar TTL.
+
+    Aceita ``turma_id`` como ``str`` ou ``uuid.UUID``: o vínculo vem
+    do Postgres (portal_link.AlunoVinculo) onde o campo é UUID. SQLite3
+    Python driver não converte UUID → str automaticamente
+    ("type 'UUID' is not supported"), então convertemos via ``str()``
+    antes do bind. Caller pode passar o objeto cru sem precisar saber
+    o tipo do storage.
     """
     now = _now()
+    turma_id_str = str(turma_id) if turma_id is not None else None
     with _conn() as c:
         c.execute(
             "UPDATE alunos SET turma_ativa_id = ?, turma_ativa_em = ?, "
             "updated_at = ? WHERE phone = ?",
-            (turma_id, now, now, phone),
+            (turma_id_str, now, now, phone),
         )
 
 
