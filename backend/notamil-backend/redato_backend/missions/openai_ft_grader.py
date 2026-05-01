@@ -400,6 +400,24 @@ def grade_of14_with_ft(
             ],
         }
 
+    # Bug do portal (01/05): redato_frontend lê tool_args["nota_total"]
+    # direto sem fallback de soma — quando FT omitia o campo (frequente
+    # — não era exigido pelo prompt de treino), portal mostrava
+    # "—/1000". Calcula soma canônica das 5 cN_audit.nota e sobrescreve
+    # qualquer valor que o FT tenha emitido. Soma é fonte da verdade
+    # (FT pode dar inconsistência tipo c1=160 c2=160 ... mas
+    # nota_total=500 — modelo erra aritmética). Discrepâncias logam
+    # em DEBUG pra eventual análise de qualidade do FT, sem ruído INFO.
+    soma = sum(out[c]["nota"] for c in COMPETENCIAS)
+    nota_total_ft = audit.get("nota_total") if isinstance(audit, dict) else None
+    if (isinstance(nota_total_ft, (int, float))
+            and int(nota_total_ft) != soma):
+        logger.debug(
+            "FT nota_total inconsistente: ft=%s, soma=%d (sobrescrevendo com soma)",
+            nota_total_ft, soma,
+        )
+    out["nota_total"] = soma
+
     return out
 
 

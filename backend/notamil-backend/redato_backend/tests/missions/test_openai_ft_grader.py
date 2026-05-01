@@ -114,8 +114,8 @@ SAMPLE_AUDIT_OK = json.dumps({
 
 def test_grade_of14_caso_feliz_retorna_5_audits():
     """Resposta com 5 cN_audit completos → adapter retorna dict
-    estruturado com 5 chaves cN_audit, cada uma com nota int + feedback +
-    evidencias (lista)."""
+    estruturado com 5 chaves cN_audit + nota_total canônico
+    (soma das 5 notas)."""
     client = _mock_client_returning(SAMPLE_AUDIT_OK)
     out = grade_of14_with_ft(
         content="Texto da redação aqui.",
@@ -123,8 +123,11 @@ def test_grade_of14_caso_feliz_retorna_5_audits():
         client_factory=_client_factory(client),
     )
 
-    assert set(out.keys()) == {"c1_audit", "c2_audit", "c3_audit",
-                                "c4_audit", "c5_audit"}
+    # Schema: 5 cN_audit + nota_total (canônico, soma das 5)
+    assert set(out.keys()) == {
+        "c1_audit", "c2_audit", "c3_audit", "c4_audit", "c5_audit",
+        "nota_total",
+    }
     assert out["c1_audit"]["nota"] == 160
     assert out["c2_audit"]["nota"] == 200
     assert out["c3_audit"]["nota"] == 160
@@ -135,9 +138,8 @@ def test_grade_of14_caso_feliz_retorna_5_audits():
     assert len(out["c1_audit"]["evidencias"]) == 1
     assert "concordância" in out["c1_audit"]["evidencias"][0]["comentario"]
 
-    # Soma das notas: 160+200+160+120+160 = 800
-    soma = sum(out[c]["nota"] for c in out)
-    assert soma == 800
+    # nota_total = soma: 160+200+160+120+160 = 800
+    assert out["nota_total"] == 800
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -155,7 +157,7 @@ def test_grade_of14_tolera_markdown_fence():
         client_factory=_client_factory(client),
     )
     assert out["c3_audit"]["nota"] == 160
-    assert sum(out[c]["nota"] for c in out) == 800
+    assert out["nota_total"] == 800
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -181,7 +183,7 @@ def test_grade_of14_partial_sem_evidencias_aceito():
     # c1 não tinha evidencias no input → adapter normaliza pra []
     assert out["c1_audit"]["evidencias"] == []
     assert out["c1_audit"]["nota"] == 120
-    assert sum(out[c]["nota"] for c in out) == 640
+    assert out["nota_total"] == 640
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -282,3 +284,77 @@ def test_parse_audit_response_resposta_vazia():
     assert status == "failed"
     assert missing == ["resposta_vazia"]
     assert audit is None
+
+
+# ──────────────────────────────────────────────────────────────────────
+# nota_total canônico (Bug do portal — 01/05/2026)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Sintoma: portal mostrava "Nota total: __/1000" pra correção OF14
+# (commit 5f6214b em diante). Causa: FT às vezes omite `nota_total` no
+# JSON, e redato_frontend lia tool_args["nota_total"] direto sem
+# fallback de soma. Fix: adapter SEMPRE popula nota_total = soma
+# canônica das 5 cN_audit.nota — fonte da verdade. Sobrescreve qualquer
+# valor que o FT tenha emitido (modelo pode dar inconsistência tipo
+# c1=160 c2=160 ... mas nota_total=500).
+#
+# Correções persistidas ANTES deste fix continuam com nota_total=null
+# no banco — não vale rodar migration retroativa pra corrigir poucas
+# entries de teste. Frontend já tolera (mostra "—") pra elas.
+
+def test_grade_of14_calcula_nota_total_quando_FT_omite():
+    """FT retorna sem `nota_total` (caso comum, mais frequente que
+    inconsistência). Adapter popula com soma das 5 notas."""
+    payload = {
+        "c1_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c2_audit": {"nota": 160, "feedback_text": "x", "evidencias": []},
+        "c3_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c4_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c5_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        # nota_total ausente — exatamente o caso que quebrava o portal
+    }
+    client = _mock_client_returning(json.dumps(payload))
+    out = grade_of14_with_ft(
+        content="x", theme="y",
+        client_factory=_client_factory(client),
+    )
+    assert out["nota_total"] == 640
+
+
+def test_grade_of14_recalcula_nota_total_quando_inconsistente():
+    """FT retorna nota_total=500 mas soma real é 640. Adapter
+    sobrescreve com 640 (soma é fonte canônica — FT erra aritmética)."""
+    payload = {
+        "c1_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c2_audit": {"nota": 160, "feedback_text": "x", "evidencias": []},
+        "c3_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c4_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c5_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "nota_total": 500,  # inconsistente: deveria ser 640
+    }
+    client = _mock_client_returning(json.dumps(payload))
+    out = grade_of14_with_ft(
+        content="x", theme="y",
+        client_factory=_client_factory(client),
+    )
+    # Adapter sobrescreve com soma canônica
+    assert out["nota_total"] == 640
+
+
+def test_grade_of14_preserva_nota_total_quando_consistente():
+    """FT retorna nota_total=640 e soma=640. Resultado idêntico:
+    nota_total fica 640. Idempotência."""
+    payload = {
+        "c1_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c2_audit": {"nota": 160, "feedback_text": "x", "evidencias": []},
+        "c3_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c4_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "c5_audit": {"nota": 120, "feedback_text": "x", "evidencias": []},
+        "nota_total": 640,  # consistente
+    }
+    client = _mock_client_returning(json.dumps(payload))
+    out = grade_of14_with_ft(
+        content="x", theme="y",
+        client_factory=_client_factory(client),
+    )
+    assert out["nota_total"] == 640
