@@ -91,14 +91,27 @@ def init_db() -> None:
         # 1) Cria tabelas + índices base
         c.executescript(_SCHEMA_TABLES)
         # 2) Migration: adiciona colunas em DBs antigos
-        cols = {r["name"] for r in c.execute(
+        cols_interactions = {r["name"] for r in c.execute(
             "PRAGMA table_info(interactions)"
         ).fetchall()}
-        if "foto_hash" not in cols:
+        if "foto_hash" not in cols_interactions:
             c.execute("ALTER TABLE interactions ADD COLUMN foto_hash TEXT")
-        if "invalidated_at" not in cols:
+        if "invalidated_at" not in cols_interactions:
             # NULL = válida; ISO timestamp = invalidada (aluno disse "ocr errado")
             c.execute("ALTER TABLE interactions ADD COLUMN invalidated_at TEXT")
+
+        # 2026-05-01 — Aluno em múltiplas turmas: persiste a turma
+        # escolhida por sessão (TTL = TURMA_ATIVA_TTL_HOURS). Sem isso,
+        # bot pergunta "de qual turma?" a cada foto. Vivem em `alunos`
+        # mesmo (turma_id legacy é singular e ortogonal).
+        cols_alunos = {r["name"] for r in c.execute(
+            "PRAGMA table_info(alunos)"
+        ).fetchall()}
+        if "turma_ativa_id" not in cols_alunos:
+            c.execute("ALTER TABLE alunos ADD COLUMN turma_ativa_id TEXT")
+        if "turma_ativa_em" not in cols_alunos:
+            c.execute("ALTER TABLE alunos ADD COLUMN turma_ativa_em TEXT")
+
         # 3) Cria índice de hash (depois de garantir que a coluna existe)
         c.execute(
             "CREATE INDEX IF NOT EXISTS idx_interactions_hash "
@@ -153,6 +166,76 @@ def upsert_aluno(
                 (nome, turma_id, escola, estado, now, phone),
             )
     return get_aluno(phone)  # type: ignore[return-value]
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Turma ativa por sessão (aluno em múltiplas turmas)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Quando aluno está cadastrado em 2+ vínculos ativos (`alunos_turma`
+# em Postgres) e manda uma foto, o bot pergunta "de qual turma é?".
+# A resposta é persistida aqui pra valer pelas próximas
+# `TURMA_ATIVA_TTL_HOURS` horas — sem isso, perguntaria a cada foto.
+# Aluno pode reset via comando "trocar turma" (ver bot.py).
+
+TURMA_ATIVA_TTL_HOURS = 2
+
+
+def set_turma_ativa(phone: str, turma_id: str) -> None:
+    """Persiste a turma escolhida pelo aluno + timestamp da escolha.
+
+    Usado depois que `_handle_turma_choice` (bot.py) recebe o número
+    válido da lista de vínculos. Aceita múltiplas escolhas — sobrescreve
+    timestamp pra renovar TTL.
+    """
+    now = _now()
+    with _conn() as c:
+        c.execute(
+            "UPDATE alunos SET turma_ativa_id = ?, turma_ativa_em = ?, "
+            "updated_at = ? WHERE phone = ?",
+            (turma_id, now, now, phone),
+        )
+
+
+def get_turma_ativa(
+    phone: str, *, ttl_hours: float = TURMA_ATIVA_TTL_HOURS,
+) -> Optional[str]:
+    """Retorna `turma_id` da última escolha SE ainda dentro do TTL,
+    senão None. None também se aluno nunca escolheu.
+
+    Caller (bot.py `_process_photo`) deve cruzar o `turma_id` retornado
+    com a lista de vínculos atuais — vínculo pode ter sido desativado
+    no portal entre a escolha e agora.
+    """
+    aluno = get_aluno(phone)
+    if not aluno:
+        return None
+    turma_id = aluno.get("turma_ativa_id")
+    em_str = aluno.get("turma_ativa_em")
+    if not turma_id or not em_str:
+        return None
+    try:
+        em = datetime.fromisoformat(em_str)
+    except (ValueError, TypeError):
+        return None
+    if em.tzinfo is None:
+        em = em.replace(tzinfo=timezone.utc)
+    age = datetime.now(timezone.utc) - em
+    if age.total_seconds() > ttl_hours * 3600:
+        return None
+    return turma_id
+
+
+def clear_turma_ativa(phone: str) -> None:
+    """Limpa escolha de turma. Usado pelo comando "trocar turma".
+    Próxima foto vai voltar a perguntar (se aluno tem 2+ vínculos)."""
+    now = _now()
+    with _conn() as c:
+        c.execute(
+            "UPDATE alunos SET turma_ativa_id = NULL, "
+            "turma_ativa_em = NULL, updated_at = ? WHERE phone = ?",
+            (now, phone),
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────

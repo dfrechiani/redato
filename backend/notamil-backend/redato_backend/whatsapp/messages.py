@@ -88,6 +88,27 @@ MSG_TURMA_ESCOLHA_INVALIDA = (
     "Não entendi. Responde com o número da turma (1, 2, ...)."
 )
 
+MSG_TURMA_ATIVA_CONFIRMADA = (
+    "Turma escolhida: *{turma_codigo}* — *{escola_nome}*. "
+    "Vou usar ela pelas próximas {ttl_horas}h. "
+    "Pra mudar, manda *trocar turma*."
+)
+
+MSG_FOTO_DURANTE_ESCOLHA = (
+    "Vi sua foto, mas antes preciso saber: de qual turma é? "
+    "Responde com o número:\n\n{lista_turmas}"
+)
+
+MSG_TROCAR_TURMA_INICIO = (
+    "Beleza, vamos trocar de turma. De qual turma você quer atender "
+    "agora?\n\n{lista_turmas}\n\nResponde com o número."
+)
+
+MSG_TROCAR_TURMA_UNICA = (
+    "Você só tem 1 turma ativa: *{turma_codigo}* — *{escola_nome}*. "
+    "Não tem como trocar."
+)
+
 
 # ──────────────────────────────────────────────────────────────────────
 # Reenvio de foto duplicada (continuidade do fluxo de M3)

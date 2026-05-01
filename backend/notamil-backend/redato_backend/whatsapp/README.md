@@ -189,12 +189,59 @@ Cenários:
 
 ## Aluno em múltiplas turmas
 
+Aluno com 2+ vínculos ativos no portal (ex.: estuda em duas séries
+no mesmo telefone, ou ano letivo de transição) precisa desambiguar
+qual turma a redação refere antes da correção. O caso real que
+motivou (30/04/2026): telefone em turmas 1A (1S) + 2A (2S), aluno
+manda foto+OF14, bot tinha que rotear pra 1A onde OF14 existe.
+
+### Fluxo
+
 Quando `list_alunos_ativos_por_telefone` retorna ≥2 vínculos:
-1. Bot entra em `AWAITING_TURMA_CHOICE` e responde `MSG_ESCOLHE_TURMA`
-   com a lista numerada.
-2. Aluno responde com o número (1, 2, ...).
-3. Bot resolve pra `aluno_turma_id` específico e segue o fluxo de
-   validação de atividade normalmente.
+
+1. **Primeira foto da sessão** (sem turma persistida): bot entra em
+   `AWAITING_TURMA_CHOICE|<missao>|<foto_path>` e responde
+   `MSG_ESCOLHE_TURMA` com lista numerada das turmas.
+2. **Aluno responde número** (1, 2, ...): bot persiste a escolha em
+   `alunos.turma_ativa_id` (TTL de **2h** — `P.TURMA_ATIVA_TTL_HOURS`)
+   e reprocessa a foto via `_process_photo_after_validations`.
+3. **Próximas fotos dentro do TTL**: bot atalha — lê `turma_ativa_id`,
+   confere se ainda bate com algum vínculo ativo do portal, e segue
+   sem perguntar. Se vínculo foi desativado entre escolha e agora,
+   limpa e abre nova pergunta (fail-safe).
+
+### Comando "trocar turma"
+
+Em qualquer estado pós-cadastro, aluno pode mandar `trocar turma`
+(ou `mudar turma`, `trocar de turma`, `outra turma`) pra:
+- Limpar a escolha persistida (`P.clear_turma_ativa`)
+- Reabrir a desambiguação (se 2+ vínculos)
+- Receber `MSG_TROCAR_TURMA_UNICA` se só tem 1 vínculo (não dá pra trocar)
+
+### Guard-rail: foto durante AWAITING_TURMA_CHOICE
+
+Se aluno está em `AWAITING_TURMA_CHOICE` e manda **foto** em vez de
+responder o número, o bot **não processa** a foto silenciosamente
+(podia rotear pra turma errada). Em vez disso reenvia
+`MSG_FOTO_DURANTE_ESCOLHA` mantendo o estado — aluno precisa responder
+com o número primeiro.
+
+### Persistência (`alunos.turma_ativa_id` + `turma_ativa_em`)
+
+Colunas adicionadas via migration ALTER em `init_db()` (idempotente
+— `PRAGMA table_info` checa antes). Helpers em `persistence.py`:
+- `set_turma_ativa(phone, turma_id)`: persiste com timestamp now.
+- `get_turma_ativa(phone, ttl_hours=2)`: retorna turma_id se ainda
+  dentro do TTL, senão None.
+- `clear_turma_ativa(phone)`: zera. Usado pelo comando "trocar turma"
+  e pelo fail-safe quando vínculo persistido foi desativado.
+
+### Mensagens novas (`messages.py`)
+
+- `MSG_TURMA_ATIVA_CONFIRMADA` — confirma escolha + lembra TTL + dica do comando.
+- `MSG_FOTO_DURANTE_ESCOLHA` — guard-rail.
+- `MSG_TROCAR_TURMA_INICIO` — abertura da nova escolha.
+- `MSG_TROCAR_TURMA_UNICA` — aluno só tem 1 vínculo, não dá pra trocar.
 
 ## Migração de dados antigos (Fase A → M4)
 

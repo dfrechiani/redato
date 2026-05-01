@@ -235,6 +235,13 @@ _CANCEL_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Comando "trocar turma" — limpa escolha persistida e abre nova
+# desambiguação (se aluno tem 2+ vínculos). Aceita variações comuns.
+_TROCAR_TURMA_RE = re.compile(
+    r"^\s*(trocar|mudar|alterar|outra)\s+(de\s+)?turma\s*$",
+    re.IGNORECASE,
+)
+
 
 def _pad2(n: str) -> str:
     """Normaliza '4' → '04', '04' → '04', '10' → '10'."""
@@ -446,12 +453,25 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
     if msg.text and _is_ocr_errado(msg.text):
         return _handle_ocr_errado(msg, aluno)
 
+    # Comando especial "trocar turma" — em qualquer estado pós-cadastro,
+    # limpa escolha persistida e abre nova desambiguação (se aluno tem
+    # 2+ vínculos). Sem cadastro completo, o comando é ignorado pra não
+    # quebrar onboarding inicial.
+    if (text_stripped and _TROCAR_TURMA_RE.match(text_stripped)
+            and not estado.startswith(AWAITING_CODIGO_TURMA)
+            and not estado.startswith(AWAITING_NOME_ALUNO)):
+        return _handle_trocar_turma(msg, aluno)
+
     # Caso especial: aguardando decisão de duplicata (1=reusar, 2=reavaliar)
     if estado.startswith(AWAITING_DUPLICATE_CHOICE + "|"):
         return _handle_duplicate_choice(msg, aluno)
 
-    # Caso especial: aguardando escolha de turma (aluno em múltiplas)
-    if estado.startswith(AWAITING_TURMA_CHOICE + "|"):
+    # Caso especial: aguardando escolha de turma (aluno em múltiplas).
+    # Aceita ambas formas: com payload "AWAITING_TURMA_CHOICE|missao|foto"
+    # (vindo de _process_photo) ou sem payload "AWAITING_TURMA_CHOICE"
+    # (vindo de _handle_trocar_turma — sem foto pendente).
+    if (estado == AWAITING_TURMA_CHOICE
+            or estado.startswith(AWAITING_TURMA_CHOICE + "|")):
         return _handle_turma_choice(msg, aluno)
 
     # Fase 2 passo 4 — fluxo do jogo "Redação em Jogo".
@@ -602,44 +622,111 @@ def _handle_nome_aluno(
     ))]
 
 
+def _handle_trocar_turma(
+    msg: InboundMessage, aluno: Dict[str, Any],
+) -> List[OutboundMessage]:
+    """Comando "trocar turma" — limpa escolha persistida e abre nova
+    desambiguação. Se aluno só tem 1 vínculo ativo, responde que não há
+    como trocar.
+    """
+    from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import portal_link as PL
+
+    vinculos = PL.list_alunos_ativos_por_telefone(msg.phone)
+    if not vinculos:
+        return [OutboundMessage(MSG.MSG_ALUNO_NAO_CADASTRADO)]
+
+    # Limpa qualquer atalho persistido — caller vai escolher de novo.
+    P.clear_turma_ativa(msg.phone)
+
+    if len(vinculos) == 1:
+        unico = vinculos[0]
+        # Mantém estado anterior (READY); só informa que não dá pra trocar.
+        return [OutboundMessage(MSG.MSG_TROCAR_TURMA_UNICA.format(
+            turma_codigo=unico.turma_codigo,
+            escola_nome=unico.escola_nome,
+        ))]
+
+    # 2+ vínculos: abre nova escolha sem foto pendente. Estado fica
+    # AWAITING_TURMA_CHOICE (sem barra de payload — _handle_turma_choice
+    # tolera ausência de missao/foto e só confirma).
+    P.upsert_aluno(msg.phone, estado=AWAITING_TURMA_CHOICE)
+    lista = "\n".join(
+        f"{i+1}. {v.turma_codigo} — {v.escola_nome}"
+        for i, v in enumerate(vinculos)
+    )
+    return [OutboundMessage(
+        MSG.MSG_TROCAR_TURMA_INICIO.format(lista_turmas=lista)
+    )]
+
+
 def _handle_turma_choice(
     msg: InboundMessage, aluno: Dict[str, Any],
 ) -> List[OutboundMessage]:
     """Aluno em múltiplas turmas escolheu por número (1, 2, ...).
-    Estado: AWAITING_TURMA_CHOICE|<missao_canon>|<foto_path>"""
+    Estado: AWAITING_TURMA_CHOICE[|<missao_canon>|<foto_path>]
+
+    Persiste a escolha em `alunos.turma_ativa_id` (TTL via
+    `P.TURMA_ATIVA_TTL_HOURS`) — próximas fotos não vão repergumtar
+    enquanto válida.
+
+    Guard-rail: se aluno mandar foto sem responder o número, o bot
+    re-explica e mantém estado AWAITING_TURMA_CHOICE — não processa
+    a foto silenciosamente em turma errada.
+    """
     from redato_backend.whatsapp import messages as MSG
     from redato_backend.whatsapp import portal_link as PL
-    import uuid as _uuid
 
     estado = aluno["estado"]
     parts = estado.split("|", 2)
-    if len(parts) < 2:
-        P.upsert_aluno(msg.phone, estado=READY)
-        return [OutboundMessage(MSG.MSG_ERRO_GENERICO)]
-    missao_canon = parts[1]
+    # Estado pode ter ou não foto pendente (ex.: vindo de "trocar turma"
+    # sem foto). Aceita 1, 2 ou 3 partes.
+    missao_canon = parts[1] if len(parts) > 1 else None
     foto_path = parts[2] if len(parts) > 2 else None
+
+    vinculos = PL.list_alunos_ativos_por_telefone(msg.phone)
+    if not vinculos:
+        # Vínculos perdidos no portal entre setar AWAITING_TURMA_CHOICE
+        # e responder. Reset.
+        P.upsert_aluno(msg.phone, estado=READY)
+        return [OutboundMessage(MSG.MSG_ALUNO_NAO_CADASTRADO)]
+
+    # Guard-rail: aluno mandou FOTO em vez de responder número.
+    # Re-explica + mantém estado (não processa silenciosamente).
+    if msg.image_path is not None:
+        lista = "\n".join(
+            f"{i+1}. {v.turma_codigo} — {v.escola_nome}"
+            for i, v in enumerate(vinculos)
+        )
+        return [OutboundMessage(
+            MSG.MSG_FOTO_DURANTE_ESCOLHA.format(lista_turmas=lista)
+        )]
 
     text = (msg.text or "").strip()
     if not text.isdigit():
         return [OutboundMessage(MSG.MSG_TURMA_ESCOLHA_INVALIDA)]
     idx = int(text) - 1
 
-    vinculos = PL.list_alunos_ativos_por_telefone(msg.phone)
     if not (0 <= idx < len(vinculos)):
         return [OutboundMessage(MSG.MSG_TURMA_ESCOLHA_INVALIDA)]
 
     chosen = vinculos[idx]
+    # PERSISTE escolha pra valer pelas próximas TURMA_ATIVA_TTL_HOURS
+    # — sem isso, bot pergunta de novo a cada foto.
+    P.set_turma_ativa(msg.phone, chosen.turma_id)
     P.upsert_aluno(msg.phone, estado=READY)
     if foto_path and missao_canon:
         return _process_photo_after_validations(
             msg.phone, foto_path, missao_canon, aluno, chosen,
         )
-    # Sem foto pendente: só confirma escolha e volta pra READY.
-    return [OutboundMessage(
-        f"OK, atendendo pela turma *{chosen.turma_codigo}* "
-        f"da *{chosen.escola_nome}*. Manda a foto + código quando estiver "
-        f"pronto."
-    )]
+    # Sem foto pendente (ex.: veio de "trocar turma"): confirma escolha
+    # com TTL visível pro aluno. Mensagem nova MSG_TURMA_ATIVA_CONFIRMADA
+    # padroniza tom em vez do f-string ad-hoc anterior.
+    return [OutboundMessage(MSG.MSG_TURMA_ATIVA_CONFIRMADA.format(
+        turma_codigo=chosen.turma_codigo,
+        escola_nome=chosen.escola_nome,
+        ttl_horas=int(P.TURMA_ATIVA_TTL_HOURS),
+    ))]
 
 
 def _parse_turma(text: str) -> Tuple[Optional[str], Optional[str]]:
@@ -1004,13 +1091,32 @@ def _process_photo(
         if not vinculos:
             return [OutboundMessage(MSG.MSG_ALUNO_NAO_CADASTRADO)]
         if len(vinculos) > 1:
-            # Encoda missão + foto no estado pra retomar após escolha
-            P.upsert_aluno(
-                phone,
-                estado=f"{AWAITING_TURMA_CHOICE}|{missao_canon}|{image_path}",
-            )
-            return [OutboundMessage(_format_choice_msg(vinculos))]
-        aluno_vinculo = vinculos[0]
+            # 2026-05-01 — Tenta atalho via turma persistida (TTL 2h).
+            # Se aluno já escolheu recentemente E a turma persistida
+            # ainda bate com algum vínculo ativo, reusa silenciosamente.
+            # Senão, pergunta. Vínculo desativado no portal entre escolha
+            # e agora invalida o atalho (fail-safe).
+            turma_ativa_id = P.get_turma_ativa(phone)
+            if turma_ativa_id:
+                bater = next(
+                    (v for v in vinculos if str(v.turma_id) == str(turma_ativa_id)),
+                    None,
+                )
+                if bater is not None:
+                    aluno_vinculo = bater
+                else:
+                    # Turma persistida não está mais ativa — limpa.
+                    P.clear_turma_ativa(phone)
+
+            if aluno_vinculo is None:
+                # Encoda missão + foto no estado pra retomar após escolha
+                P.upsert_aluno(
+                    phone,
+                    estado=f"{AWAITING_TURMA_CHOICE}|{missao_canon}|{image_path}",
+                )
+                return [OutboundMessage(_format_choice_msg(vinculos))]
+        else:
+            aluno_vinculo = vinculos[0]
 
     # M4: valida atividade ativa
     atividade = PL.find_atividade_para_missao(
