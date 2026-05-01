@@ -2787,13 +2787,15 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     import os
 
-    from redato_backend.shared.constants import (
-        ESSAYS_DETAILED_TABLE,
-        ESSAYS_ERRORS_TABLE,
-        ESSAYS_GRADED_TABLE,
-    )
-    from redato_backend.shared.utils import generate_essay_hash
-
+    # Imports `shared.constants`/`shared.utils` movidos pra dentro dos
+    # helpers que efetivamente usam (`_persist_grading_to_bq`). Imports
+    # no topo de `_claude_grade_essay` puxavam `shared.utils` →
+    # `shared.bigquery` → `from google.cloud import bigquery`, que
+    # quebra em prod Railway (google-cloud-bigquery não está em
+    # requirements.txt — apply_patches() só intercepta com
+    # REDATO_DEV_OFFLINE=1, e prod tem REDATO_DEV_OFFLINE=0).
+    # Bug pré-existente que ninguém pegou porque OF14 nunca foi
+    # cadastrada em turma 1S ativa antes de 30/04/2026.
     try:
         import anthropic
     except ImportError as e:
@@ -2862,10 +2864,17 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
                     {"raw_audit": tool_args, "updated_at": datetime.now(timezone.utc)},
                     merge=True,
                 )
+            except (ImportError, ModuleNotFoundError) as exc:
+                # google-cloud-firestore não instalado em Railway prod.
+                # Esperado quando REDATO_DEV_OFFLINE=0; warning concise
+                # pra não inundar logs (cada OF14 passaria por aqui).
+                logger.warning(
+                    "Firestore stash skipped for %s — google-cloud "
+                    "unavailable (%s)", essay_id, exc,
+                )
             except Exception:  # noqa: BLE001
-                # logger.exception inclui stack trace automaticamente —
-                # 1º incidente em prod (01/05) mostrou que print(exc!r)
-                # silencia detalhes que stack trace traria.
+                # Erro inesperado — stack completo (1º incidente prod
+                # 01/05 mostrou que print(exc!r) silencia detalhes).
                 logger.exception(
                     "could not stash raw_audit for %s", essay_id,
                 )
@@ -2970,8 +2979,17 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
             {"raw_audit": tool_args, "updated_at": datetime.now(timezone.utc)},
             merge=True,
         )
-    except Exception as exc:  # noqa: BLE001
-        print(f"[dev_offline] could not stash raw_audit for {essay_id}: {exc!r}")
+    except (ImportError, ModuleNotFoundError) as exc:
+        # google-cloud-firestore não instalado em Railway prod.
+        # Esperado com REDATO_DEV_OFFLINE=0; warning concise.
+        logger.warning(
+            "Firestore stash skipped for %s — google-cloud unavailable "
+            "(%s)", essay_id, exc,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "could not stash raw_audit for %s", essay_id,
+        )
 
     return tool_args
 
@@ -2988,15 +3006,32 @@ def _persist_grading_to_bq(
 
     Defensive against Claude deviating from the schema — coerces any non-dict
     value to an empty dict rather than crashing the entire grading.
+
+    No-op silencioso em prod Railway sem google-cloud-bigquery instalado.
+    `apply_patches()` (REDATO_DEV_OFFLINE=1) registra fakes em
+    `sys.modules` que tornam o import abaixo seguro; sem ele, o import
+    explode com ModuleNotFoundError. Em vez de derrubar a correção
+    inteira, persistir vira no-op + warning. O grading retorna o
+    `tool_args` direto pro caller (FT ou Claude), que entrega ao
+    aluno via render_aluno_whatsapp.
     """
-    from redato_backend.shared.constants import (
-        CORRECTION_REVIEW_TABLE,
-        ESSAYS_DETAILED_TABLE,
-        ESSAYS_ERRORS_TABLE,
-        ESSAYS_GRADED_TABLE,
-    )
-    from redato_backend.shared.utils import generate_essay_hash
-    from redato_backend.routing.correction_router import route_correction
+    try:
+        from redato_backend.shared.constants import (
+            CORRECTION_REVIEW_TABLE,
+            ESSAYS_DETAILED_TABLE,
+            ESSAYS_ERRORS_TABLE,
+            ESSAYS_GRADED_TABLE,
+        )
+        from redato_backend.shared.utils import generate_essay_hash
+        from redato_backend.routing.correction_router import route_correction
+    except (ImportError, ModuleNotFoundError) as exc:
+        logger.warning(
+            "BQ persist skipped for %s — google-cloud deps unavailable "
+            "(%s). Esperado em Railway prod com REDATO_DEV_OFFLINE=0; "
+            "a correção segue sem persistir em BQ-stub.",
+            essay_id, exc,
+        )
+        return
 
     now = datetime.now(timezone.utc).isoformat()
 
