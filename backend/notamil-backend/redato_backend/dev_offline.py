@@ -25,6 +25,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import logging
 import os
 import pickle
 import re
@@ -36,6 +37,13 @@ from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, Dict, Iterable, List, Optional
 from uuid import uuid4
+
+
+# Logger pro caminho FT do OF14 (commit fix(of14)). Os print()s
+# legados de outras partes do módulo NÃO foram migrados — Railway
+# captura print() em dynos novos, mas a migração pra logger acontece
+# por demanda (quando algum print silencia em prod).
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -2834,9 +2842,8 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
                 grade_of14_with_ft,
             )
             tool_args = grade_of14_with_ft(content=content, theme=theme)
-            print(
-                f"[dev_offline] OF14 graded via FT BTBOS5VF "
-                f"(request_id={essay_id})"
+            logger.info(
+                "OF14 graded via FT BTBOS5VF (request_id=%s)", essay_id,
             )
             # _persist_grading_to_bq é defensive contra schema parcial
             # (_dict_or_empty em campos faltantes — priorization,
@@ -2855,21 +2862,23 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
                     {"raw_audit": tool_args, "updated_at": datetime.now(timezone.utc)},
                     merge=True,
                 )
-            except Exception as exc_ft:  # noqa: BLE001
-                print(
-                    f"[dev_offline] could not stash raw_audit for {essay_id}: "
-                    f"{exc_ft!r}"
+            except Exception:  # noqa: BLE001
+                # logger.exception inclui stack trace automaticamente —
+                # 1º incidente em prod (01/05) mostrou que print(exc!r)
+                # silencia detalhes que stack trace traria.
+                logger.exception(
+                    "could not stash raw_audit for %s", essay_id,
                 )
             return tool_args
-        except Exception as exc_ft:  # noqa: BLE001
-            print(
-                f"[dev_offline] FT path failed for {essay_id}: "
-                f"{type(exc_ft).__name__}: {exc_ft!r}"
-            )
-            print(
-                "[dev_offline] falling back to Claude Sonnet 4.6 v2 "
-                "(graceful degradation; set REDATO_OF14_BACKEND=claude "
-                "to silence this fallback)"
+        except Exception:  # noqa: BLE001
+            # Mantém literal "falling back to Claude" pro
+            # test_dev_offline_tem_roteamento_of14_ft_com_rollback
+            # detectar refactors que removem o fallback.
+            logger.exception(
+                "OF14 FT path failed for %s — falling back to Claude "
+                "Sonnet 4.6 v2 (graceful degradation; set "
+                "REDATO_OF14_BACKEND=claude to silence this fallback)",
+                essay_id,
             )
             # Cai pro Claude path abaixo.
 

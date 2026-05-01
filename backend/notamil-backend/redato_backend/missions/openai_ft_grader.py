@@ -41,10 +41,17 @@ como fonte única.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
+
+
+# Logger pro adapter. Em prod (Railway), `print()` em pipeline async
+# tem chance de ser silenciado/buferizado — logger.exception garante
+# stack trace + flush nos handlers configurados.
+logger = logging.getLogger(__name__)
 
 
 # Modelo FT vencedor do A/B 30/abr. Hardcoded — trocar exige re-treino + A/B.
@@ -301,7 +308,18 @@ def grade_of14_with_ft(
     user_msg = USER_MSG_TEMPLATE.format(tema=theme, texto=content)
     model = os.getenv("REDATO_FT_MODEL", DEFAULT_FT_MODEL)
 
-    client = client_factory()
+    try:
+        client = client_factory()
+    except OpenAIFTGradingError:
+        # Já é o tipo certo (key missing, SDK ausente). Loga + repropaga
+        # — caller (dev_offline) faz fallback graceful.
+        logger.exception("FT client_factory failed (likely OPENAI_API_KEY missing)")
+        raise
+
+    logger.info(
+        "calling FT %s, content_len=%d, theme_len=%d, timeout=%.0fs",
+        model, len(content), len(theme), timeout_seconds,
+    )
 
     started = time.time()
     try:
@@ -316,7 +334,10 @@ def grade_of14_with_ft(
             timeout=timeout_seconds,
         )
     except Exception as exc:  # noqa: BLE001
-        # Timeout, rate limit, modelo inexistente, etc.
+        # Timeout, rate limit, modelo inexistente, autenticação inválida,
+        # rede caindo. Stack trace via logger.exception garante visibilidade
+        # em Railway (print() silencia em pipelines async).
+        logger.exception("FT call failed: %s", exc)
         raise OpenAIFTGradingError(
             f"chamada FT falhou: {type(exc).__name__}: {exc}"
         ) from exc
@@ -324,12 +345,21 @@ def grade_of14_with_ft(
     elapsed_ms = int((time.time() - started) * 1000)
 
     if not getattr(response, "choices", None):
+        logger.error(
+            "FT returned no choices in %dms (resposta vazia da OpenAI)",
+            elapsed_ms,
+        )
         raise OpenAIFTGradingError(
             "FT retornou sem choices (resposta vazia da OpenAI)"
         )
 
     raw_text = response.choices[0].message.content or ""
     audit, status, missing = parse_audit_response(raw_text)
+
+    logger.info(
+        "FT response in %dms, parse_status=%s, raw_len=%d",
+        elapsed_ms, status, len(raw_text),
+    )
 
     # Aceita ok ou partial (com missing leve, ex.: evidencias ausente em
     # 1 competência). Rejeita failed (JSON não parseou ou faltam todas as
@@ -339,6 +369,14 @@ def grade_of14_with_ft(
         for m in missing
     )
     if status == "failed" or nota_invalida_critica:
+        # logger.error em vez de exception — não há exceção em
+        # parse_audit_response, só status semântico. Truncate raw pra
+        # não inundar log. Stack trace virá do raise abaixo se caller
+        # logar com logger.exception.
+        logger.error(
+            "FT parse rejected (status=%s, missing=%s, raw[:200]=%r)",
+            status, missing[:5], raw_text[:200],
+        )
         raise OpenAIFTGradingError(
             f"parser não casou audit válido. status={status}, "
             f"missing={missing[:5]}",
@@ -362,10 +400,6 @@ def grade_of14_with_ft(
             ],
         }
 
-    print(
-        f"[openai_ft_grader] OF14 graded by FT in {elapsed_ms}ms "
-        f"(parse_status={status})"
-    )
     return out
 
 
