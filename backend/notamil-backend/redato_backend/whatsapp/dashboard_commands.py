@@ -199,6 +199,20 @@ def _open_session() -> Optional[Session]:
 # Comando /turma
 # ──────────────────────────────────────────────────────────────────────
 
+# ──────────────────────────────────────────────────────────────────────
+# Estados FSM de desambiguação (M10 PROMPT 2 fix)
+# ──────────────────────────────────────────────────────────────────────
+
+AWAITING_ALUNO_CHOICE = "AWAITING_ALUNO_CHOICE"
+AWAITING_ATIVIDADE_CHOICE = "AWAITING_ATIVIDADE_CHOICE"
+
+# Regex de cancelamento (cobre variações pt-br comuns).
+_CANCELAR_RE = re.compile(
+    r"^\s*(cancelar|cancela|sair|sai|nao|não|abortar)\s*$",
+    re.IGNORECASE,
+)
+
+
 def cmd_turma(prof_id: uuid.UUID, escola_id: uuid.UUID, args: str) -> str:
     """Resumo da turma. `args` é o código (ex: "1A"). Filtra por
     escola_id pra LGPD — prof não vê dados de outras escolas."""
@@ -383,13 +397,17 @@ def _render_resumo_turma(
 # Comando /aluno
 # ──────────────────────────────────────────────────────────────────────
 
-def cmd_aluno(prof_id: uuid.UUID, escola_id: uuid.UUID, args: str) -> str:
+def cmd_aluno(
+    phone: str, prof_id: uuid.UUID, escola_id: uuid.UUID, args: str,
+) -> str:
     """Histórico do aluno por nome (busca fuzzy ILIKE %nome%).
-    Múltiplos matches → lista pra refinar."""
-    from redato_backend.portal.models import (
-        Atividade, AlunoTurma, Envio, Interaction, Missao, Turma,
-    )
+    Múltiplos matches → persiste FSM `AWAITING_ALUNO_CHOICE` com
+    lista de candidatos pra que próxima mensagem (esperada como
+    número 1, 2, ...) seja interpretada como escolha pelo handler
+    `handle_aluno_choice`."""
+    from redato_backend.portal.models import AlunoTurma, Turma
     from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import persistence as P
 
     nome = (args or "").strip()
     if not nome or len(nome) < 2:
@@ -418,10 +436,21 @@ def cmd_aluno(prof_id: uuid.UUID, escola_id: uuid.UUID, args: str) -> str:
             return MSG.MSG_ALUNO_NAO_ENCONTRADO.format(nome=nome)
 
         if len(matches) > 1:
-            # Múltiplos matches — pede pra refinar
+            # Múltiplos matches — persiste FSM com candidatos e
+            # devolve mensagem pedindo escolha numérica.
+            visiveis = matches[:5]
+            payload = [
+                {
+                    "aluno_turma_id": str(at.id),
+                    "nome": at.nome,
+                    "turma_codigo": t.codigo,
+                }
+                for at, t in visiveis
+            ]
+            P.set_professor_fsm(phone, AWAITING_ALUNO_CHOICE, payload)
             linhas = [
                 f"{i+1}. {at.nome} — {t.codigo}"
-                for i, (at, t) in enumerate(matches[:5])
+                for i, (at, t) in enumerate(visiveis)
             ]
             extra = ""
             if len(matches) > 5:
@@ -431,34 +460,68 @@ def cmd_aluno(prof_id: uuid.UUID, escola_id: uuid.UUID, args: str) -> str:
                 lista="\n".join(linhas) + extra,
             )
 
+        # 1 match único — render direto
         aluno_at, turma = matches[0]
-
-        # Últimos 5 envios
-        envios = sess.execute(
-            select(Envio, Interaction, Missao, Atividade)
-            .join(Atividade, Atividade.id == Envio.atividade_id)
-            .join(Missao, Missao.id == Atividade.missao_id)
-            .join(Interaction, Interaction.id == Envio.interaction_id)
-            .where(Envio.aluno_turma_id == aluno_at.id)
-            .order_by(Envio.enviado_em.desc())
-            .limit(5)
-        ).all()
-
-        if not envios:
-            return (
-                f"👤 *{aluno_at.nome}* — Turma {turma.codigo}\n\n"
-                f"Ainda não enviou nenhuma redação."
-            )
-
-        return _render_historico_aluno(
-            aluno=aluno_at, turma=turma, envios=envios,
+        return _carregar_e_renderizar_historico_aluno(
+            sess, aluno_turma_id=aluno_at.id, escola_id=escola_id,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         logger.exception("cmd_aluno falhou pra escola=%s nome=%s",
                          escola_id, nome)
         return MSG.MSG_DASHBOARD_ERRO_GENERICO
     finally:
         sess.close()
+
+
+def _carregar_e_renderizar_historico_aluno(
+    sess: Session, *, aluno_turma_id: uuid.UUID, escola_id: uuid.UUID,
+) -> str:
+    """Carrega aluno (revalidando escola_id pra LGPD) e seus 5 últimos
+    envios, e renderiza. Usado por `cmd_aluno` (1 match único) e
+    `handle_aluno_choice` (escolha após múltiplos matches).
+
+    Re-valida `escola_id` mesmo quando o aluno já foi listado em
+    `cmd_aluno` antes — entre as 2 mensagens, o vínculo poderia ter
+    sido alterado. Custo de 1 query extra é aceitável.
+    """
+    from redato_backend.portal.models import (
+        Atividade, AlunoTurma, Envio, Interaction, Missao, Turma,
+    )
+    from redato_backend.whatsapp import messages as MSG
+
+    row = sess.execute(
+        select(AlunoTurma, Turma)
+        .join(Turma, Turma.id == AlunoTurma.turma_id)
+        .where(
+            AlunoTurma.id == aluno_turma_id,
+            AlunoTurma.ativo.is_(True),
+            Turma.escola_id == escola_id,
+            Turma.deleted_at.is_(None),
+        )
+    ).first()
+    if row is None:
+        return MSG.MSG_ALUNO_NAO_ENCONTRADO.format(nome="(escolhido)")
+    aluno_at, turma = row
+
+    envios = sess.execute(
+        select(Envio, Interaction, Missao, Atividade)
+        .join(Atividade, Atividade.id == Envio.atividade_id)
+        .join(Missao, Missao.id == Atividade.missao_id)
+        .join(Interaction, Interaction.id == Envio.interaction_id)
+        .where(Envio.aluno_turma_id == aluno_at.id)
+        .order_by(Envio.enviado_em.desc())
+        .limit(5)
+    ).all()
+
+    if not envios:
+        return (
+            f"👤 *{aluno_at.nome}* — Turma {turma.codigo}\n\n"
+            f"Ainda não enviou nenhuma redação."
+        )
+
+    return _render_historico_aluno(
+        aluno=aluno_at, turma=turma, envios=envios,
+    )
 
 
 def _render_historico_aluno(*, aluno, turma, envios) -> str:
@@ -534,13 +597,13 @@ def _render_historico_aluno(*, aluno, turma, envios) -> str:
 # ──────────────────────────────────────────────────────────────────────
 
 def cmd_atividade(
-    prof_id: uuid.UUID, escola_id: uuid.UUID, args: str,
+    phone: str, prof_id: uuid.UUID, escola_id: uuid.UUID, args: str,
 ) -> str:
-    """Status de atividade pelo código. Filtra por escola_id (LGPD)."""
-    from redato_backend.portal.models import (
-        Atividade, AlunoTurma, Envio, Interaction, Missao, Turma,
-    )
+    """Status de atividade pelo código. Filtra por escola_id (LGPD).
+    Múltiplos matches → persiste FSM `AWAITING_ATIVIDADE_CHOICE`."""
+    from redato_backend.portal.models import Atividade, Missao, Turma
     from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import persistence as P
 
     codigo = (args or "").strip()
     if not codigo:
@@ -576,6 +639,15 @@ def cmd_atividade(
             return MSG.MSG_ATIVIDADE_NAO_ENCONTRADA.format(codigo=codigo)
 
         if len(atvs) > 1:
+            payload = [
+                {
+                    "atividade_id": str(a.id),
+                    "missao_codigo": m.codigo,
+                    "turma_codigo": t.codigo,
+                }
+                for a, m, t in atvs
+            ]
+            P.set_professor_fsm(phone, AWAITING_ATIVIDADE_CHOICE, payload)
             linhas = [
                 f"{i+1}. {m.codigo} — Turma {t.codigo} "
                 f"(prazo {a.data_fim.strftime('%d/%m')})"
@@ -585,68 +657,95 @@ def cmd_atividade(
                 codigo=codigo, lista="\n".join(linhas),
             )
 
-        atv, missao, turma = atvs[0]
-
-        # Total de alunos cadastrados na turma
-        n_alunos = sess.scalar(
-            select(func.count(AlunoTurma.id)).where(
-                AlunoTurma.turma_id == turma.id,
-                AlunoTurma.ativo.is_(True),
-            )
-        ) or 0
-
-        # Envios (com texto redato_output pra calcular notas)
-        rows = sess.execute(
-            select(Envio, Interaction, AlunoTurma)
-            .join(Interaction, Interaction.id == Envio.interaction_id)
-            .join(AlunoTurma, AlunoTurma.id == Envio.aluno_turma_id)
-            .where(Envio.atividade_id == atv.id)
-        ).all()
-
-        ids_com_envio: set = set()
-        notas_totais: List[int] = []
-        soma_cn: Dict[str, List[int]] = {f"c{i}": [] for i in range(1, 6)}
-        n_erro = 0
-        nomes_com_erro: List[str] = []
-        for envio, inter, aluno in rows:
-            ids_com_envio.add(aluno.id)
-            redato = _parse_redato(inter.redato_output)
-            if _redato_tem_erro(redato):
-                n_erro += 1
-                nomes_com_erro.append(aluno.nome)
-                continue
-            total = _nota_total_de(redato)
-            if total is not None:
-                notas_totais.append(total)
-            notas_cn = _notas_por_competencia(redato)
-            if notas_cn:
-                for k, v in notas_cn.items():
-                    soma_cn[k].append(v)
-
-        # Pendentes (alunos da turma sem envio nessa atividade)
-        pendentes = sess.execute(
-            select(AlunoTurma.nome)
-            .where(
-                AlunoTurma.turma_id == turma.id,
-                AlunoTurma.ativo.is_(True),
-                ~AlunoTurma.id.in_(ids_com_envio),
-            )
-            .order_by(AlunoTurma.nome)
-        ).scalars().all()
-
-        return _render_status_atividade(
-            atv=atv, missao=missao, turma=turma,
-            n_alunos=n_alunos, n_envios=len(ids_com_envio),
-            notas_totais=notas_totais, soma_cn=soma_cn,
-            pendentes=list(pendentes),
-            n_erro=n_erro, nomes_com_erro=nomes_com_erro,
+        atv, _missao, _turma = atvs[0]
+        return _carregar_e_renderizar_status_atividade(
+            sess, atividade_id=atv.id, escola_id=escola_id,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         logger.exception("cmd_atividade falhou pra escola=%s codigo=%s",
                          escola_id, codigo)
         return MSG.MSG_DASHBOARD_ERRO_GENERICO
     finally:
         sess.close()
+
+
+def _carregar_e_renderizar_status_atividade(
+    sess: Session, *, atividade_id: uuid.UUID, escola_id: uuid.UUID,
+) -> str:
+    """Carrega atividade (revalidando escola pra LGPD) + agrega envios
+    e renderiza. Usado por `cmd_atividade` (1 match) e
+    `handle_atividade_choice` (escolha após múltiplos matches)."""
+    from redato_backend.portal.models import (
+        Atividade, AlunoTurma, Envio, Interaction, Missao, Turma,
+    )
+    from redato_backend.whatsapp import messages as MSG
+
+    row = sess.execute(
+        select(Atividade, Missao, Turma)
+        .join(Missao, Missao.id == Atividade.missao_id)
+        .join(Turma, Turma.id == Atividade.turma_id)
+        .where(
+            Atividade.id == atividade_id,
+            Atividade.deleted_at.is_(None),
+            Turma.escola_id == escola_id,
+            Turma.deleted_at.is_(None),
+        )
+    ).first()
+    if row is None:
+        return MSG.MSG_ATIVIDADE_NAO_ENCONTRADA.format(codigo="(escolhida)")
+    atv, missao, turma = row
+
+    n_alunos = sess.scalar(
+        select(func.count(AlunoTurma.id)).where(
+            AlunoTurma.turma_id == turma.id,
+            AlunoTurma.ativo.is_(True),
+        )
+    ) or 0
+
+    rows = sess.execute(
+        select(Envio, Interaction, AlunoTurma)
+        .join(Interaction, Interaction.id == Envio.interaction_id)
+        .join(AlunoTurma, AlunoTurma.id == Envio.aluno_turma_id)
+        .where(Envio.atividade_id == atv.id)
+    ).all()
+
+    ids_com_envio: set = set()
+    notas_totais: List[int] = []
+    soma_cn: Dict[str, List[int]] = {f"c{i}": [] for i in range(1, 6)}
+    n_erro = 0
+    nomes_com_erro: List[str] = []
+    for envio, inter, aluno in rows:
+        ids_com_envio.add(aluno.id)
+        redato = _parse_redato(inter.redato_output)
+        if _redato_tem_erro(redato):
+            n_erro += 1
+            nomes_com_erro.append(aluno.nome)
+            continue
+        total = _nota_total_de(redato)
+        if total is not None:
+            notas_totais.append(total)
+        notas_cn = _notas_por_competencia(redato)
+        if notas_cn:
+            for k, v in notas_cn.items():
+                soma_cn[k].append(v)
+
+    pendentes = sess.execute(
+        select(AlunoTurma.nome)
+        .where(
+            AlunoTurma.turma_id == turma.id,
+            AlunoTurma.ativo.is_(True),
+            ~AlunoTurma.id.in_(ids_com_envio),
+        )
+        .order_by(AlunoTurma.nome)
+    ).scalars().all()
+
+    return _render_status_atividade(
+        atv=atv, missao=missao, turma=turma,
+        n_alunos=n_alunos, n_envios=len(ids_com_envio),
+        notas_totais=notas_totais, soma_cn=soma_cn,
+        pendentes=list(pendentes),
+        n_erro=n_erro, nomes_com_erro=nomes_com_erro,
+    )
 
 
 def _render_status_atividade(
@@ -726,29 +825,176 @@ def cmd_ajuda(prof_id: uuid.UUID, escola_id: uuid.UUID) -> str:
 
 
 # ──────────────────────────────────────────────────────────────────────
+# Handlers de escolha (M10 PROMPT 2 fix — desambiguação numérica)
+# ──────────────────────────────────────────────────────────────────────
+
+def _parse_indice(text: Optional[str], max_idx: int) -> Optional[int]:
+    """Parser de número 1..N. Retorna índice 0-based (subtraído 1)
+    ou None se inválido. Tolera espaços e variações tipo "1." ou "1)".
+    """
+    if not text:
+        return None
+    cleaned = re.sub(r"[\.\)\,]", "", text.strip())
+    if not cleaned.isdigit():
+        return None
+    idx = int(cleaned) - 1
+    if 0 <= idx < max_idx:
+        return idx
+    return None
+
+
+def handle_aluno_choice(
+    phone: str, prof_id: uuid.UUID, escola_id: uuid.UUID,
+    payload: Any, text: Optional[str],
+) -> str:
+    """Processa resposta numérica após múltiplos matches em /aluno.
+    `payload` é a lista persistida pelo `cmd_aluno`."""
+    from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import persistence as P
+
+    text_clean = (text or "").strip()
+    if _CANCELAR_RE.match(text_clean):
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_ESCOLHA_CANCELADA
+
+    if not isinstance(payload, list) or not payload:
+        # Payload corrompido — limpa FSM e mostra ajuda
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_AJUDA
+
+    idx = _parse_indice(text_clean, max_idx=len(payload))
+    if idx is None:
+        # Mantém FSM — professor pode tentar de novo
+        return MSG.MSG_DASHBOARD_ESCOLHA_INVALIDA
+
+    item = payload[idx]
+    aluno_turma_id_str = item.get("aluno_turma_id") if isinstance(item, dict) else None
+    if not aluno_turma_id_str:
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_ERRO_GENERICO
+    try:
+        aluno_turma_id = uuid.UUID(aluno_turma_id_str)
+    except (ValueError, TypeError):
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_ERRO_GENERICO
+
+    # Limpa FSM ANTES de renderizar — render pode demorar e durante
+    # esse tempo professor não deve estar em estado de escolha.
+    P.clear_professor_fsm(phone)
+
+    sess = _open_session()
+    if sess is None:
+        return MSG.MSG_DASHBOARD_DB_INDISPONIVEL
+    try:
+        return _carregar_e_renderizar_historico_aluno(
+            sess, aluno_turma_id=aluno_turma_id, escola_id=escola_id,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "handle_aluno_choice falhou pra escola=%s aluno=%s",
+            escola_id, aluno_turma_id,
+        )
+        return MSG.MSG_DASHBOARD_ERRO_GENERICO
+    finally:
+        sess.close()
+
+
+def handle_atividade_choice(
+    phone: str, prof_id: uuid.UUID, escola_id: uuid.UUID,
+    payload: Any, text: Optional[str],
+) -> str:
+    """Processa resposta numérica após múltiplos matches em
+    /atividade."""
+    from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import persistence as P
+
+    text_clean = (text or "").strip()
+    if _CANCELAR_RE.match(text_clean):
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_ESCOLHA_CANCELADA
+
+    if not isinstance(payload, list) or not payload:
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_AJUDA
+
+    idx = _parse_indice(text_clean, max_idx=len(payload))
+    if idx is None:
+        return MSG.MSG_DASHBOARD_ESCOLHA_INVALIDA
+
+    item = payload[idx]
+    atividade_id_str = item.get("atividade_id") if isinstance(item, dict) else None
+    if not atividade_id_str:
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_ERRO_GENERICO
+    try:
+        atividade_id = uuid.UUID(atividade_id_str)
+    except (ValueError, TypeError):
+        P.clear_professor_fsm(phone)
+        return MSG.MSG_DASHBOARD_ERRO_GENERICO
+
+    P.clear_professor_fsm(phone)
+
+    sess = _open_session()
+    if sess is None:
+        return MSG.MSG_DASHBOARD_DB_INDISPONIVEL
+    try:
+        return _carregar_e_renderizar_status_atividade(
+            sess, atividade_id=atividade_id, escola_id=escola_id,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception(
+            "handle_atividade_choice falhou pra escola=%s atv=%s",
+            escola_id, atividade_id,
+        )
+        return MSG.MSG_DASHBOARD_ERRO_GENERICO
+    finally:
+        sess.close()
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Dispatcher (entry point chamado pelo bot)
 # ──────────────────────────────────────────────────────────────────────
 
 def dispatch(
+    phone: str,
     prof_id: uuid.UUID,
     escola_id: uuid.UUID,
     text: Optional[str],
 ) -> str:
-    """Parsa o texto, roteia pro handler e retorna a string da resposta.
-    Caller (bot.py) embrulha em OutboundMessage.
+    """Roteia mensagem do professor.
 
-    Tipa entrada cuidadosamente: prof_id + escola_id são UUIDs (já
-    extraídos do ProfessorVinculo) — nada de string aqui.
+    Ordem de checagem:
+    1. FSM ativo (AWAITING_ALUNO_CHOICE / AWAITING_ATIVIDADE_CHOICE):
+       interpreta texto como escolha numérica/cancelar — não tenta
+       parsear como comando. Sem isso, "1" caía em /ajuda.
+    2. Texto bate em comando (/turma, /aluno, /atividade, /ajuda):
+       chama cmd_*.
+    3. Senão: mostra ajuda.
 
-    Retorna sempre uma string (mensagem amigável). Erros internos
-    geram MSG_DASHBOARD_ERRO_GENERICO em vez de exception — bot.py
-    não precisa de try/except adicional.
+    Retorna sempre string. Erros internos viram mensagens amigáveis.
     """
     from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import persistence as P
 
+    # 1. FSM ativo? Mensagem é resposta de escolha, não comando.
+    fsm = P.get_professor_fsm(phone)
+    if fsm is not None:
+        estado = fsm.get("estado")
+        payload = fsm.get("payload")
+        if estado == AWAITING_ALUNO_CHOICE:
+            return handle_aluno_choice(
+                phone, prof_id, escola_id, payload, text,
+            )
+        if estado == AWAITING_ATIVIDADE_CHOICE:
+            return handle_atividade_choice(
+                phone, prof_id, escola_id, payload, text,
+            )
+        # Estado desconhecido → limpa pra não travar professor
+        P.clear_professor_fsm(phone)
+
+    # 2. Parse de comando.
     parsed = parse_comando(text)
     if parsed is None:
-        # Texto sem comando reconhecido → mostra ajuda
         return MSG.MSG_DASHBOARD_AJUDA
     cmd, args = parsed
 
@@ -757,9 +1003,8 @@ def dispatch(
     if cmd == "turma":
         return cmd_turma(prof_id, escola_id, args)
     if cmd == "aluno":
-        return cmd_aluno(prof_id, escola_id, args)
+        return cmd_aluno(phone, prof_id, escola_id, args)
     if cmd == "atividade":
-        return cmd_atividade(prof_id, escola_id, args)
+        return cmd_atividade(phone, prof_id, escola_id, args)
 
-    # Não deveria chegar aqui (parse_comando filtra), mas defesa.
     return MSG.MSG_DASHBOARD_AJUDA

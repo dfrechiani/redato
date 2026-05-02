@@ -721,8 +721,11 @@ def _handle_professor_inbound(
     # Caminho 2 — LGPD aceito. Dispatch pra dashboard_commands
     # (M10 PROMPT 2). Texto vazio cai em /ajuda automaticamente
     # (parse_comando retorna None → dispatch retorna ajuda).
+    # `phone` é usado pra persistir FSM efêmera de desambiguação
+    # (M10 PROMPT 2 fix — /aluno e /atividade com múltiplos matches).
     from redato_backend.whatsapp import dashboard_commands as DC
     resposta = DC.dispatch(
+        phone=msg.phone,
         prof_id=professor.id,
         escola_id=professor.escola_id,
         text=msg.text,

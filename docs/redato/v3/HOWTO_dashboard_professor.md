@@ -72,8 +72,13 @@ Busca **fuzzy** com `ILIKE %nome%` na escola do professor:
 - 0 matches → "Nenhum aluno encontrado..."
 - 1 match → mostra histórico (5 últimos envios + tendência + pontos
   fortes/fracos por C1-C5)
-- 2+ matches → lista pra refinar com nome completo (até 5 itens
-  visíveis, conta os demais)
+- 2+ matches → lista os candidatos numerados; bot persiste FSM
+  efêmera (TTL 5 min) e aguarda resposta numérica:
+  - `1`, `2`, etc. → escolhe e mostra histórico
+  - `cancelar` (ou variações: `nao`, `sair`) → limpa estado, volta
+    pro fluxo normal
+  - Texto inválido → pede pra responder número/cancelar (mantém FSM)
+  - Sem resposta em 5 min → FSM expira automaticamente
 
 Tendência calculada por média das 2 mais recentes vs anteriores
 (diferença ≥30 pontos = subindo/caindo, senão estável).
@@ -84,7 +89,8 @@ Status de uma atividade. Ex: `/atividade OF14`.
 
 Aceita código curto (`OF14`) — busca via `ILIKE %codigo%` em
 `missoes.codigo`. Múltiplos matches (mesmo código em turmas
-diferentes) → lista pra desambiguar.
+diferentes) → lista numerada com FSM `AWAITING_ATIVIDADE_CHOICE`.
+Mesma UX do `/aluno`: responder `1`/`2`/etc escolhe, `cancelar` sai.
 
 Retorna:
 - Cabeçalho: código + título + turma + prazo

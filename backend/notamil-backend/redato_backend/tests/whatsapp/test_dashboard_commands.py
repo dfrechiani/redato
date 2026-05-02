@@ -166,7 +166,8 @@ def test_cmd_turma_sem_match_resposta_amigavel():
 def test_cmd_aluno_sem_match_resposta_amigavel():
     from redato_backend.whatsapp import dashboard_commands as DC
     out = DC.cmd_aluno(
-        prof_id=uuid.uuid4(), escola_id=uuid.uuid4(), args="maria",
+        phone="+5500", prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), args="maria",
     )
     aceita = (
         "Não consegui" in out
@@ -179,7 +180,8 @@ def test_cmd_aluno_sem_match_resposta_amigavel():
 def test_cmd_atividade_sem_match_resposta_amigavel():
     from redato_backend.whatsapp import dashboard_commands as DC
     out = DC.cmd_atividade(
-        prof_id=uuid.uuid4(), escola_id=uuid.uuid4(), args="OF14",
+        phone="+5500", prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), args="OF14",
     )
     aceita = (
         "Não consegui" in out
@@ -204,7 +206,8 @@ def test_cmd_turma_sem_args_pede_codigo():
 def test_cmd_aluno_sem_args_pede_nome():
     from redato_backend.whatsapp import dashboard_commands as DC
     out = DC.cmd_aluno(
-        prof_id=uuid.uuid4(), escola_id=uuid.uuid4(), args="",
+        phone="+5500", prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), args="",
     )
     assert "nome do aluno" in out.lower() or "/aluno" in out
 
@@ -212,7 +215,8 @@ def test_cmd_aluno_sem_args_pede_nome():
 def test_cmd_atividade_sem_args_pede_codigo():
     from redato_backend.whatsapp import dashboard_commands as DC
     out = DC.cmd_atividade(
-        prof_id=uuid.uuid4(), escola_id=uuid.uuid4(), args="",
+        phone="+5500", prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), args="",
     )
     assert "código da atividade" in out.lower() or "/atividade" in out
 
@@ -235,29 +239,39 @@ def test_cmd_ajuda_lista_4_comandos():
 # Dispatcher
 # ──────────────────────────────────────────────────────────────────────
 
-def test_dispatch_texto_invalido_retorna_ajuda():
+def test_dispatch_texto_invalido_retorna_ajuda(tmp_path, monkeypatch):
     """Texto sem comando → ajuda."""
+    monkeypatch.setenv("REDATO_WHATSAPP_DB", str(tmp_path / "db"))
     from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+    P.init_db()
     out = DC.dispatch(
-        prof_id=uuid.uuid4(), escola_id=uuid.uuid4(),
-        text="oi tudo bem",
+        phone="+5500", prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="oi tudo bem",
     )
     assert "Comandos do dashboard" in out
 
 
-def test_dispatch_ajuda_retorna_ajuda():
+def test_dispatch_ajuda_retorna_ajuda(tmp_path, monkeypatch):
+    monkeypatch.setenv("REDATO_WHATSAPP_DB", str(tmp_path / "db"))
     from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+    P.init_db()
     out = DC.dispatch(
-        prof_id=uuid.uuid4(), escola_id=uuid.uuid4(), text="/ajuda",
+        phone="+5500", prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="/ajuda",
     )
     assert "Comandos do dashboard" in out
 
 
-def test_dispatch_aceita_variacoes_sintaticas():
+def test_dispatch_aceita_variacoes_sintaticas(tmp_path, monkeypatch):
     """Texto com variações ("turma 1A", "/Turma 1A", "TURMA 1A") cai
     no mesmo comando. Quando DB indisponível em test, retorna mensagem
     amigável — confirma que pelo menos chegou no handler."""
+    monkeypatch.setenv("REDATO_WHATSAPP_DB", str(tmp_path / "db"))
     from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+    P.init_db()
     msgs = [
         "/turma 1A",
         "turma 1A",
@@ -265,12 +279,11 @@ def test_dispatch_aceita_variacoes_sintaticas():
     ]
     outs = [
         DC.dispatch(
-            prof_id=uuid.uuid4(), escola_id=uuid.uuid4(), text=m,
+            phone="+5500", prof_id=uuid.uuid4(),
+            escola_id=uuid.uuid4(), text=m,
         )
         for m in msgs
     ]
-    # Todas devem ter mesma forma (DB indisponível ou turma não
-    # encontrada — não cair em "Comandos do dashboard" da ajuda).
     for o in outs:
         assert "Comandos do dashboard" not in o, (
             f"comando turma caiu em ajuda: {o[:80]}"
@@ -365,3 +378,290 @@ def test_render_resumo_turma_sem_dados_nao_quebra():
     assert "Turma 9Z" in out
     # Sem médias quando não há notas
     assert "Médias" not in out or "Geral" not in out
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Desambiguação (M10 PROMPT 2 fix — escolha numérica via FSM)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Em prod (02/05/2026), múltiplos matches em /aluno e /atividade
+# pediam "manda /aluno <nome completo>" mas:
+# - Resposta numérica "1" caía em /ajuda (não tinha parser de escolha)
+# - Sintaxe sugerida (/aluno daniel - 1A) não existia (busca literal
+#   pelo texto inteiro)
+# Fix: FSM persistida com candidatos + handlers de escolha numérica.
+
+PHONE = "+5561999999999"
+
+
+def _setup_fsm(monkeypatch, tmp_path):
+    """Isola SQLite + init_db. Retorna phone usado nos tests."""
+    monkeypatch.setenv(
+        "REDATO_WHATSAPP_DB", str(tmp_path / "test_fsm.db"),
+    )
+    from redato_backend.whatsapp import persistence as P
+    P.init_db()
+    return PHONE
+
+
+def test_aluno_choice_persiste_fsm_e_processa_numero(
+    monkeypatch, tmp_path,
+):
+    """Bug original: /aluno multi-match → resposta '1' caía em /ajuda.
+    Fix: FSM AWAITING_ALUNO_CHOICE persiste candidatos, dispatch
+    interpreta '1' como índice da lista."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    aluno_id_escolhido = uuid.uuid4()
+    payload = [
+        {"aluno_turma_id": str(aluno_id_escolhido),
+         "nome": "Daniel Frechiani", "turma_codigo": "1A"},
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "Daniel Frechiani", "turma_codigo": "2A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ALUNO_CHOICE, payload)
+
+    # Simula dispatch da resposta numérica
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="1",
+    )
+    # NÃO deve cair em /ajuda — chegou no handler de escolha
+    assert "Comandos do dashboard" not in out
+    # FSM foi limpo após processamento
+    assert P.get_professor_fsm(phone) is None
+
+
+def test_aluno_choice_numero_invalido_pede_de_novo(
+    monkeypatch, tmp_path,
+):
+    """Resposta inválida (texto não-numérico) durante AWAITING →
+    pede pra responder número, MANTÉM FSM (professor pode tentar)."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    payload = [
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "Daniel", "turma_codigo": "1A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ALUNO_CHOICE, payload)
+
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="abacate",
+    )
+    assert "número" in out.lower()
+    # FSM mantém pra retry
+    fsm = P.get_professor_fsm(phone)
+    assert fsm is not None
+    assert fsm["estado"] == DC.AWAITING_ALUNO_CHOICE
+
+
+def test_aluno_choice_cancelar_limpa_fsm(monkeypatch, tmp_path):
+    """'cancelar' (e variações) limpa FSM e mostra mensagem amigável."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    payload = [
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "X", "turma_codigo": "1A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ALUNO_CHOICE, payload)
+
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="cancelar",
+    )
+    assert "Cancelei" in out or "cancel" in out.lower()
+    assert P.get_professor_fsm(phone) is None
+
+
+def test_aluno_choice_indice_fora_de_range_pede_de_novo(
+    monkeypatch, tmp_path,
+):
+    """Número fora do range (ex: '5' quando só tem 2 opções) →
+    mantém FSM, pede de novo (não estoura)."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    payload = [
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "X", "turma_codigo": "1A"},
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "Y", "turma_codigo": "2A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ALUNO_CHOICE, payload)
+
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="5",
+    )
+    assert "número" in out.lower()
+    # FSM mantém
+    assert P.get_professor_fsm(phone) is not None
+
+
+def test_atividade_choice_persiste_fsm_e_processa_numero(
+    monkeypatch, tmp_path,
+):
+    """Análogo ao /aluno: /atividade multi-match → resposta '1'
+    é interpretada como escolha."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    atividade_id_escolhido = uuid.uuid4()
+    payload = [
+        {"atividade_id": str(atividade_id_escolhido),
+         "missao_codigo": "RJ1·OF14·MF", "turma_codigo": "1A"},
+        {"atividade_id": str(uuid.uuid4()),
+         "missao_codigo": "RJ1·OF14·MF", "turma_codigo": "2A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ATIVIDADE_CHOICE, payload)
+
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="2",
+    )
+    assert "Comandos do dashboard" not in out
+    assert P.get_professor_fsm(phone) is None
+
+
+def test_atividade_choice_cancelar(monkeypatch, tmp_path):
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    payload = [
+        {"atividade_id": str(uuid.uuid4()),
+         "missao_codigo": "X", "turma_codigo": "1A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ATIVIDADE_CHOICE, payload)
+
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="cancelar",
+    )
+    assert "Cancelei" in out or "cancel" in out.lower()
+    assert P.get_professor_fsm(phone) is None
+
+
+def test_dispatcher_fsm_ativo_nao_parsa_como_comando(
+    monkeypatch, tmp_path,
+):
+    """Bug central: durante AWAITING_ALUNO_CHOICE, mensagem '1'
+    deveria ser interpretada como escolha, NÃO como `/turma 1` ou
+    parsed como ajuda. Confirma que o gate de FSM tem prioridade."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    payload = [
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "Daniel Frechiani", "turma_codigo": "1A"},
+        {"aluno_turma_id": str(uuid.uuid4()),
+         "nome": "Daniel Frechiani", "turma_codigo": "2A"},
+    ]
+    P.set_professor_fsm(phone, DC.AWAITING_ALUNO_CHOICE, payload)
+
+    # Mesmo que texto "1" pudesse ser interpretado como argumento de
+    # algum comando, FSM ativo bloqueia parse de comando.
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="1",
+    )
+    # Não foi pra ajuda nem retornou MSG_TURMA_NAO_ENCONTRADA
+    assert "Comandos do dashboard" not in out
+    assert "Turma" not in out or "encontrada" not in out
+
+
+def test_dispatcher_sem_fsm_ativo_segue_fluxo_de_comando(
+    monkeypatch, tmp_path,
+):
+    """Sem FSM ativo, "1" sozinho não é comando reconhecido →
+    cai em /ajuda. Garante que o gate de FSM não bloqueia o fluxo
+    normal quando não há escolha pendente."""
+    from redato_backend.whatsapp import dashboard_commands as DC
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+
+    # Sem FSM persistida, "1" é texto livre → ajuda
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="1",
+    )
+    assert "Comandos do dashboard" in out
+
+
+def test_fsm_expirado_nao_intercepta(monkeypatch, tmp_path):
+    """FSM com TTL expirado é tratada como inexistente — nova
+    mensagem cai no fluxo normal de comando."""
+    from datetime import datetime, timedelta, timezone
+    from redato_backend.whatsapp import dashboard_commands as DC
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    payload = [{"aluno_turma_id": str(uuid.uuid4()),
+                "nome": "X", "turma_codigo": "1A"}]
+    P.set_professor_fsm(phone, DC.AWAITING_ALUNO_CHOICE, payload)
+
+    # Manipula expira_em pra 10min atrás (TTL é 5min)
+    velho = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    with P._conn() as c:
+        c.execute(
+            "UPDATE professor_fsm SET expira_em = ? WHERE phone = ?",
+            (velho, phone),
+        )
+
+    # FSM expirado → "1" é interpretado como texto livre → ajuda
+    out = DC.dispatch(
+        phone=phone, prof_id=uuid.uuid4(),
+        escola_id=uuid.uuid4(), text="1",
+    )
+    assert "Comandos do dashboard" in out
+    # FSM foi limpo durante o get
+    assert P.get_professor_fsm(phone) is None
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Persistence helpers (M10 PROMPT 2 fix)
+# ──────────────────────────────────────────────────────────────────────
+
+def test_persistence_set_get_professor_fsm(monkeypatch, tmp_path):
+    """Smoke do set/get básico — TTL não-expirado."""
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    P.set_professor_fsm(phone, "TESTE", payload={"foo": "bar"})
+
+    fsm = P.get_professor_fsm(phone)
+    assert fsm is not None
+    assert fsm["estado"] == "TESTE"
+    assert fsm["payload"] == {"foo": "bar"}
+
+
+def test_persistence_clear_professor_fsm(monkeypatch, tmp_path):
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    P.set_professor_fsm(phone, "TESTE", payload=[1, 2, 3])
+    assert P.get_professor_fsm(phone) is not None
+
+    P.clear_professor_fsm(phone)
+    assert P.get_professor_fsm(phone) is None
+
+
+def test_persistence_get_fsm_inexistente_retorna_none(
+    monkeypatch, tmp_path,
+):
+    from redato_backend.whatsapp import persistence as P
+
+    phone = _setup_fsm(monkeypatch, tmp_path)
+    assert P.get_professor_fsm(phone) is None
+    # Idempotente — pode chamar várias vezes
+    assert P.get_professor_fsm("+5500outro") is None

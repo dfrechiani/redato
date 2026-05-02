@@ -206,7 +206,7 @@ MSG_ALUNO_NAO_ENCONTRADO = (
 MSG_ALUNO_MULTIPLOS_MATCHES = (
     "Encontrei mais de 1 aluno com *{nome}*:\n\n"
     "{lista}\n\n"
-    "Manda */aluno <nome completo>* pra ver um específico."
+    "Responde o *número* (1, 2, ...) pra escolher, ou *cancelar*."
 )
 
 MSG_ATIVIDADE_NAO_ENCONTRADA = (
@@ -217,8 +217,16 @@ MSG_ATIVIDADE_NAO_ENCONTRADA = (
 MSG_ATIVIDADE_MULTIPLOS_MATCHES = (
     "Encontrei mais de 1 atividade com *{codigo}*:\n\n"
     "{lista}\n\n"
-    "Manda o código completo (com a turma na busca) "
-    "pra desambiguar."
+    "Responde o *número* (1, 2, ...) pra escolher, ou *cancelar*."
+)
+
+MSG_DASHBOARD_ESCOLHA_INVALIDA = (
+    "Não entendi. Responde o *número* (1, 2, ...) pra escolher, "
+    "ou *cancelar* pra sair da escolha."
+)
+
+MSG_DASHBOARD_ESCOLHA_CANCELADA = (
+    "Cancelei. Manda */ajuda* pra ver os comandos disponíveis."
 )
 
 MSG_DASHBOARD_DB_INDISPONIVEL = (

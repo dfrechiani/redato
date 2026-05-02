@@ -14,7 +14,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
@@ -111,6 +111,20 @@ def init_db() -> None:
             c.execute("ALTER TABLE alunos ADD COLUMN turma_ativa_id TEXT")
         if "turma_ativa_em" not in cols_alunos:
             c.execute("ALTER TABLE alunos ADD COLUMN turma_ativa_em TEXT")
+
+        # 2026-05-02 (M10 PROMPT 2 fix) — FSM efêmera de professor
+        # pra desambiguação de /aluno e /atividade quando há múltiplos
+        # matches. Tabela separada pra não cruzar com `alunos`
+        # (professor não está em alunos_turma — vive em professores
+        # do Postgres). Idempotente via CREATE TABLE IF NOT EXISTS.
+        c.execute(
+            "CREATE TABLE IF NOT EXISTS professor_fsm ("
+            "  phone TEXT PRIMARY KEY,"
+            "  estado TEXT NOT NULL,"
+            "  payload TEXT,"
+            "  expira_em TEXT NOT NULL"
+            ")"
+        )
 
         # 3) Cria índice de hash (depois de garantir que a coluna existe)
         c.execute(
@@ -244,6 +258,92 @@ def clear_turma_ativa(phone: str) -> None:
             "turma_ativa_em = NULL, updated_at = ? WHERE phone = ?",
             (now, phone),
         )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# FSM efêmera de professor (M10 PROMPT 2 fix — desambiguação)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Quando /aluno ou /atividade tem múltiplos matches, bot persiste a
+# lista de candidatos aqui e seta um estado FSM. Próxima mensagem do
+# professor (esperada como número 1, 2, ...) é interpretada como
+# escolha. Sem isso, número solto cai em /ajuda — UX ruim.
+#
+# TTL curto (5 min) porque escolha é interação imediata. Limpa
+# automaticamente em get/clear quando expirou — sem cron.
+
+PROFESSOR_FSM_TTL_SECONDS = 5 * 60
+
+
+def set_professor_fsm(
+    phone: str, estado: str, payload: Optional[Any] = None,
+    *, ttl_seconds: int = PROFESSOR_FSM_TTL_SECONDS,
+) -> None:
+    """Persiste estado FSM efêmero do professor. `payload` é
+    serializado em JSON (deve ser JSON-friendly: dict/list/str/int/etc).
+    Sobrescreve qualquer estado anterior do mesmo phone.
+    """
+    expira = (
+        datetime.now(timezone.utc)
+        + timedelta(seconds=ttl_seconds)
+    ).isoformat()
+    payload_json = json.dumps(payload, ensure_ascii=False) if payload is not None else None
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO professor_fsm (phone, estado, payload, expira_em) "
+            "VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(phone) DO UPDATE SET "
+            "  estado = excluded.estado, "
+            "  payload = excluded.payload, "
+            "  expira_em = excluded.expira_em",
+            (phone, estado, payload_json, expira),
+        )
+
+
+def get_professor_fsm(phone: str) -> Optional[Dict[str, Any]]:
+    """Retorna {"estado": str, "payload": Any} ou None.
+
+    None se: phone não tem FSM, FSM expirou, tabela ainda não foi
+    criada (init_db não rodou). Em caso de expiração limpa
+    silenciosamente (não acumula garbage entre mensagens)."""
+    with _conn() as c:
+        try:
+            row = c.execute(
+                "SELECT estado, payload, expira_em FROM professor_fsm "
+                "WHERE phone = ?",
+                (phone,),
+            ).fetchone()
+        except sqlite3.OperationalError:
+            # Tabela ainda não existe — caller (bot.py) deveria ter
+            # rodado init_db, mas em testes a ordem varia. Trata como
+            # "sem FSM" pra não derrubar dispatch.
+            return None
+        if row is None:
+            return None
+        try:
+            expira = datetime.fromisoformat(row["expira_em"])
+        except (ValueError, TypeError):
+            # Timestamp corrompido — trata como expirado
+            c.execute("DELETE FROM professor_fsm WHERE phone = ?", (phone,))
+            return None
+        if expira.tzinfo is None:
+            expira = expira.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expira:
+            c.execute("DELETE FROM professor_fsm WHERE phone = ?", (phone,))
+            return None
+        payload: Any = None
+        if row["payload"]:
+            try:
+                payload = json.loads(row["payload"])
+            except (json.JSONDecodeError, ValueError):
+                payload = None
+        return {"estado": row["estado"], "payload": payload}
+
+
+def clear_professor_fsm(phone: str) -> None:
+    """Remove FSM do professor (idempotente — sem error se não existe)."""
+    with _conn() as c:
+        c.execute("DELETE FROM professor_fsm WHERE phone = ?", (phone,))
 
 
 # ──────────────────────────────────────────────────────────────────────
