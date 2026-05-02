@@ -191,6 +191,45 @@ export async function reprocessarEnvio(
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// Perfil + Telefone WhatsApp (M10 — dashboard professor)
+// ──────────────────────────────────────────────────────────────────────
+
+// Resposta de `/auth/me` agora inclui telefone + lgpd_aceito_em (campos
+// opcionais, só populados pra professor que vinculou). Frontend usa pra
+// decidir mostrar campo "Telefone WhatsApp" ou aviso "ainda precisa
+// aceitar LGPD pelo bot".
+export interface MeDetalheResponse {
+  id: string;
+  nome: string;
+  email: string;
+  papel: "coordenador" | "professor";
+  escola_id: string;
+  escola_nome: string;
+  telefone?: string | null;
+  lgpd_aceito_em?: string | null;
+}
+
+export async function meDetalhe(): Promise<MeDetalheResponse> {
+  return fetchJson<MeDetalheResponse>("/api/auth/me");
+}
+
+export async function vincularTelefone(
+  telefone: string,
+): Promise<{ telefone: string }> {
+  return fetchJson<{ telefone: string }>(
+    "/api/auth/perfil/telefone",
+    { method: "PATCH", body: { telefone } },
+  );
+}
+
+export async function desvincularTelefone(): Promise<void> {
+  await fetchJson<undefined>(
+    "/api/auth/perfil/telefone",
+    { method: "DELETE" },
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // Dashboards (M7)
 // ──────────────────────────────────────────────────────────────────────
 

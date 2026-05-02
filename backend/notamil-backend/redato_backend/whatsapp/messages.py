@@ -111,6 +111,51 @@ MSG_TROCAR_TURMA_UNICA = (
 
 
 # ──────────────────────────────────────────────────────────────────────
+# M10 — Dashboard professor via WhatsApp (PROMPT 1/2 — LGPD)
+# ──────────────────────────────────────────────────────────────────────
+
+# Aviso LGPD enviado na 1ª mensagem do professor após ele vincular
+# telefone no portal. Bot persiste estado AGUARDANDO_LGPD_ACEITE_PROFESSOR
+# e bloqueia respostas com dados até receber "sim".
+AVISO_LGPD_PROFESSOR = (
+    "Olá *{nome}*! Você está acessando o dashboard do Redato via "
+    "WhatsApp.\n\n"
+    "Aqui você poderá consultar dados das suas turmas — médias, "
+    "histórico de alunos, status de atividades.\n\n"
+    "⚠️ *AVISO LGPD:*\n"
+    "Esses dados incluem nome de alunos, notas e trechos de redações. "
+    "São dados pessoais com finalidade pedagógica. Não compartilhe "
+    "prints, conversas ou dados com terceiros.\n\n"
+    "Use apenas no seu celular pessoal. Se concordar, responda *sim*."
+)
+
+# Resposta quando aluno digita algo que não é "sim" / "não" durante
+# AGUARDANDO_LGPD_ACEITE_PROFESSOR.
+MSG_LGPD_REPETIR_PEDIDO = (
+    "Pra usar o dashboard, preciso da sua confirmação.\n\n"
+    "Responde *sim* se concordou com o aviso, ou *não* pra "
+    "desvincular o telefone."
+)
+
+# Resposta quando professor responde "não" ao LGPD. Limpa o telefone
+# do banco e retorna READY.
+MSG_LGPD_NEGADO = (
+    "Tudo bem. Seu telefone foi desvinculado da conta. Se quiser "
+    "usar no futuro, vincule novamente em *Perfil* no portal."
+)
+
+# Placeholder enquanto PROMPT 2 não implementa os comandos
+# (/turma, /aluno, /atividade). Aviso curto pro professor saber
+# que vinculou OK mas dashboard ainda está em build.
+MSG_DASHBOARD_PLACEHOLDER = (
+    "Olá *{nome}*! Dashboard via WhatsApp está em construção.\n\n"
+    "Em breve você poderá usar comandos como `/turma 1A` pra ver "
+    "resumo da turma, `/aluno <nome>` pra histórico, e `/atividade` "
+    "pra status. Aguarde."
+)
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Reenvio de foto duplicada (continuidade do fluxo de M3)
 # ──────────────────────────────────────────────────────────────────────
 

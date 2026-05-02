@@ -184,6 +184,22 @@ class Professor(Base):
     sessoes_invalidadas_em: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )
+    # 2026-05-02 (M10 — dashboard professor via WhatsApp): telefone
+    # E.164 vinculado no portal pra receber comandos do dashboard via
+    # bot. `telefone_verificado_em` registra quando o portal gravou.
+    # `lgpd_aceito_em` registra quando professor confirmou LGPD via
+    # "sim" no WhatsApp — sem isso, bot não responde com dados de
+    # alunos. Migration i0a1b2c3d4e5 cria índice único parcial em
+    # `telefone` (WHERE telefone IS NOT NULL) pra evitar duplicidade.
+    telefone: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True,
+    )
+    telefone_verificado_em: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    lgpd_aceito_em: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
     ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(

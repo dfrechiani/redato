@@ -69,6 +69,14 @@ AWAITING_TURMA_CHOICE = "AWAITING_TURMA_CHOICE"  # aluno em múltiplas turmas
 #          "REVISANDO_TEXTO_MONTADO|<uuid_partida>".
 AGUARDANDO_CARTAS_PARTIDA = "AGUARDANDO_CARTAS_PARTIDA"
 REVISANDO_TEXTO_MONTADO = "REVISANDO_TEXTO_MONTADO"
+# M10 (2026-05-02 — dashboard professor via WhatsApp). FSM separado
+# pra não cruzar com o flow do aluno: phone vinculado a Professor
+# segue por aqui, phone vinculado a AlunoTurma segue pelos estados
+# anteriores. Lookup é por tabela: bot.py:handle_inbound primeiro
+# tenta Professor, se nao encontra cai pro fluxo de aluno.
+AGUARDANDO_LGPD_ACEITE_PROFESSOR = "AGUARDANDO_LGPD_PROFESSOR"
+READY_PROFESSOR = "READY_PROFESSOR"
+
 # Estados legados (Fase A) — descontinuados pós-M4, preservados pra
 # não quebrar testes existentes que ainda referenciam constantes.
 AWAITING_NOME = "AWAITING_NOME"
@@ -427,6 +435,20 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
     from redato_backend.whatsapp import portal_link as PL
 
     P.init_db()
+
+    # M10 (2026-05-02 — dashboard professor via WhatsApp): primeiro
+    # tenta resolver phone como Professor (1 query Postgres com índice
+    # único parcial em professores.telefone — barato). Se bate, fluxo
+    # vai pra `_handle_professor_inbound` antes mesmo de tocar SQLite
+    # de aluno. Se não bate, fluxo segue normal pro aluno.
+    #
+    # Decisão: esse lookup acontece a cada mensagem (sem cache). Em
+    # prod, volume é baixo (<100 prof, <1k msg/dia) — overhead é
+    # desprezível. Cache TTL pode entrar depois se latência incomodar.
+    professor = PL.find_professor_por_telefone(msg.phone)
+    if professor is not None:
+        return _handle_professor_inbound(msg, professor)
+
     aluno = P.get_aluno(msg.phone)
 
     # Caso 1: usuário novo
@@ -619,6 +641,91 @@ def _handle_nome_aluno(
         primeiro_nome=primeiro,
         turma_codigo=vinculo.turma_codigo,
         escola_nome=vinculo.escola_nome,
+    ))]
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Handler do dashboard professor (M10 — PROMPT 1/2: LGPD)
+# ──────────────────────────────────────────────────────────────────────
+
+# Regex pra aceitar consentimento LGPD (variações comuns em PT-BR).
+_LGPD_SIM_RE = re.compile(
+    r"^\s*(sim|concordo|aceito|ok|tudo bem)\s*$",
+    re.IGNORECASE,
+)
+# Regex pra rejeição — limpa telefone do banco.
+_LGPD_NAO_RE = re.compile(
+    r"^\s*(n[aã]o|nao concordo|recuso)\s*$",
+    re.IGNORECASE,
+)
+
+
+def _handle_professor_inbound(
+    msg: InboundMessage, professor,  # ProfessorVinculo
+) -> List[OutboundMessage]:
+    """Roteia mensagens vindas de telefone vinculado a Professor.
+
+    PROMPT 1/2 (esta entrega) cobre só:
+    - Aviso LGPD na 1ª mensagem (lgpd_aceito_em IS NULL)
+    - Aceite LGPD via "sim" → marca DB + responde com placeholder
+    - Negação via "não" → desvincula telefone (limpa 3 campos)
+    - Após aceite, qualquer mensagem cai no placeholder MSG_DASHBOARD_PLACEHOLDER
+
+    PROMPT 2 substitui o placeholder por dispatcher de comandos
+    (/turma, /aluno, /atividade, /ajuda).
+    """
+    from redato_backend.whatsapp import messages as MSG
+    from redato_backend.whatsapp import portal_link as PL
+
+    text = (msg.text or "").strip()
+
+    # Caminho 1 — professor ainda não aceitou LGPD.
+    if professor.lgpd_aceito_em is None:
+        # Tenta interpretar a resposta como aceite/negação.
+        if _LGPD_SIM_RE.match(text):
+            PL.marcar_lgpd_aceito_professor(professor.id)
+            return [
+                OutboundMessage(
+                    "Obrigado! Use o comando `/ajuda` pra ver os "
+                    "comandos disponíveis (em breve)."
+                ),
+                OutboundMessage(MSG.MSG_DASHBOARD_PLACEHOLDER.format(
+                    nome=professor.nome,
+                )),
+            ]
+        if _LGPD_NAO_RE.match(text):
+            # Desvincula telefone — usa o helper do auth (UPDATE no
+            # Postgres direto, sem session SQLAlchemy do bot).
+            from sqlalchemy.orm import Session
+            from redato_backend.portal.db import get_engine
+            from redato_backend.portal.models import Professor as ProfModel
+            with Session(get_engine()) as s:
+                p = s.get(ProfModel, professor.id)
+                if p is not None:
+                    p.telefone = None
+                    p.telefone_verificado_em = None
+                    p.lgpd_aceito_em = None
+                    s.commit()
+            return [OutboundMessage(MSG.MSG_LGPD_NEGADO)]
+
+        # Mensagem fora do esperado — qualquer outro texto OU foto
+        # durante AGUARDANDO_LGPD: reenvia o aviso (1ª vez) ou pede
+        # confirmação clara (2ª+ vez).
+        # Heurística: se professor ainda não respondeu nada (mensagem
+        # atual é a 1ª), envia AVISO_LGPD. Senão, envia RAPIDO_PEDIDO.
+        # Como não persistimos "1ª vez vs 2ª", olhamos pelo texto:
+        # se texto está vazio/só foto, é primeiro contato; senão já
+        # tentou algo que não bate em sim/não.
+        if not text:
+            return [OutboundMessage(MSG.AVISO_LGPD_PROFESSOR.format(
+                nome=professor.nome,
+            ))]
+        return [OutboundMessage(MSG.MSG_LGPD_REPETIR_PEDIDO)]
+
+    # Caminho 2 — professor já aceitou LGPD. PROMPT 2 vai expandir
+    # esse ramo pra dispatcher de comandos. Por enquanto, placeholder.
+    return [OutboundMessage(MSG.MSG_DASHBOARD_PLACEHOLDER.format(
+        nome=professor.nome,
     ))]
 
 

@@ -130,6 +130,85 @@ def list_alunos_ativos_por_telefone(phone: str) -> List[AlunoVinculo]:
     ]
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Professor (M10 — dashboard via WhatsApp)
+# ──────────────────────────────────────────────────────────────────────
+
+@dataclass
+class ProfessorVinculo:
+    """Dados mínimos pro bot processar mensagens de um professor:
+    `id` pra UPDATE de lgpd_aceito_em, `nome` pra mensagens
+    personalizadas, `escola_id` pra futuros comandos do dashboard,
+    `lgpd_aceito_em` pra decidir entre aviso LGPD vs comando."""
+    id: uuid.UUID
+    nome: str
+    escola_id: uuid.UUID
+    lgpd_aceito_em: Optional[datetime]
+
+
+def find_professor_por_telefone(phone: str) -> Optional[ProfessorVinculo]:
+    """Retorna Professor ativo com `telefone == phone`, OU None.
+
+    Usado em `bot.py:handle_inbound` ANTES da resolução de aluno —
+    se phone bate com Professor, fluxo segue pra `_handle_professor_inbound`
+    (LGPD + comandos do dashboard) em vez do fluxo de aluno.
+
+    Índice único parcial em `professores.telefone` garante 0 ou 1 row.
+    Se professor.ativo=False (ex.: desligado da escola), retorna None
+    — telefone órfão não responde.
+
+    DEFENSIVA: se Postgres não está disponível (ex.: tests sem
+    DATABASE_URL, ou DB caído em prod), retorna None silenciosamente
+    pra não derrubar o fluxo de aluno (que tem SQLite local). Erro
+    real é logado mas não levanta — bot deve continuar respondendo
+    alunos mesmo sem dashboard professor.
+    """
+    if not phone:
+        return None
+    try:
+        with _open_session() as session:
+            prof = session.scalar(
+                select(Professor).where(
+                    Professor.telefone == phone,
+                    Professor.ativo.is_(True),
+                )
+            )
+            if prof is None:
+                return None
+            return ProfessorVinculo(
+                id=prof.id, nome=prof.nome, escola_id=prof.escola_id,
+                lgpd_aceito_em=prof.lgpd_aceito_em,
+            )
+    except Exception as exc:  # noqa: BLE001
+        # DATABASE_URL ausente, conexão fechada, etc. Não derruba bot.
+        # logger é importado lazy no módulo — só quem mexe nessa função
+        # de bot toca: log de info pra Railway.
+        import logging as _logging
+        _logging.getLogger(__name__).debug(
+            "find_professor_por_telefone falhou (assumindo não-prof): %r",
+            exc,
+        )
+        return None
+
+
+def marcar_lgpd_aceito_professor(professor_id: uuid.UUID) -> None:
+    """Persiste o aceite LGPD do professor após ele responder "sim"
+    no WhatsApp ao aviso. Sem isso, bot não responde com dados.
+
+    Idempotente — se já tem `lgpd_aceito_em`, sobrescreve com novo
+    timestamp (raro mas aceito; melhor que ramificar com SELECT antes).
+    """
+    with _open_session() as session:
+        prof = session.get(Professor, professor_id)
+        if prof is None:
+            # Não levanta — bot pode tratar como falha graciosa,
+            # mas também é estado impossível em prática (foi
+            # encontrado por find_professor_por_telefone segundos antes).
+            return
+        prof.lgpd_aceito_em = _utc_now()
+        session.commit()
+
+
 def cadastrar_aluno_em_turma(
     *, turma_id: uuid.UUID, nome: str, telefone: str,
 ) -> tuple[AlunoVinculo, bool]:

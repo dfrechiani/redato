@@ -187,6 +187,28 @@ Cenários:
 - Código inválido/turma inativa: `MSG_CODIGO_TURMA_INVALIDO` /
   `MSG_TURMA_INATIVA`. Estado **não muda** — aluno continua READY.
 
+## Roteamento professor vs aluno (M10 — 2026-05-02)
+
+Antes de qualquer outra coisa, `handle_inbound` tenta resolver o
+telefone como Professor via `PL.find_professor_por_telefone(phone)`.
+Se bate (índice único parcial em `professores.telefone`), o fluxo
+inteiro segue por `_handle_professor_inbound` — LGPD primeiro,
+dispatcher de comandos depois (PROMPT 2).
+
+Se não bate, fluxo segue como aluno (busca em `alunos_turma`).
+
+**Por que essa ordem:** professor ganha prioridade pra evitar
+ambiguidade quando o telefone, por erro de cadastro, está em ambas
+as tabelas. O lookup é uma query Postgres por mensagem (com índice),
+overhead desprezível em volume atual.
+
+**Defensivo:** `find_professor_por_telefone` captura qualquer exceção
+(DB indisponível, DATABASE_URL ausente em test, etc.) e retorna
+`None`. Bot continua respondendo alunos via SQLite local mesmo se
+Postgres cair — log em DEBUG ajuda diagnosticar.
+
+Detalhes do fluxo: [`docs/redato/v3/HOWTO_dashboard_professor.md`](../../../../docs/redato/v3/HOWTO_dashboard_professor.md).
+
 ## Aluno em múltiplas turmas
 
 Aluno com 2+ vínculos ativos no portal (ex.: estuda em duas séries

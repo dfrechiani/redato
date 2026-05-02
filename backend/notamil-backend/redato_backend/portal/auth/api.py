@@ -15,7 +15,9 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import re
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
@@ -108,6 +110,11 @@ class MeResponse(BaseModel):
     papel: str
     escola_id: str
     escola_nome: str
+    # M10 — dashboard professor via WhatsApp. Só preenchido pra
+    # papel="professor" (coordenador não recebe). Frontend mostra/
+    # esconde campo de telefone na tela de perfil baseado nesses 2.
+    telefone: Optional[str] = None
+    lgpd_aceito_em: Optional[str] = None
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -374,10 +381,22 @@ def me(auth: AuthenticatedUser = Depends(get_current_user)) -> MeResponse:
     with _get_session() as session:
         escola = session.get(Escola, auth.escola_id)
         escola_nome = escola.nome if escola else ""
+        # M10 — preenche telefone + lgpd só pra professor
+        telefone: Optional[str] = None
+        lgpd_aceito_em: Optional[str] = None
+        if auth.papel == "professor":
+            prof = session.get(Professor, auth.user_id)
+            if prof is not None:
+                telefone = prof.telefone
+                lgpd_aceito_em = (
+                    prof.lgpd_aceito_em.isoformat()
+                    if prof.lgpd_aceito_em else None
+                )
     return MeResponse(
         id=str(auth.user_id), nome=auth.nome, email=auth.email,
         papel=auth.papel, escola_id=str(auth.escola_id),
         escola_nome=escola_nome,
+        telefone=telefone, lgpd_aceito_em=lgpd_aceito_em,
     )
 
 
@@ -452,3 +471,113 @@ def sair_todas_sessoes(
         user.sessoes_invalidadas_em = _utc_now()
         session.commit()
     return {"sucesso": True}
+
+
+# ──────────────────────────────────────────────────────────────────────
+# PATCH /auth/perfil/telefone (M10 — dashboard professor via WhatsApp)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Vincula telefone E.164 ao Professor pra acesso via WhatsApp. Após
+# vincular, qualquer mensagem do bot vinda desse telefone é roteada
+# pelo handler de professor (não de aluno) — primeira mensagem aciona
+# aviso LGPD que precisa ser aceito antes de receber dados.
+#
+# Coordenador NÃO tem campo telefone hoje (decisão de escopo: M10
+# atende só professor). Endpoint rejeita se papel != "professor".
+
+# Regex E.164 simples: "+" + 10 a 15 dígitos. Não valida prefixo de
+# país nem operadora — confiamos no professor e no Twilio que vai
+# rejeitar a mensagem se número for inválido.
+_TELEFONE_E164_RE = re.compile(r"^\+\d{10,15}$")
+
+
+class TelefoneRequest(BaseModel):
+    telefone: str
+
+
+@router.patch("/perfil/telefone")
+def patch_perfil_telefone(
+    body: TelefoneRequest,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> dict:
+    """Vincula telefone E.164 ao Professor logado.
+
+    400 se formato inválido (não bate `^\\+\\d{10,15}$`).
+    403 se usuário é coordenador (escopo M10 cobre só professor).
+    409 se telefone já está em outro Professor (índice único parcial).
+    Atualiza `professores.telefone` + `telefone_verificado_em=NOW()`.
+    `lgpd_aceito_em` permanece NULL — só preenche depois que professor
+    responde "sim" no WhatsApp ao aviso de LGPD.
+    """
+    if auth.papel != "professor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Dashboard via WhatsApp está disponível apenas pra "
+                "professor. Coordenador não tem essa opção."
+            ),
+        )
+    telefone = (body.telefone or "").strip()
+    if not _TELEFONE_E164_RE.match(telefone):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Telefone inválido. Use formato E.164: "
+                "'+' seguido de 10 a 15 dígitos. Ex.: +5561912345678"
+            ),
+        )
+
+    with _get_session() as session:
+        # Unicidade — outro Professor com mesmo telefone?
+        # Postgres tem índice único parcial mas validar antes dá
+        # mensagem mais clara que o IntegrityError do driver.
+        outro = session.scalar(
+            select(Professor).where(
+                Professor.telefone == telefone,
+                Professor.id != auth.user_id,
+            )
+        )
+        if outro is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Esse telefone já está vinculado a outra conta. "
+                    "Cada professor precisa de telefone único."
+                ),
+            )
+        prof = session.get(Professor, auth.user_id)
+        if prof is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Professor não encontrado",
+            )
+        prof.telefone = telefone
+        prof.telefone_verificado_em = _utc_now()
+        # Reset do LGPD — se vincular telefone novo, aceite anterior
+        # (eventualmente em outro número) deixa de valer. Próxima
+        # mensagem no WhatsApp vai pedir aceite de novo.
+        prof.lgpd_aceito_em = None
+        session.commit()
+    return {"telefone": telefone}
+
+
+@router.delete("/perfil/telefone", status_code=status.HTTP_204_NO_CONTENT)
+def delete_perfil_telefone(
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> Response:
+    """Desvincula telefone do Professor. Limpa os 3 campos
+    (telefone, telefone_verificado_em, lgpd_aceito_em).
+
+    Não-op silencioso se professor não tinha telefone vinculado.
+    Coordenador também recebe 204 (não tem telefone, mas DELETE de
+    coisa que não existe é idempotente).
+    """
+    with _get_session() as session:
+        if auth.papel == "professor":
+            prof = session.get(Professor, auth.user_id)
+            if prof is not None:
+                prof.telefone = None
+                prof.telefone_verificado_em = None
+                prof.lgpd_aceito_em = None
+                session.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

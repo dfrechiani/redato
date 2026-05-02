@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/Button";
@@ -12,8 +12,17 @@ import { ModalConfirm } from "@/components/ui/ModalConfirm";
 import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/hooks/useAuth";
 import { validarSenhaLocal } from "@/lib/auth-client";
-import { mudarSenha, sairTodasSessoes } from "@/lib/portal-client";
+import {
+  desvincularTelefone,
+  meDetalhe,
+  mudarSenha,
+  sairTodasSessoes,
+  vincularTelefone,
+} from "@/lib/portal-client";
 import { ApiError, type AuthenticatedUser } from "@/types/api";
+
+// Regex E.164 simples (mesma do backend): "+" + 10 a 15 dígitos.
+const TELEFONE_E164_RE = /^\+\d{10,15}$/;
 
 interface Props {
   user: AuthenticatedUser;
@@ -32,6 +41,33 @@ export function PerfilView({ user }: Props) {
 
   const [modalSairOpen, setModalSairOpen] = useState(false);
   const [sairLoading, setSairLoading] = useState(false);
+
+  // M10 — Telefone WhatsApp (só pra professor). Estado local — fetch
+  // inicial via /auth/me detalhe pra pegar telefone + lgpd_aceito_em
+  // (não cabem em useAuth zustand sem mexer no shape do AuthenticatedUser).
+  const [telefoneAtual, setTelefoneAtual] = useState<string | null>(null);
+  const [telefoneInput, setTelefoneInput] = useState("");
+  const [telefoneErr, setTelefoneErr] = useState<string | null>(null);
+  const [telefoneLoading, setTelefoneLoading] = useState(false);
+  const [lgpdAceitoEm, setLgpdAceitoEm] = useState<string | null>(null);
+  const [modalDesvincularOpen, setModalDesvincularOpen] = useState(false);
+
+  useEffect(() => {
+    if (user.papel !== "professor") return;
+    let cancel = false;
+    meDetalhe()
+      .then((me) => {
+        if (cancel) return;
+        setTelefoneAtual(me.telefone ?? null);
+        setLgpdAceitoEm(me.lgpd_aceito_em ?? null);
+      })
+      .catch(() => {
+        // Silencioso — se /auth/me falhar, card simplesmente não aparece
+        // ou aparece sem dados. Toast aqui seria ruído (não é erro do
+        // usuário).
+      });
+    return () => { cancel = true; };
+  }, [user.papel]);
 
   function resetForm() {
     setSenhaAtual("");
@@ -59,6 +95,51 @@ export function PerfilView({ user }: Props) {
       setSenhaErr((err2 as ApiError).detail || "Erro ao alterar senha.");
     } finally {
       setSenhaLoading(false);
+    }
+  }
+
+  // M10 — vincular telefone WhatsApp
+  async function onSubmitTelefone(e: FormEvent) {
+    e.preventDefault();
+    setTelefoneErr(null);
+    const tel = telefoneInput.trim();
+    if (!TELEFONE_E164_RE.test(tel)) {
+      setTelefoneErr(
+        "Use formato E.164: +55 + DDD + número, ex: +5561912345678",
+      );
+      return;
+    }
+    setTelefoneLoading(true);
+    try {
+      const res = await vincularTelefone(tel);
+      setTelefoneAtual(res.telefone);
+      setLgpdAceitoEm(null); // novo telefone exige novo aceite LGPD
+      setTelefoneInput("");
+      toast.success(
+        "Telefone vinculado. No WhatsApp você receberá um aviso ao "
+        + "usar pela primeira vez.",
+        { duration: 7000 },
+      );
+    } catch (err) {
+      const msg = (err as ApiError).detail || "Erro ao vincular.";
+      setTelefoneErr(msg);
+    } finally {
+      setTelefoneLoading(false);
+    }
+  }
+
+  async function onConfirmDesvincular() {
+    setTelefoneLoading(true);
+    try {
+      await desvincularTelefone();
+      setTelefoneAtual(null);
+      setLgpdAceitoEm(null);
+      toast.success("Telefone desvinculado.");
+    } catch (err) {
+      toast.error((err as ApiError).detail || "Erro ao desvincular.");
+    } finally {
+      setTelefoneLoading(false);
+      setModalDesvincularOpen(false);
     }
   }
 
@@ -120,6 +201,82 @@ export function PerfilView({ user }: Props) {
           campos são gerenciados via importação de planilha.
         </p>
       </Card>
+
+      {user.papel === "professor" && (
+        <Card>
+          <h2 className="font-display text-lg mb-1">
+            Telefone WhatsApp
+          </h2>
+          <p className="text-sm text-ink-400 mb-4">
+            Vincule um telefone pra acessar o dashboard via WhatsApp
+            (consultar turmas, alunos e atividades por mensagem).
+          </p>
+
+          {telefoneAtual ? (
+            <div className="space-y-3">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                <span className="font-mono text-xs uppercase tracking-wider text-ink-400">
+                  Vinculado:
+                </span>
+                <span className="text-base font-semibold">
+                  {telefoneAtual}
+                </span>
+                {lgpdAceitoEm ? (
+                  <span className="text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                    LGPD aceito
+                  </span>
+                ) : (
+                  <span className="text-xs text-amber-800 bg-amber-50 px-2 py-0.5 rounded">
+                    Aguardando aceite LGPD
+                  </span>
+                )}
+              </div>
+              {!lgpdAceitoEm && (
+                <p className="text-xs text-ink-400">
+                  Mande qualquer mensagem pelo WhatsApp e responda &quot;sim&quot;
+                  ao aviso pra ativar o dashboard.
+                </p>
+              )}
+              <Button
+                variant="ghost"
+                onClick={() => setModalDesvincularOpen(true)}
+                disabled={telefoneLoading}
+              >
+                Desvincular
+              </Button>
+            </div>
+          ) : (
+            <form
+              onSubmit={onSubmitTelefone}
+              className="flex flex-col gap-3"
+              noValidate
+            >
+              <FormField
+                label="Telefone"
+                hint="Formato E.164: +55 + DDD + número (ex: +5561912345678)"
+                error={telefoneErr ?? undefined}
+              >
+                <Input
+                  type="tel"
+                  value={telefoneInput}
+                  onChange={(e) => setTelefoneInput(e.target.value)}
+                  placeholder="+5561912345678"
+                  disabled={telefoneLoading}
+                />
+              </FormField>
+              <div>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={telefoneLoading}
+                >
+                  {telefoneLoading ? "Salvando…" : "Salvar"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </Card>
+      )}
 
       <Card>
         <h2 className="font-display text-lg mb-1">Segurança</h2>
@@ -217,6 +374,23 @@ export function PerfilView({ user }: Props) {
           </>
         }
         confirmLabel="Encerrar todas"
+        confirmVariant="danger"
+      />
+
+      {/* M10 — Modal desvincular telefone WhatsApp */}
+      <ModalConfirm
+        open={modalDesvincularOpen}
+        onClose={() => !telefoneLoading && setModalDesvincularOpen(false)}
+        onConfirm={onConfirmDesvincular}
+        loading={telefoneLoading}
+        title="Desvincular telefone do WhatsApp?"
+        description={
+          <>
+            Você não vai mais receber comandos do dashboard pelo WhatsApp.
+            Pode vincular outro telefone depois.
+          </>
+        }
+        confirmLabel="Desvincular"
         confirmVariant="danger"
       />
     </div>
