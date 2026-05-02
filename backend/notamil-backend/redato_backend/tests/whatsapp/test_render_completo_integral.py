@@ -281,3 +281,108 @@ def test_render_foco_c2_continua_funcionando():
     # Não deve ser tratado como completo_integral (que mostraria
     # "Redação completa")
     assert "Redação completa" not in out
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Truncamento (Passo 7b — fix em 2026-05-01)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Antes do fix: `_OF14_FB_CHARS=200` cortava 5x por mensagem com
+# feedback típico do FT (250-350 chars). Investigação:
+# docs/redato/v3/INVESTIGATION_truncamento_whatsapp.md.
+# Fix: cap pra 450 (cobre 95% dos casos), `_OF14_TRECHO_CHARS` pra 120,
+# `_OF14_COMENT_CHARS` pra 140, e `_truncate` ganha janela de busca
+# proporcional ao limite + fallback pra pontuação.
+
+_FB_FT_TIPICO_280 = (
+    "Texto bem escrito, com poucos desvios gramaticais detectáveis. "
+    "Atente-se à concordância em períodos longos para subir a nota. "
+    "Trabalhe também as marcas de oralidade ainda presentes, "
+    "especialmente no terceiro parágrafo."
+)
+
+
+def test_render_of14_feedback_tipico_ft_nao_trunca():
+    """Feedback típico do FT (250-300 chars) deve renderizar inteiro
+    sem ellipsis. Antes do fix, cap=200 cortava em todo feedback."""
+    payload = {
+        f"c{i}_audit": {
+            "nota": 160, "feedback_text": _FB_FT_TIPICO_280,
+            "evidencias": [],
+        }
+        for i in range(1, 6)
+    }
+    out = render_aluno_whatsapp(payload)
+    assert "…" not in out, (
+        f"feedback típico FT (~280 chars) ainda truncando — out:\n{out}"
+    )
+    # Cada feedback original aparece inteiro (busca por substring única)
+    assert "especialmente no terceiro parágrafo." in out
+
+
+def test_render_of14_feedback_acima_do_cap_trunca_uma_vez_por_comp():
+    """Feedback acima do cap (450 chars) ainda corta — esperado.
+    Cada competência tem 1 ellipsis. Total 5."""
+    fb_grande = _FB_FT_TIPICO_280 * 3  # ~654 chars (acima de 450)
+    assert len(fb_grande) > 450  # confirma que está acima do cap
+    payload = {
+        f"c{i}_audit": {
+            "nota": 160, "feedback_text": fb_grande, "evidencias": [],
+        }
+        for i in range(1, 6)
+    }
+    out = render_aluno_whatsapp(payload)
+    # 1 ellipsis por competência (5 totais), porque cada um corta 1x
+    assert out.count("…") == 5, (
+        f"esperado 5 ellipses pra feedback >cap, got {out.count('…')}"
+    )
+
+
+def test_truncate_corta_em_fronteira_de_palavra_quando_possivel():
+    """Frase normal com espaços deve cortar em fronteira de palavra,
+    não no meio. Janela de busca = 50% do limit (vs 30 fixos antes)."""
+    from redato_backend.whatsapp.render import _truncate
+    txt = "frase normal que tem palavras que devem cortar em fronteira de palavra"
+    out = _truncate(txt, 30)
+    # Antes do '…' deve haver fim de palavra (sem letra cortada)
+    body = out.rstrip("…")
+    # Última char antes do '…' não deve ser meio de palavra (heurística:
+    # se cabe nos limites, palavra inteira aparece). Verifica que
+    # o corte casa com fronteira do input.
+    assert txt.startswith(body), f"corte fora do input: {body!r}"
+    # body termina em palavra completa do input — garante que a próxima
+    # char no input ORIGINAL é espaço (ou body é o input inteiro).
+    next_idx = len(body)
+    if next_idx < len(txt):
+        # O caractere após o corte deve ser espaço (corte limpo)
+        # OU pontuação (também aceita).
+        assert txt[next_idx] in (" ", ".", ",", ";", ":", "-"), (
+            f"corte no meio de palavra: prev={body[-10:]!r}, "
+            f"next_char={txt[next_idx]!r}"
+        )
+
+
+def test_truncate_palavra_gigante_sem_espaco_corta_mas_termina_com_ellipsis():
+    """Palavra de 60 chars sem espaço próximo: aceita corte mid-palavra,
+    mas garante que termina com '…' e não cai em loop infinito."""
+    from redato_backend.whatsapp.render import _truncate
+    txt = "x" + "y" * 100 + "z"  # 102 chars contínuos sem espaço
+    out = _truncate(txt, 30)
+    assert len(out) <= 30
+    assert out.endswith("…")
+    # Output não cai abaixo do mínimo razoável (≥ 1/3 do limit)
+    assert len(out) >= 10
+
+
+def test_truncate_usa_pontuacao_como_fronteira():
+    """Fallback pra '.' quando não há espaço na zona ideal."""
+    from redato_backend.whatsapp.render import _truncate
+    txt = "frase.um.dois.tres.quatro.cinco.seis.sete.oito.nove.dez"
+    out = _truncate(txt, 30)
+    body = out.rstrip("…")
+    # Verifica que cortou em '.' (último char do body é palavra completa)
+    next_idx = len(body)
+    if next_idx < len(txt):
+        assert txt[next_idx] == ".", (
+            f"esperado corte em ponto, got next_char={txt[next_idx]!r}"
+        )

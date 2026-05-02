@@ -75,11 +75,32 @@ def _faixa_total_800(total: int) -> str:
 
 
 def _truncate(text: str, limit: int) -> str:
+    """Trunca `text` em `limit` chars, sufixando '…'. Tenta fronteira
+    semântica (espaço/pontuação) antes de quebrar palavra.
+
+    Janela de busca = max(30, limit//2) — antes era 30 fixo, que falha em
+    palavras grandes (>30 chars sem espaço próximo). Fallback pra
+    pontuação (".", ",", ";", ":", "-") quando não há espaço na zona.
+    Investigação: docs/redato/v3/INVESTIGATION_truncamento_whatsapp.md §6.c
+    """
     if len(text) <= limit:
         return text
     cut = text[: limit - 1].rstrip()
-    if " " in cut[-30:]:
-        cut = cut.rsplit(" ", 1)[0]
+    janela = max(30, limit // 2)
+    zona_inicio = max(0, len(cut) - janela)
+    # Mínimo: não cortar abaixo de limit/3 — manter ao menos algum
+    # conteúdo pra não virar "…" sozinho. Investigada empiricamente.
+    minimo = max(1, limit // 3)
+    melhor_corte = -1
+    for sep in (" ", ".", ",", ";", ":", "-"):
+        i = cut.rfind(sep)
+        if i >= zona_inicio and i >= minimo:
+            melhor_corte = max(melhor_corte, i)
+            if sep == " ":
+                # Espaço é fronteira ideal; não procura mais.
+                break
+    if melhor_corte > 0:
+        cut = cut[:melhor_corte].rstrip()
     return cut + "…"
 
 
@@ -349,9 +370,16 @@ def _render_transformacao_badge(score: int) -> str:
 # Limite mais generoso pra OF14 — 5 competências × ~400 chars cada ainda
 # cabe nos 1600 chars/chunk do Twilio com chunking de bot.py.
 _OF14_MAX_CHARS = 2800
-_OF14_FB_CHARS = 200          # feedback_text resumido por competência
-_OF14_TRECHO_CHARS = 80       # citação literal
-_OF14_COMENT_CHARS = 100      # comentário sobre o trecho
+
+# Caps por elemento (2026-05-01): aumentados após investigação
+# `INVESTIGATION_truncamento_whatsapp.md`. Antes _OF14_FB_CHARS=200
+# cortava 5x por mensagem com feedback típico do FT (250-350 chars),
+# apesar de 1600+ chars de folga até o cap final. 450 cobre 95% dos
+# casos do FT BTBOS5VF; budget dinâmico em `_render_completo_integral`
+# omite evidências quando soma estoura cap final.
+_OF14_FB_CHARS = 450          # feedback_text por competência
+_OF14_TRECHO_CHARS = 120      # citação literal (antes 80 — cortava frase média)
+_OF14_COMENT_CHARS = 140      # comentário sobre o trecho
 _OF14_EVID_PER_COMP = 2       # até 2 evidências por competência
 
 
