@@ -1,6 +1,6 @@
 # Wireframes dos livros — sistema visual `mf-redato-page`
 
-**Última atualização:** 2026-05-02
+**Última atualização:** 2026-05-02 (3S migrado)
 
 ## TL;DR
 
@@ -25,7 +25,7 @@ Cada MF ocupa 1 página A4 dedicada (`.mf-redato-page`) com:
 |---|---|---|
 | `LIVRO_1S_PROF_v3_COMPLETO-checkpoints.html` | `mf-redato-page` completo (com QR) | ✅ Padrão de referência |
 | `LIVRO_ATO_2S_PROF.html` | `mf-redato-page` completo (sem QR) | ✅ **Migrado em 2026-05-02 (commit feat(livros))** |
-| `LIVRO_ATO_3S_v8_PROF (1).html` | Sistema antigo `.redato-bottom` | ⏳ **Pendente** — próxima sessão |
+| `LIVRO_ATO_3S_PROF.html` | `mf-redato-page` completo (sem QR) | ✅ **Migrado em 2026-05-02** |
 
 ## Migração 2S → `mf-redato-page` (2026-05-02)
 
@@ -97,17 +97,81 @@ QR foi considerado mas descartado:
 CSS `.mf-redato-bottom-qr` ainda existe no 1S (placeholder xadrez)
 mas foi **omitido** ao migrar pro 2S.
 
-## Próxima sessão (3S)
+## Migração 3S → `mf-redato-page` (2026-05-02)
 
-Aplicar mesmo sistema no `LIVRO_ATO_3S_v8_PROF (1).html`. Considerar:
+### CSS adicionado
 
-- 11 oficinas seedadas em `migrations/versions/j0a1b2c3d4e5_seed_missoes_3s`
-  (ver `oficinas_3s_status.md`)
-- 4 simulados (OF09, OF11, OF14, OF15) usam modo `completo` — sem
-  cards, igual OF13 do 2S
-- Dossiê (OF03, OF04, OF05, OF06) provavelmente leva 3 cards cada
-  (similar ao Foco C2 do 2S)
-- Jogo do Corretor (OF07) — depende do conteúdo pedagógico do livro
-- Revisão Cooperativa (OF10) — definir cards baseado no fluxo
-- OF02 (chat-only), OF08 (foco_c1 adiado), OF12/OF13 (cartas
-  argumentativas pendentes) — fora do escopo de cards
+Bloco `.mf-redato-bottom*` copiado do 2S em
+`LIVRO_ATO_3S_v8_PROF (1).html:~3345-3445` (após as regras
+`.mf-redato-card.lines-N`, antes de `.mf-redato-step-marker`).
+**Sem `.mf-redato-bottom-qr`.** Page-break preventivo aplicado:
+`.mf-redato-page` recebeu `page-break-before: always`,
+`page-break-after: avoid` e `page-break-inside: avoid`; `min-height: 277mm`
+removido em `@media print`.
+
+### 11 MFs avaliáveis migradas (mapping definitivo)
+
+| Código | Modo (banco) | Cards estruturais | Texto corrido |
+|---|---|---|---|
+| **ATO3·OF01·MF** Diagnóstico | `completo_parcial` | 1 card único `lines-9` (autoavaliação metacognitiva) | — |
+| **ATO3·OF03·MF** Dossiê: Repertório + Análise | `foco_c2` | 1·CONTEXTUALIZAÇÃO (lines-2), 2·DADO+REPERTÓRIO (lines-3), 3·AFETADOS (lines-2), 4·TESE (lines-2) | 5 write-line |
+| **ATO3·OF04·MF** Dossiê: Tema + Problemática | `foco_c2` | 1·INTRODUÇÃO 4 elementos (lines-4), 2·ARGUMENTO 1 (lines-4) | 5 write-line |
+| **ATO3·OF05·MF** Dossiê: Agentes + Proposta | `foco_c5` | 1·AGENTE+AÇÃO (lines-2), 2·MEIO (lines-2), 3·FINALIDADE (lines-2) | 5 write-line |
+| **ATO3·OF06·MF** Dossiê: Proposta Completa | `foco_c5` | 1·PROBLEMA (lines-2), 2·PROPOSTA C/ 5 ELEMENTOS (lines-7) | 4 write-line |
+| **ATO3·OF07·MF** Jogo do Corretor | `completo_parcial` | 1·ERROS PEGOS (lines-3), 2·CORREÇÕES APLICADAS (lines-4), 3·CHECKLIST PESSOAL (lines-3) | 4 write-line |
+| **ATO3·OF09·MF** Simulado 1 (Saúde Mental) | `completo` | Sem cards (redação completa) | `redacao-sheet` 30 linhas numeradas |
+| **ATO3·OF10·MF** Revisão pós-protocolo solo | `completo_parcial` | 1·SCANNER+DIAGNÓSTICO (lines-3), 2·SOLUÇÃO (lines-2), 3·REESCRITA (lines-5) | 4 write-line |
+| **ATO3·OF11·MF** Simulado 2 + IA (Inclusão Digital, V2) | `completo` | Sem cards (V2 é a avaliada — V1 fica como rascunho fora do `.mf-redato-page`) | `redacao-sheet` 30 linhas numeradas |
+| **ATO3·OF14·MF** Simulado Final 1 (Igualdade de Gênero) | `completo` | Sem cards | `redacao-sheet` 30 linhas numeradas |
+| **ATO3·OF15·MF** Simulado Final 2 + Fechamento (Preservação Ambiental) | `completo` | Sem cards | `redacao-sheet` 30 linhas numeradas |
+
+### Por que cards no Dossiê (OF03–OF06) e na revisão solo (OF10)
+
+Mesma lógica do 2S — andaime visual + pedagógico que força preenchimento
+por etapa antes do texto corrido:
+- **OF03** força explorar contextualização → repertório → afetados → tese
+  separadamente (4 cards = 4 elementos canônicos da introdução ENEM)
+- **OF04** consolida em 2 cards (introdução completa + 1º desenvolvimento)
+- **OF05** decompõe a proposta em AGENTE+AÇÃO / MEIO / FINALIDADE (3
+  cards = núcleos da C5)
+- **OF06** valida proposta completa com 5 elementos num único card grande
+  `lines-7` (1·PROBLEMA + 2·PROPOSTA)
+- **OF10** consolida os 5 passos do protocolo de revisão solo em 3 cards
+  (SCANNER+DIAG / SOLUÇÃO / REESCRITA) + texto corrido pra continuar
+  reescrita e validar resultado
+
+### Por que sem cards em OF01 (Diagnóstico) e nos 4 Simulados (OF09, OF11, OF14, OF15)
+
+- **OF01 Diagnóstico:** mesmo argumento do 2S. Mas no 3S optou-se por 1
+  card único `lines-9` (em vez de 8 missao-writing-line do 2S) com hint
+  metacognitivo explícito ("onde estou hoje, qual competência é minha
+  maior lacuna, qual meta concreta pra o ano"). Mantém abertura
+  pedagógica + dá enquadramento visual.
+- **OF09/OF11/OF14/OF15 Simulados:** redação dissertativa completa
+  (formato ENEM, 30 linhas numeradas) não admite andaime — aluno
+  decide quebras de parágrafo, e o `redacao-sheet` com `rl-num` dá a
+  estrutura visual já consagrada. `mf-redato-page` envolve o
+  `redacao-sheet` adicionando fiduciais + rodapé `.completo`. **OF11
+  exceção:** tem V1 (rascunho) + V2 (após análise IA); só V2 vira
+  `mf-redato-page` (V2 é a avaliada por OCR; V1 fica fora como folha
+  de rascunho).
+
+### Por que sem migração em OF02, OF08, OF12, OF13
+
+Mantidos com sistema legacy `.redato-bottom`:
+- **OF02** Conectivos + Coesão — chat-only sem produção avaliável
+- **OF08** Análise de Erros Comuns — depende do modo `foco_c1` (adiado)
+- **OF12, OF13** Jogos de Redação Completo — usam sistema de cartas
+  argumentativas 3S (slots A/AÇ/ME/F) ainda não modelado no banco
+
+Ver `oficinas_3s_status.md` pras pendências detalhadas.
+
+### Pequenas variações vs 2S
+
+- **`redacao-sheet` dentro de `.mf-redato-page`** (Simulados): 3S
+  preserva a folha ENEM canônica (30 linhas numeradas com `rl-num`)
+  envolvida pela página fiducial. 2S não tinha simulados — foi a
+  primeira vez que essa combinação apareceu.
+- **OF01 com 1 card lines-9** (em vez de 8 missao-writing-line do 2S
+  Diagnóstico): mantém abertura mas acrescenta um único card-âncora
+  com hint metacognitivo pra ajudar OCR a delimitar o texto.
