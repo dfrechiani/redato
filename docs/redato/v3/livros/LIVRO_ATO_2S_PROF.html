@@ -1376,8 +1376,13 @@ table.redato-mapa .mini-selo {
 
 /* Cada página de Missão Final é uma seção com page-break controlado */
 .mf-redato-page {
-  page-break-before: auto;
-  page-break-after: auto;
+  /* Bug fix 2026-05-02: cards + rodápé caíam em páginas separadas.
+     - page-break-before: always força MF começar página nova
+     - page-break-inside: avoid mantém MF inteira junta
+     - page-break-after: avoid cola próximo conteúdo (sem página em branco) */
+  page-break-before: always;
+  page-break-after: avoid;
+  page-break-inside: avoid;
   position: relative;
   padding: 1.5rem 1rem;
   margin: 1.2rem 0;
@@ -1422,8 +1427,12 @@ table.redato-mapa .mini-selo {
 /* Caixa de escrita com tab — base */
 .mf-redato-card {
   position: relative; background: #ffffff;
-  border: 1.5pt solid var(--missao); margin-bottom: 0.9rem;
+  border: 1.5pt solid var(--missao);
+  /* Bug fix 2026-05-02: margem reduzida 0.9 → 0.6 + page-break-after
+     pra cards consecutivos não se separarem do rodapé seguinte. */
+  margin-bottom: 0.6rem;
   page-break-inside: avoid;
+  page-break-after: avoid;
 }
 .mf-redato-card-tab {
   display: inline-block; background: var(--missao); color: var(--redato-lime);
@@ -1462,8 +1471,11 @@ table.redato-mapa .mini-selo {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  padding: 0.65rem 0.85rem;
-  margin: 1.2rem 0 0.5rem 0;
+  /* Bug fix 2026-05-02: padding/margin compactados pra ajudar a
+     caber junto dos cards no mesmo A4 (page-break-inside:avoid no
+     pai força). page-break-before:avoid mantido como segurança extra. */
+  padding: 0.5rem 0.75rem;
+  margin: 0.6rem 0 0 0;
   border-radius: 8px;
   page-break-inside: avoid;
   page-break-before: avoid;
@@ -1584,9 +1596,12 @@ table.redato-mapa .mini-selo {
 
 /* Print — força os fiduciais e cards a serem mantidos sem page-break interno */
 @media print {
-  .mf-redato-page {
-    min-height: 277mm;
-  }
+  /* Bug fix 2026-05-02: REMOVIDO min-height:277mm. Causava expansão
+     além do A4 quando .mf-redato-page começava no meio de página
+     (277mm A PARTIR daquele ponto = atravessava 297mm do A4 → rodapé
+     caía sozinho na próxima página). page-break-inside:avoid +
+     page-break-before:always (no desktop rule do .mf-redato-page)
+     já garantem que cada MF fica numa página dedicada. */
   .mf-redato-card,
   .redato-bottom,
   .mf-redato-continues {
