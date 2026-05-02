@@ -65,6 +65,28 @@ _MISSAO_TO_MODE: Dict[str, MissionMode] = {
     # 2S — M9.1 (foco_c2 desbloqueado).
     "RJ2_OF04_MF": MissionMode.FOCO_C2,    # Fontes e Citações
     "RJ2_OF06_MF": MissionMode.FOCO_C2,    # Da Notícia ao Artigo
+    # 3S — 2026-05-02 (migration j0a1b2c3d4e5_seed_missoes_3s).
+    # 11 das 15 oficinas do livro. Pendentes (ver
+    # docs/redato/v3/oficinas_3s_status.md):
+    # - OF02 (chat-only, sem produção avaliável)
+    # - OF08 (foco_c1, modo ainda adiado — exige enum + tool schema
+    #   + scoring branch + DEFAULT_MODEL; sessão dedicada futura)
+    # - OF12, OF13 (jogos com cartas argumentativas — sistema 3S
+    #   diferente do 1S)
+    # Os Simulados (OF09/OF11/OF14/OF15) usam COMPLETO_INTEGRAL —
+    # passam pelo path do FT BTBOS5VF (rollback REDATO_OF14_BACKEND=
+    # claude também aplica).
+    "RJ3_OF01_MF": MissionMode.COMPLETO_PARCIAL,  # Redato — corretor de bolso
+    "RJ3_OF03_MF": MissionMode.FOCO_C2,           # Dossiê: Repertório + Análise
+    "RJ3_OF04_MF": MissionMode.FOCO_C2,           # Dossiê: Tema + Problemática
+    "RJ3_OF05_MF": MissionMode.FOCO_C5,           # Dossiê: Agentes + Proposta
+    "RJ3_OF06_MF": MissionMode.FOCO_C5,           # Dossiê: Proposta Completa
+    "RJ3_OF07_MF": MissionMode.COMPLETO_PARCIAL,  # Jogo do Corretor
+    "RJ3_OF09_MF": MissionMode.COMPLETO_INTEGRAL, # Simulado 1
+    "RJ3_OF10_MF": MissionMode.COMPLETO_PARCIAL,  # Revisão Cooperativa
+    "RJ3_OF11_MF": MissionMode.COMPLETO_INTEGRAL, # Simulado 2 + IA
+    "RJ3_OF14_MF": MissionMode.COMPLETO_INTEGRAL, # Simulado Final 1
+    "RJ3_OF15_MF": MissionMode.COMPLETO_INTEGRAL, # Simulado Final 2
 }
 
 
