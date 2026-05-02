@@ -1453,6 +1453,88 @@ table.redato-mapa .mini-selo {
 .mf-redato-card.lines-9 .mf-redato-card-lines { min-height: 134pt; }
 .mf-redato-card.lines-11 .mf-redato-card-lines { min-height: 162pt; }
 
+/* ═══════════════════════════════════════════════════════════════
+   RODAPÉ DA PÁGINA REDATO — selo + código + instrução de foto
+   Migrado do LIVRO_1S_PROF_v3 em 2026-05-02. SEM .mf-redato-bottom-qr
+   (Daniel descartou QR no design final).
+   ═══════════════════════════════════════════════════════════════ */
+.mf-redato-bottom {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  margin: 1.2rem 0 0.5rem 0;
+  border-radius: 8px;
+  page-break-inside: avoid;
+  page-break-before: avoid;
+}
+.mf-redato-bottom.foco {
+  background: var(--redato-ink);
+  color: var(--redato-lime);
+  border: 1px solid var(--redato-ink);
+}
+.mf-redato-bottom.completo {
+  background: var(--redato-lime);
+  color: var(--redato-ink);
+  border: 1px solid var(--redato-lime-deep);
+}
+.mf-redato-bottom.diag {
+  background: var(--redato-diag);
+  color: #fff;
+  border: 1px solid var(--redato-diag);
+}
+.mf-redato-bottom-info {
+  flex: 1;
+  min-width: 0;
+}
+.mf-redato-bottom-selo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.mf-redato-bottom-selo::before {
+  content: '';
+  width: 7pt;
+  height: 7pt;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.mf-redato-bottom.foco .mf-redato-bottom-selo::before { background: var(--redato-lime); }
+.mf-redato-bottom.completo .mf-redato-bottom-selo::before { background: var(--redato-ink); }
+.mf-redato-bottom.diag .mf-redato-bottom-selo::before { background: #fff; }
+.mf-redato-bottom-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.15rem;
+}
+.mf-redato-bottom-instr {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 0.62rem;
+  line-height: 1.4;
+  margin: 0;
+  opacity: 0.85;
+}
+.mf-redato-bottom-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+  text-align: right;
+  flex-shrink: 0;
+  align-self: flex-start;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
 /* Indicador "▼ AGORA REESCREVA" entre caixas */
 .mf-redato-step-marker {
   font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
@@ -3002,6 +3084,15 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
     <span class="check-item"><span class="check-box"></span> Meu texto tem começo, meio e fim</span>
   </div>
 
+  <div class="mf-redato-bottom diag">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Diagnóstico</div>
+      <div class="mf-redato-bottom-code">ATO2·OF01·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato analisa seu parágrafo autoavaliativo e gera um mapa pessoal de pontos fortes e fracos antes da Oficina 2. Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Modo Diagnóstico — Redato</div>
+  </div>
+
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
 </div>
 
@@ -3033,15 +3124,6 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   </div>
 </div>
 
-
-<div class="redato-bottom diag">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Diagnóstico</span>
-    <div class="redato-bottom-code">ATO2·OF01·MF</div>
-    <p class="redato-bottom-instr">A Redato analisa seu parágrafo autoavaliativo e gera um mapa pessoal de pontos fortes e fracos antes da Oficina 2. Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Modo Diagnóstico — Redato</span>
-</div>
 
 <div class="box box-discover">
   <span class="box-label">Transição para a Oficina 2</span>
@@ -5546,19 +5628,41 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <span class="mf-redato-fiducial tl"></span><span class="mf-redato-fiducial tr"></span>
 
   <span class="prod-label">Tema escolhido: ____</span>
+
+  <div class="mf-redato-card lines-2">
+    <div class="mf-redato-card-tab">1 · TESE</div>
+    <div class="mf-redato-card-hint">Qual posição você defende sobre o tema?</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-3">
+    <div class="mf-redato-card-tab">2 · CITAÇÃO</div>
+    <div class="mf-redato-card-hint">Discurso direto (com aspas) OU paráfrase + fonte verificável</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-4">
+    <div class="mf-redato-card-tab">3 · ANÁLISE</div>
+    <div class="mf-redato-card-hint">Como a citação sustenta a tese? Não deixe a citação solta no texto.</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <p class="mf-redato-step-marker">▼ AGORA, ESCREVA O PARÁGRAFO INTEGRANDO OS 3 ELEMENTOS</p>
   <div class="write-lines">
     <div class="write-line"></div>
     <div class="write-line"></div>
     <div class="write-line"></div>
     <div class="write-line"></div>
     <div class="write-line"></div>
-    <div class="write-line"></div>
-    <div class="write-line"></div>
-    <div class="write-line"></div>
-    <div class="write-line"></div>
-    <div class="write-line"></div>
-    <div class="write-line"></div>
-    <div class="write-line"></div>
+  </div>
+
+  <div class="mf-redato-bottom foco">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Foco C2</div>
+      <div class="mf-redato-bottom-code">ATO2·OF04·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato avalia se a citação que você integrou é pertinente e está corretamente formatada (Competência 2 do ENEM). Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Foco em competência — Redato</div>
   </div>
 
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
@@ -5571,15 +5675,6 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <p><strong>Nível insuficiente:</strong> A citação está solta no texto, sem conexão com o argumento, ou apresenta erro de formatação (discurso direto sem aspas, discurso indireto mantendo pronomes de 1ª pessoa).</p>
 </div>
 
-
-<div class="redato-bottom comp">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Foco C2</span>
-    <div class="redato-bottom-code">ATO2·OF04·MF</div>
-    <p class="redato-bottom-instr">A Redato avalia se a citação que você integrou é pertinente e está corretamente formatada (Competência 2 do ENEM). Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Foco em competência — Redato</span>
-</div>
 
 <div class="box box-prof">
   <span class="box-label">🟢 Conexão com a próxima oficina</span>
@@ -7116,10 +7211,38 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <span class="mf-redato-fiducial tl"></span><span class="mf-redato-fiducial tr"></span>
 
   <span class="prod-label">Tema escolhido: ____</span>
+
+  <div class="mf-redato-card lines-3">
+    <div class="mf-redato-card-tab">1 · NOTÍCIA-BASE</div>
+    <div class="mf-redato-card-hint">Resuma a notícia em 2-3 frases — fato concreto que serve de repertório</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-2">
+    <div class="mf-redato-card-tab">2 · TESE</div>
+    <div class="mf-redato-card-hint">Qual sua opinião sobre o tema da notícia? (Cobre C2 + C3)</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-4">
+    <div class="mf-redato-card-tab">3 · ARGUMENTO</div>
+    <div class="mf-redato-card-hint">Como a notícia sustenta sua tese? Faça a transição argumentativa.</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <p class="mf-redato-step-marker">▼ AGORA, ESCREVA O PARÁGRAFO INTEGRANDO OS 3 ELEMENTOS</p>
   <div class="write-lines">
     <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
     <div class="write-line"></div><div class="write-line"></div>
+  </div>
+
+  <div class="mf-redato-bottom foco">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Foco C2 · C3</div>
+      <div class="mf-redato-bottom-code">ATO2·OF06·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato avalia tema (C2) e tese (C3) na sua introdução dissertativa, com sugestões de repertório. Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Foco em competência — Redato</div>
   </div>
 
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
@@ -7130,16 +7253,6 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <p><strong>Excelente:</strong> Contextualização com dado ou referência verificável, tese clara ao final do parágrafo, registro formal, repertório produtivo (gera desenvolvimento). Transição fluida entre contextualização e tese.</p>
   <p><strong>Adequado:</strong> Tese presente, mas contextualização genérica ou repertório superficial. Registro formal mantido.</p>
   <p><strong>Insuficiente:</strong> Sem tese clara, repertório ausente ou copiado, registro informal, ou estrutura de artigo de opinião (1ª pessoa) em vez de dissertação.</p>
-</div>
-
-
-<div class="redato-bottom comp">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Foco C2 · C3</span>
-    <div class="redato-bottom-code">ATO2·OF06·MF</div>
-    <p class="redato-bottom-instr">A Redato avalia tema (C2) e tese (C3) na sua introdução dissertativa, com sugestões de repertório. Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Foco em competência — Redato</span>
 </div>
 
 <div class="box box-prof">
@@ -7997,11 +8110,38 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <span class="mf-redato-fiducial tl"></span><span class="mf-redato-fiducial tr"></span>
 
   <span class="prod-label">Tema escolhido: ____ · Tipo de argumento: ☐ Pragmático ☐ Principiológico</span>
+
+  <div class="mf-redato-card lines-2">
+    <div class="mf-redato-card-tab">1 · TESE</div>
+    <div class="mf-redato-card-hint">Tópico frasal — uma frase clara e objetiva</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-4">
+    <div class="mf-redato-card-tab">2 · ARGUMENTO 1</div>
+    <div class="mf-redato-card-hint">Premissa + repertório (dado ou referência verificável)</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-4">
+    <div class="mf-redato-card-tab">3 · ARGUMENTO 2</div>
+    <div class="mf-redato-card-hint">Outro tipo de argumento — encadeie sem salto lógico</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <p class="mf-redato-step-marker">▼ AGORA, ESCREVA O PARÁGRAFO INTEGRANDO OS 3 ELEMENTOS</p>
   <div class="write-lines">
     <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div>
+  </div>
+
+  <div class="mf-redato-bottom foco">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Foco C3</div>
+      <div class="mf-redato-bottom-code">ATO2·OF07·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato avalia a estrutura do seu parágrafo argumentativo (tópico frasal, premissas, repertório, tipo de argumento). Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Foco em competência — Redato</div>
   </div>
 
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
@@ -8015,14 +8155,6 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
 </div>
 
 
-<div class="redato-bottom comp">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Foco C3</span>
-    <div class="redato-bottom-code">ATO2·OF07·MF</div>
-    <p class="redato-bottom-instr">A Redato avalia a estrutura do seu parágrafo argumentativo (tópico frasal, premissas, repertório, tipo de argumento). Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Foco em competência — Redato</span>
-</div>
 
 <div class="box box-prof">
   <span class="box-label">🟢 Conexão com a próxima oficina</span>
@@ -9425,12 +9557,38 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <span class="mf-redato-fiducial tl"></span><span class="mf-redato-fiducial tr"></span>
 
   <span class="prod-label">Área escolhida: ☐ Social ☐ Econômico ☐ Político</span>
+
+  <div class="mf-redato-card lines-3">
+    <div class="mf-redato-card-tab">1 · PROBLEMA</div>
+    <div class="mf-redato-card-hint">Camada superficial — qual o problema visível?</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-3">
+    <div class="mf-redato-card-tab">2 · CAUSA</div>
+    <div class="mf-redato-card-hint">Aprofunde — o que provoca esse problema? Use repertório.</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-3">
+    <div class="mf-redato-card-tab">3 · RAIZ</div>
+    <div class="mf-redato-card-hint">Camada estrutural — qual a raiz histórica/social? (C3 do parágrafo)</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <p class="mf-redato-step-marker">▼ AGORA, ESCREVA O PARÁGRAFO ENCADEANDO AS 3 CAMADAS (sem saltos lógicos)</p>
   <div class="write-lines">
     <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
     <div class="write-line"></div><div class="write-line"></div>
+  </div>
+
+  <div class="mf-redato-bottom foco">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Foco C3 · C4</div>
+      <div class="mf-redato-bottom-code">ATO2·OF09·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato avalia as três camadas do parágrafo (problema → causa → raiz) e a coesão entre elas. Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Foco em competência — Redato</div>
   </div>
 
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
@@ -9445,14 +9603,6 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
 </div>
 
 
-<div class="redato-bottom comp">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Foco C3 · C4</span>
-    <div class="redato-bottom-code">ATO2·OF09·MF</div>
-    <p class="redato-bottom-instr">A Redato avalia as três camadas do parágrafo (problema → causa → raiz) e a coesão entre elas. Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Foco em competência — Redato</span>
-</div>
 
 <div class="box box-prof">
   <span class="box-label">🟢 Conexão com a próxima oficina</span>
@@ -11502,10 +11652,33 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
 
   <span class="prod-label">Parágrafo de conclusão com proposta de intervenção</span>
   <p style="font-size:.82rem;color:var(--muted);margin-bottom:.5rem;">Tema: _______________________________________________</p>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+
+  <div class="mf-redato-card lines-2">
+    <div class="mf-redato-card-tab">1 · PROBLEMA</div>
+    <div class="mf-redato-card-hint">Qual desafio sua proposta resolve?</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <div class="mf-redato-card lines-7">
+    <div class="mf-redato-card-tab">2 · PROPOSTA C/ 5 ELEMENTOS</div>
+    <div class="mf-redato-card-hint">Agente + Ação + Meio + Finalidade + Detalhamento — uma linha por elemento</div>
+    <div class="mf-redato-card-lines"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line"></div></div>
+  </div>
+
+  <p class="mf-redato-step-marker">▼ AGORA, ESCREVA O PARÁGRAFO DE CONCLUSÃO INTEGRANDO TUDO</p>
+  <div class="write-lines">
+    <div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div>
+  </div>
+
+  <div class="mf-redato-bottom foco">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Foco C5</div>
+      <div class="mf-redato-bottom-code">ATO2·OF12·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato avalia se sua proposta tem os 5 elementos exigidos pelo ENEM: agente, ação, meio, finalidade e detalhamento. Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Foco em competência — Redato</div>
+  </div>
 
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
 </div>
@@ -11515,16 +11688,6 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <p><strong>Excelente (nota 200 em C5):</strong> Proposta com 5 elementos, agente específico, ação concreta, meio viável, finalidade clara, detalhamento que aprofunda. Respeita direitos humanos. Registro formal.</p>
   <p><strong>Adequado (nota 120-160):</strong> Proposta com 3-4 elementos, agente identificável, mas algum elemento genérico ou ausente.</p>
   <p><strong>Insuficiente (nota 40-80):</strong> Apenas 1-2 elementos, proposta vaga ("o governo deve resolver"), sem detalhamento.</p>
-</div>
-
-
-<div class="redato-bottom comp">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Foco C5</span>
-    <div class="redato-bottom-code">ATO2·OF12·MF</div>
-    <p class="redato-bottom-instr">A Redato avalia se sua proposta tem os 5 elementos exigidos pelo ENEM: agente, ação, meio, finalidade e detalhamento. Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Foco em competência — Redato</span>
 </div>
 
 <div class="box box-prof">
@@ -12231,43 +12394,39 @@ ZABALA, A. <em>A Prática Educativa: Como Ensinar.</em> Porto Alegre: Artmed, 19
   <p>Sem dados, sem cartas, sem templates. Usando o mesmo tema da partida, escreva individualmente <strong>dois parágrafos</strong>: o D1 (Desenvolvimento 1) e a Conclusão com proposta de intervenção completa. Cada parágrafo deve seguir a estrutura-modelo estudada na Ponte.</p>
 </div>
 
-<p><strong>D1:</strong> Tópico frasal → Argumento com repertório → Análise crítica. (7-10 linhas)</p>
+<p><strong>D1:</strong> Tópico frasal → Argumento com repertório → Análise crítica. (7-10 linhas)<br>
+<strong>Conclusão:</strong> Retomada + Proposta (Agente + Ação + Meio + Finalidade + Detalhe). (5-7 linhas)</p>
 
 <div class="production-block mf-redato-page">
   <span class="mf-redato-fiducial tl"></span><span class="mf-redato-fiducial tr"></span>
 
-  <span class="prod-label">Desenvolvimento 1</span>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div>
+  <span class="prod-label">Redação completa — D1 + Conclusão (sem cards, texto corrido)</span>
+  <p style="font-size:.78rem;color:var(--muted);margin:.3rem 0 .6rem;font-style:italic;">Indique a transição entre D1 e Conclusão com pulo de linha. A Redato avalia a redação inteira pelas 5 competências.</p>
+  <div class="write-lines">
+    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
+    <div class="write-line"></div><div class="write-line"></div>
+  </div>
+
+  <div class="mf-redato-bottom completo">
+    <div class="mf-redato-bottom-info">
+      <div class="mf-redato-bottom-selo">✦ Envie à Redato · Correção 5 comp.</div>
+      <div class="mf-redato-bottom-code">ATO2·OF13·MF</div>
+      <p class="mf-redato-bottom-instr">A Redato corrige sua redação completa pelas cinco competências do ENEM e devolve nota de 0 a 1000. Tire foto da página inteira, na vertical, com boa luz.</p>
+    </div>
+    <div class="mf-redato-bottom-tag">Correção Completa — Redato</div>
+  </div>
 
   <span class="mf-redato-fiducial bl"></span><span class="mf-redato-fiducial br"></span>
-</div>
-
-<p><strong>Conclusão:</strong> Retomada + Proposta (Agente + Ação + Meio + Finalidade + Detalhe). (5-7 linhas)</p>
-
-<div class="production-block">
-  <span class="prod-label">Conclusão com proposta de intervenção</span>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div><div class="write-line"></div><div class="write-line"></div>
-  <div class="write-line"></div>
 </div>
 
 <div class="box box-gabarito">
   <span class="box-label">🔴 Critérios para avaliação — Professor</span>
   <p><strong>D1 — Excelente:</strong> Tópico frasal claro, argumento com repertório verificável, análise crítica que vai além da paráfrase. Registro formal. <strong>D1 — Insuficiente:</strong> Sem tópico frasal, argumento de senso comum, sem repertório.</p>
   <p><strong>Conclusão — Excelente:</strong> Retoma o problema, proposta com 5 elementos, agente específico, ação concreta, respeita DH. <strong>Conclusão — Insuficiente:</strong> Sem retomada, proposta vaga ou incompleta (1-2 elementos).</p>
-</div>
-
-
-<div class="redato-bottom completo">
-  <div class="redato-bottom-info">
-    <span class="redato-bottom-selo">Correção 5 comp.</span>
-    <div class="redato-bottom-code">ATO2·OF13·MF</div>
-    <p class="redato-bottom-instr">A Redato corrige sua redação completa pelas cinco competências do ENEM e devolve nota de 0 a 1000. Tire foto da página com boa luz, abra o app Redato e use o código acima.</p>
-  </div>
-  <span class="redato-bottom-tag">Correção Completa — Redato</span>
 </div>
 
 <div class="box box-prof">
