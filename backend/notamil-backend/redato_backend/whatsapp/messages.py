@@ -156,6 +156,83 @@ MSG_DASHBOARD_PLACEHOLDER = (
 
 
 # ──────────────────────────────────────────────────────────────────────
+# M10 PROMPT 2 — Comandos do dashboard professor via WhatsApp
+# ──────────────────────────────────────────────────────────────────────
+#
+# Substitui MSG_DASHBOARD_PLACEHOLDER pelos 4 comandos: /turma,
+# /aluno, /atividade, /ajuda. Mensagens curtas (cabem em 1500 chars
+# por chunk Twilio); detalhamento fica no portal.
+
+MSG_DASHBOARD_AJUDA = (
+    "📚 *Comandos do dashboard*\n\n"
+    "*/turma <codigo>*\n"
+    "  Resumo da turma. Ex: /turma 1A\n\n"
+    "*/aluno <nome>*\n"
+    "  Histórico do aluno. Ex: /aluno maria\n"
+    "  Aceita nome parcial — mostra lista se houver duplicados.\n\n"
+    "*/atividade <codigo>*\n"
+    "  Status de uma atividade. Ex: /atividade OF14\n\n"
+    "*/ajuda*\n"
+    "  Mostra essa mensagem.\n\n"
+    "⚠️ Os dados aqui são pra uso pedagógico exclusivo. Não "
+    "compartilhe com terceiros."
+)
+
+MSG_DASHBOARD_USO_TURMA = (
+    "Falta o código da turma.\n"
+    "Use: */turma <codigo>* (ex: /turma 1A)"
+)
+
+MSG_DASHBOARD_USO_ALUNO = (
+    "Falta o nome do aluno.\n"
+    "Use: */aluno <nome>* (ex: /aluno maria)"
+)
+
+MSG_DASHBOARD_USO_ATIVIDADE = (
+    "Falta o código da atividade.\n"
+    "Use: */atividade <codigo>* (ex: /atividade OF14)"
+)
+
+MSG_TURMA_NAO_ENCONTRADA = (
+    "Turma *{codigo}* não encontrada na sua escola.\n\n"
+    "Confere o código e tenta de novo."
+)
+
+MSG_ALUNO_NAO_ENCONTRADO = (
+    "Nenhum aluno encontrado com *{nome}* na sua escola.\n\n"
+    "Confere o nome e tenta de novo."
+)
+
+MSG_ALUNO_MULTIPLOS_MATCHES = (
+    "Encontrei mais de 1 aluno com *{nome}*:\n\n"
+    "{lista}\n\n"
+    "Manda */aluno <nome completo>* pra ver um específico."
+)
+
+MSG_ATIVIDADE_NAO_ENCONTRADA = (
+    "Atividade *{codigo}* não encontrada na sua escola.\n\n"
+    "Confere o código (ex: OF14) e tenta de novo."
+)
+
+MSG_ATIVIDADE_MULTIPLOS_MATCHES = (
+    "Encontrei mais de 1 atividade com *{codigo}*:\n\n"
+    "{lista}\n\n"
+    "Manda o código completo (com a turma na busca) "
+    "pra desambiguar."
+)
+
+MSG_DASHBOARD_DB_INDISPONIVEL = (
+    "Não consegui acessar os dados agora. Tenta de novo em alguns "
+    "segundos. Se persistir, fala com a coordenação."
+)
+
+MSG_DASHBOARD_ERRO_GENERICO = (
+    "Tive um problema ao montar a resposta. Tenta de novo. Se "
+    "persistir, fala com a coordenação."
+)
+
+
+# ──────────────────────────────────────────────────────────────────────
 # Reenvio de foto duplicada (continuidade do fluxo de M3)
 # ──────────────────────────────────────────────────────────────────────
 

@@ -665,14 +665,12 @@ def _handle_professor_inbound(
 ) -> List[OutboundMessage]:
     """Roteia mensagens vindas de telefone vinculado a Professor.
 
-    PROMPT 1/2 (esta entrega) cobre só:
-    - Aviso LGPD na 1ª mensagem (lgpd_aceito_em IS NULL)
-    - Aceite LGPD via "sim" → marca DB + responde com placeholder
-    - Negação via "não" → desvincula telefone (limpa 3 campos)
-    - Após aceite, qualquer mensagem cai no placeholder MSG_DASHBOARD_PLACEHOLDER
-
-    PROMPT 2 substitui o placeholder por dispatcher de comandos
-    (/turma, /aluno, /atividade, /ajuda).
+    Cobre 2 caminhos:
+    - LGPD (M10 PROMPT 1, commit 160fb5c): se lgpd_aceito_em IS NULL,
+      pede aceite via "sim" / "não" antes de qualquer comando.
+    - Comandos (M10 PROMPT 2, este commit): após aceite, dispatch
+      pra /turma, /aluno, /atividade, /ajuda via
+      `dashboard_commands.dispatch`.
     """
     from redato_backend.whatsapp import messages as MSG
     from redato_backend.whatsapp import portal_link as PL
@@ -686,12 +684,10 @@ def _handle_professor_inbound(
             PL.marcar_lgpd_aceito_professor(professor.id)
             return [
                 OutboundMessage(
-                    "Obrigado! Use o comando `/ajuda` pra ver os "
-                    "comandos disponíveis (em breve)."
+                    "Obrigado! Use */ajuda* pra ver os comandos "
+                    "disponíveis."
                 ),
-                OutboundMessage(MSG.MSG_DASHBOARD_PLACEHOLDER.format(
-                    nome=professor.nome,
-                )),
+                OutboundMessage(MSG.MSG_DASHBOARD_AJUDA),
             ]
         if _LGPD_NAO_RE.match(text):
             # Desvincula telefone — usa o helper do auth (UPDATE no
@@ -722,11 +718,16 @@ def _handle_professor_inbound(
             ))]
         return [OutboundMessage(MSG.MSG_LGPD_REPETIR_PEDIDO)]
 
-    # Caminho 2 — professor já aceitou LGPD. PROMPT 2 vai expandir
-    # esse ramo pra dispatcher de comandos. Por enquanto, placeholder.
-    return [OutboundMessage(MSG.MSG_DASHBOARD_PLACEHOLDER.format(
-        nome=professor.nome,
-    ))]
+    # Caminho 2 — LGPD aceito. Dispatch pra dashboard_commands
+    # (M10 PROMPT 2). Texto vazio cai em /ajuda automaticamente
+    # (parse_comando retorna None → dispatch retorna ajuda).
+    from redato_backend.whatsapp import dashboard_commands as DC
+    resposta = DC.dispatch(
+        prof_id=professor.id,
+        escola_id=professor.escola_id,
+        text=msg.text,
+    )
+    return [OutboundMessage(resposta)]
 
 
 def _handle_trocar_turma(

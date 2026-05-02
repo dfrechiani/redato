@@ -1,8 +1,9 @@
 # HOWTO — Dashboard professor via WhatsApp
 
-**Status:** PROMPT 1/2 (esta entrega) — infra de auth + aviso LGPD.
-**PROMPT 2 (futuro):** comandos `/turma`, `/aluno`, `/atividade`,
-`/ajuda`.
+**Status:** completo (M10 PROMPT 1 + 2).
+- PROMPT 1 (commit `160fb5c`): infra de auth + aviso LGPD.
+- PROMPT 2 (commit atual): 4 comandos MVP (`/turma`, `/aluno`,
+  `/atividade`, `/ajuda`).
 
 ## Fluxo do professor
 
@@ -37,9 +38,96 @@
    - Bot envia `MSG_LGPD_NEGADO` orientando a re-vincular no portal
      se mudar de ideia.
 
-6. **PROMPT 2:** após aceite, qualquer mensagem cai num dispatcher
-   de comandos (`/turma 1A`, `/aluno <nome>`, `/atividade`, `/ajuda`).
-   Esta entrega tem só placeholder no lugar.
+6. **Após aceite:** qualquer mensagem cai num dispatcher de comandos
+   estruturados (PROMPT 2). Lista completa abaixo.
+
+## Comandos disponíveis
+
+Implementados em
+[`redato_backend/whatsapp/dashboard_commands.py`](../../backend/notamil-backend/redato_backend/whatsapp/dashboard_commands.py).
+Dispatcher é parser-tolerante: aceita variações `/turma 1A`,
+`turma 1A`, `/Turma 1A`, `TURMA 1A` (case-insensitive, com ou sem
+barra inicial, espaços extras).
+
+### `/turma <codigo>`
+
+Resumo da turma. Ex: `/turma 1A`.
+
+Retorna:
+- Cabeçalho: nome + série
+- Total de alunos cadastrados
+- Atividades ativas (códigos)
+- Médias C1-C5 dos últimos 30 dias (se houver envios)
+- Top 3 alunos por melhor nota
+- Alertas: envios com correção falha, alunos sem envio
+
+LGPD: filtra por `escola_id` do professor — turma de outra escola
+retorna "não encontrada".
+
+### `/aluno <nome>`
+
+Histórico de aluno. Ex: `/aluno maria silva`.
+
+Busca **fuzzy** com `ILIKE %nome%` na escola do professor:
+- 0 matches → "Nenhum aluno encontrado..."
+- 1 match → mostra histórico (5 últimos envios + tendência + pontos
+  fortes/fracos por C1-C5)
+- 2+ matches → lista pra refinar com nome completo (até 5 itens
+  visíveis, conta os demais)
+
+Tendência calculada por média das 2 mais recentes vs anteriores
+(diferença ≥30 pontos = subindo/caindo, senão estável).
+
+### `/atividade <codigo>`
+
+Status de uma atividade. Ex: `/atividade OF14`.
+
+Aceita código curto (`OF14`) — busca via `ILIKE %codigo%` em
+`missoes.codigo`. Múltiplos matches (mesmo código em turmas
+diferentes) → lista pra desambiguar.
+
+Retorna:
+- Cabeçalho: código + título + turma + prazo
+- N envios / N alunos cadastrados (com %)
+- Distribuição em buckets `<400 / 400-599 / 600-799 / 800-1000`
+- Médias C1-C5
+- Lista de pendentes (até 10 nomes, conta os demais)
+- Lista de envios com problema (sugere "use o portal pra reprocessar")
+
+### `/ajuda`
+
+Lista os 4 comandos com exemplos. Disparado automaticamente quando
+o professor manda texto que não bate em nenhum comando reconhecido —
+é o "menu padrão" da experiência.
+
+## Limitações conhecidas
+
+- **Busca por nome é fuzzy ILIKE** — não tolera typos significativos
+  (ex.: "joão" ≠ "joao"; "joão" ≠ "joao silva" se o cadastro tem o
+  acento). Se aluno não aparece, é provável diferença de acentuação
+  com o cadastro.
+- **Comando aceita só argumento simples** — `/aluno maria silva pereira`
+  procura "maria silva pereira" como substring única. Sem operadores
+  booleanos.
+- **Notas calculadas em tempo real** (sem cache) — escala atual
+  (<100 prof, <1k msgs/dia) tolera bem. Quando volume crescer, vale
+  cachear médias por turma com TTL curto.
+- **Linguagem natural não suportada** — só comandos estruturados.
+  "Como tá a turma 1A?" cai no /ajuda.
+- **Reprocessar de fora do portal** — quando dashboard mostra "envios
+  com problema", professor precisa abrir o portal pra clicar em
+  "Reprocessar avaliação". Não há `/reprocessar <id>` via WhatsApp.
+
+## Defensiva
+
+- Se Postgres está indisponível, dispatcher retorna
+  `MSG_DASHBOARD_DB_INDISPONIVEL`. Fluxo aluno via SQLite continua.
+- Se algum handler levanta exception, captura em `try/except` e
+  retorna `MSG_DASHBOARD_ERRO_GENERICO`. Stack vai pro Railway via
+  `logger.exception`.
+- Schemas parciais de `redato_output` (FT omitiu campo, parser
+  falhou, etc.) são tratados como "sem nota" via `_redato_tem_erro`
+  — não derruba agregações.
 
 ## Fluxo do coordenador
 

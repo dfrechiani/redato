@@ -254,7 +254,8 @@ def test_handle_professor_sem_lgpd_envia_aviso(monkeypatch):
 
 def test_handle_professor_aceita_lgpd_marca_db(monkeypatch):
     """Professor responde 'sim' → chama marcar_lgpd_aceito_professor +
-    envia placeholder."""
+    envia confirmação + ajuda (PROMPT 2 substituiu o placeholder pelo
+    MSG_DASHBOARD_AJUDA com lista de comandos)."""
     from redato_backend.whatsapp.bot import (
         _handle_professor_inbound, InboundMessage,
     )
@@ -268,16 +269,19 @@ def test_handle_professor_aceita_lgpd_marca_db(monkeypatch):
     msg = InboundMessage(phone="+5561999", text="sim")
     out = _handle_professor_inbound(msg, _professor_vinculo())
     assert chamado["count"] == 1
-    # 2 mensagens: confirmação + placeholder
+    # 2 mensagens: confirmação + ajuda com lista de comandos
     assert len(out) == 2
     assert "Obrigado" in out[0].text
-    assert "construção" in out[1].text or "Dashboard" in out[1].text
+    # MSG_DASHBOARD_AJUDA tem "Comandos do dashboard" e os 4 comandos
+    assert "Comandos do dashboard" in out[1].text
+    assert "/turma" in out[1].text
+    assert "/aluno" in out[1].text
 
 
-def test_handle_professor_lgpd_aceito_envia_placeholder():
-    """Professor já aceitou (lgpd_aceito_em != None) + qualquer texto →
-    placeholder MSG_DASHBOARD_PLACEHOLDER (PROMPT 2 vai trocar por
-    dispatcher de comandos)."""
+def test_handle_professor_lgpd_aceito_dispatch_ajuda(monkeypatch):
+    """Professor já aceitou + texto que não é comando reconhecido →
+    dispatch retorna MSG_DASHBOARD_AJUDA (PROMPT 2 substituiu o
+    placeholder pelo dispatch real)."""
     from datetime import datetime, timezone
     from redato_backend.whatsapp.bot import (
         _handle_professor_inbound, InboundMessage,
@@ -288,8 +292,9 @@ def test_handle_professor_lgpd_aceito_envia_placeholder():
         msg, _professor_vinculo(lgpd_aceito_em=datetime.now(timezone.utc)),
     )
     assert len(out) == 1
-    assert "construção" in out[0].text or "Dashboard" in out[0].text
-    assert "Prof Maria" in out[0].text
+    # Texto sem comando → dispatch retorna ajuda
+    assert "Comandos do dashboard" in out[0].text
+    assert "/turma" in out[0].text
 
 
 def test_handle_professor_resposta_invalida_pede_de_novo():
