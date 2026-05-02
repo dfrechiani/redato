@@ -169,6 +169,27 @@ export async function envioFeedback(
   );
 }
 
+// Reprocessar envio com correção falha (timeout FT, parser fail,
+// nota_total=null pré-fix). Backend roteia via resolve_mode entre
+// _claude_grade_essay (OF14) e grade_mission (Foco/Parcial), atualiza
+// Interaction.redato_output e retorna {ok, error?, redato_output}.
+// Se ok=false, error traz mensagem; redato_output é mantido com erro
+// pra inspeção. Caller deve refetch envioFeedback pra UI consistente.
+export interface ReprocessarEnvioResponse {
+  ok: boolean;
+  error?: string | null;
+  redato_output?: Record<string, unknown> | null;
+}
+
+export async function reprocessarEnvio(
+  envioId: string,
+): Promise<ReprocessarEnvioResponse> {
+  return fetchJson<ReprocessarEnvioResponse>(
+    `/api/portal/envios/${envioId}/reprocessar`,
+    { method: "POST" },
+  );
+}
+
 // ──────────────────────────────────────────────────────────────────────
 // Dashboards (M7)
 // ──────────────────────────────────────────────────────────────────────

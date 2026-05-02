@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1730,6 +1731,176 @@ def baixar_foto_envio(
 
     mime = _FOTO_MIME_BY_EXT.get(foto_path.suffix.lower(), "image/jpeg")
     return FileResponse(path=str(foto_path), media_type=mime)
+
+
+# ──────────────────────────────────────────────────────────────────────
+# POST /portal/envios/{envio_id}/reprocessar
+# ──────────────────────────────────────────────────────────────────────
+#
+# Quando o pipeline de correção falha (timeout FT, parser fail,
+# exception silenciada como o bug do google.cloud em prod 01/05), o
+# campo `interactions.redato_output` fica vazio ou com `{"error":"..."}`.
+# Antes desse endpoint, o professor não tinha como reprocessar — só
+# pedir aluno reenviar via WhatsApp, e o aluno podia ter desistido.
+#
+# Endpoint puxa o texto OCR-ado da Interaction ligada ao envio, roteia
+# pra `_claude_grade_essay` (OF14) ou `grade_mission` (Foco/Parcial)
+# conforme `resolve_mode`, e UPDATE no `redato_output` da mesma
+# Interaction. Não cria nova `tentativa_n` — é correção da mesma tentativa.
+#
+# Caso de uso adicional: envios persistidos antes do fix de
+# `nota_total` (commit eb5ddc9) ficaram com nota_total=null. Reprocessar
+# regenera com nota_total preenchido (FT calcula soma agora).
+
+
+class ReprocessarEnvioResponse(BaseModel):
+    ok: bool
+    """True se a correção foi regenerada com sucesso. False se o
+    pipeline falhou — `error` traz o motivo, `redato_output` é o
+    novo conteúdo persistido (pode incluir o erro)."""
+    error: Optional[str] = None
+    redato_output: Optional[Dict[str, Any]] = None
+    """Novo `tool_args` retornado pelo pipeline. Frontend pode
+    refresh do card sem novo GET — mas a abordagem padrão é refetch
+    pra garantir consistência (M9.6 tem joins de tentativa)."""
+
+
+@router.post(
+    "/envios/{envio_id}/reprocessar",
+    response_model=ReprocessarEnvioResponse,
+)
+def reprocessar_envio(
+    envio_id: uuid.UUID,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> ReprocessarEnvioResponse:
+    """Reprocessa correção de um envio existente.
+
+    Permissão: professor da turma do envio ou coordenador da escola
+    (mesma de `detalhe_envio`).
+
+    Pré-condições:
+    - Envio existe.
+    - Tem `interaction_id` (envios pré-M4 não têm — retorna 400).
+    - Interaction tem `texto_transcrito` (sem texto, não há o que
+      corrigir — retorna 400; aluno precisa reenviar a foto).
+
+    Comportamento:
+    - Sucesso: UPDATE `Interaction.redato_output` com novo `tool_args`,
+      retorna `ok=true` + `redato_output`.
+    - Falha do pipeline: persiste `{"error": ...}` no banco igual o
+      bot faz, retorna `ok=false` + `error`. Status HTTP é 200 — não é
+      erro do endpoint, é erro do conteúdo.
+    """
+    started = time.time()
+
+    with Session(get_engine()) as session:
+        envio = session.get(Envio, envio_id)
+        if envio is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Envio não encontrado",
+            )
+        # Permission via atividade (reaproveita helper).
+        _check_permission_atividade(auth, envio.atividade_id)
+
+        if envio.interaction_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Envio sem interaction vinculada (provavelmente "
+                    "pré-M4). Reprocessar requer texto OCR-ado."
+                ),
+            )
+
+        interaction = session.get(Interaction, envio.interaction_id)
+        if interaction is None or not (interaction.texto_transcrito or "").strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Reprocessar requer texto OCR-ado. Esse envio não "
+                    "tem transcrição — peça pro aluno reenviar a foto."
+                ),
+            )
+
+        # Resolve modo + monta data igual o bot.
+        from redato_backend.missions import (
+            MissionMode, resolve_mode, grade_mission,
+        )
+        activity_id_str = interaction.activity_id
+        mode = resolve_mode(activity_id_str)
+
+        # tema = padrão do bot ("Tema livre — foto enviada via WhatsApp")
+        # — não há tema rico armazenado por envio. Pipeline usa tema
+        # como contexto leve; substantivo é o texto + activity_id.
+        tema_default = "Tema livre (foto enviada via WhatsApp)"
+
+        data = {
+            "request_id": f"reprocess_{envio_id}_{int(time.time())}",
+            "user_id": str(envio.aluno_turma_id),
+            "activity_id": activity_id_str,
+            "theme": tema_default,
+            "content": interaction.texto_transcrito,
+        }
+
+        logger.info(
+            "reprocessing envio %s (modo=%s, activity_id=%s, "
+            "interaction_id=%s)",
+            envio_id, mode.value if mode else "unknown",
+            activity_id_str, interaction.id,
+        )
+
+        # Pipeline call — se falha, persiste erro estruturado igual o bot.
+        try:
+            if mode == MissionMode.COMPLETO_INTEGRAL or mode is None:
+                # OF14 ou activity_id desconhecido — passa pelo path
+                # _claude_grade_essay (que tem fallback FT→Claude).
+                from redato_backend.dev_offline import _claude_grade_essay
+                tool_args = _claude_grade_essay(data)
+            else:
+                # Foco/Parcial: grade_mission cobre.
+                tool_args = grade_mission(data)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "reprocess of envio %s failed", envio_id,
+            )
+            err_payload = {
+                "error": f"{type(exc).__name__}: {exc}"[:300],
+            }
+            interaction.redato_output = json.dumps(
+                err_payload, ensure_ascii=False,
+            )
+            session.commit()
+            return ReprocessarEnvioResponse(
+                ok=False,
+                error=err_payload["error"],
+                redato_output=err_payload,
+            )
+
+        # Sucesso — persiste novo redato_output.
+        interaction.redato_output = json.dumps(
+            tool_args, ensure_ascii=False, default=str,
+        )
+        session.commit()
+
+        elapsed_ms = int((time.time() - started) * 1000)
+        logger.info(
+            "reprocess of envio %s done in %dms (mode=%s)",
+            envio_id, elapsed_ms,
+            mode.value if mode else "unknown",
+        )
+
+        _audit({
+            "event": "envio_reprocessado",
+            "envio_id": str(envio_id),
+            "actor_id": str(auth.user_id),
+            "modo": mode.value if mode else None,
+            "elapsed_ms": elapsed_ms,
+        })
+
+        return ReprocessarEnvioResponse(
+            ok=True,
+            redato_output=tool_args if isinstance(tool_args, dict) else None,
+        )
 
 
 # ──────────────────────────────────────────────────────────────────────

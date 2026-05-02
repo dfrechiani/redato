@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ReprocessarEnvioButton } from "@/components/portal/ReprocessarEnvioButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { fetchBackend } from "@/lib/api";
@@ -53,6 +54,24 @@ export default async function FeedbackAlunoPage({
   const vendoTentativaAnterior = data.tentativa_n < maxTentativa;
   const temMultiplasTentativas = data.tentativa_total > 1;
 
+  // Detecta envios com correção falha (passíveis de reprocessamento):
+  // 1. raw_output null/ausente — pipeline nunca rodou ou foi nullado
+  // 2. raw_output.error — pipeline rodou mas falhou (timeout, parser)
+  // 3. nota_total null com texto presente — caso real do bug pré-fix
+  //    eb5ddc9 (FT omitia nota_total e portal não calculava soma)
+  // Se vendoTentativaAnterior, esconde botão — reprocessar de versão
+  // antiga é confuso; professor primeiro volta pra mais recente.
+  const rawOutput = data.raw_output as
+    | { error?: string | null }
+    | null
+    | undefined;
+  const correcaoTeveErro = !!rawOutput?.error;
+  const notaTotalAusente =
+    !semEnvio && data.nota_total === null && !!data.texto_transcrito;
+  const podeReprocessar =
+    !vendoTentativaAnterior && !semEnvio
+    && (rawOutput == null || correcaoTeveErro || notaTotalAusente);
+
   return (
     <div className="space-y-6">
       <nav aria-label="breadcrumb" className="text-sm text-ink-400">
@@ -88,6 +107,18 @@ export default async function FeedbackAlunoPage({
           <p className="mt-1 text-sm text-ink-400">
             Enviado em {formatPrazo(data.enviado_em!)}
           </p>
+        )}
+        {podeReprocessar && data.envio_id && (
+          // Botão discreto à direita — ação corretiva, não CTA
+          // principal. Aparece quando pipeline falhou OU nota_total
+          // veio null (caso pré-fix de eb5ddc9). Esconde quando
+          // vendo tentativa anterior pra evitar confusão.
+          <div className="mt-3">
+            <ReprocessarEnvioButton
+              envioId={data.envio_id}
+              shouldShow={podeReprocessar}
+            />
+          </div>
         )}
       </header>
 
