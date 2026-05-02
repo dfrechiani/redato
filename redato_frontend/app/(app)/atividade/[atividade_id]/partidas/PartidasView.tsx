@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -286,6 +286,18 @@ function PartidaFormModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ESC fecha o modal — consistente com ModalConfirm/AtivarMissaoModal
+  // (sem isso, único jeito de cancelar era clicar no backdrop ou no
+  // botão "Cancelar"). Bloqueado durante submissão pra não interromper
+  // request em voo.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !busy) onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [busy, onClose]);
+
   function toggleAluno(id: string) {
     setSelectedAlunos((prev) => {
       const next = new Set(prev);
@@ -332,16 +344,28 @@ function PartidaFormModal({
   }
 
   return (
+    // Backdrop + modal seguindo o padrão de AtivarMissaoModal /
+    // ExportarPdfModal / ModalConfirm. Antes (até 02/05): bg-ink/40
+    // direto no flex container, sem blur. Resultado: card de
+    // instrução na página atrás aparecia através do backdrop e ficava
+    // sobreposto ao título do modal. Fix: backdrop como elemento
+    // separado (button pra acessibilidade) com bg-ink/60 +
+    // backdrop-blur-sm; modal interno com `relative` por cima.
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="partida-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
     >
-      <div className="bg-card rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <button
+        type="button"
+        aria-label="Fechar"
+        onClick={() => !busy && onClose()}
+        disabled={busy}
+        className="absolute inset-0 bg-ink/60 backdrop-blur-sm"
+        tabIndex={-1}
+      />
+      <div className="relative w-full sm:max-w-lg bg-card rounded-t-2xl sm:rounded-2xl shadow-card max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <h2 id="partida-modal-title" className="font-display text-2xl">
             {isEdit ? "Editar partida" : "Cadastrar nova partida"}
