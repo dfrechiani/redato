@@ -75,9 +75,17 @@ def diagnosticar_e_persistir_envio(
         diagnostico_habilitado, inferir_diagnostico,
     )
 
+    # Log de entry — primeiro evento observável. Daniel grepa
+    # "[diag] iniciando" pra encontrar todos os envios em que o
+    # helper foi chamado, mesmo se inferência errou cedo.
+    logger.info(
+        "[diag] iniciando para envio %s (texto_chars=%d, has_redato=%s)",
+        envio_id, len(texto_redacao or ""), bool(redato_output),
+    )
+
     if not diagnostico_habilitado():
-        logger.info(
-            "diagnostico desabilitado (env REDATO_DIAGNOSTICO_HABILITADO) "
+        logger.warning(
+            "[diag] DESABILITADO (REDATO_DIAGNOSTICO_HABILITADO) "
             "— pulando envio %s", envio_id,
         )
         return None
@@ -92,16 +100,35 @@ def diagnosticar_e_persistir_envio(
         # `inferir_diagnostico` já tem try/except interno e retorna
         # None em falha. Esse catch é defesa em profundidade.
         logger.exception(
-            "diagnostico: exceção não-tratada em inferir_diagnostico "
+            "[diag] exceção não-tratada em inferir_diagnostico "
             "pra envio %s", envio_id,
         )
         return None
 
     if diagnostico is None:
-        # Já logou dentro de inferir_diagnostico.
+        logger.error(
+            "[diag] inferir_diagnostico retornou None pra envio %s "
+            "— procure no log o último '[diag]' antes desse pra "
+            "causa raiz (timeout, key, schema, validação)",
+            envio_id,
+        )
         return None
 
     ok = persistir_diagnostico_envio(envio_id, diagnostico)
     if not ok:
+        logger.error(
+            "[diag] inferência ok mas UPDATE falhou pra envio %s",
+            envio_id,
+        )
         return None
+
+    logger.info(
+        "[diag] persistido com sucesso em envios.diagnostico "
+        "(envio=%s, modelo=%s, lacunas=%d, custo=$%.4f)",
+        envio_id,
+        diagnostico.get("modelo_usado"),
+        sum(1 for d in diagnostico.get("descritores", [])
+            if d.get("status") == "lacuna"),
+        diagnostico.get("custo_estimado_usd", 0),
+    )
     return diagnostico

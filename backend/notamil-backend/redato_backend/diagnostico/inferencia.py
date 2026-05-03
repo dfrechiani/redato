@@ -486,9 +486,23 @@ def inferir_diagnostico(
         or DEFAULT_MODEL
     )
 
+    # Log de entry — primeiro evento observável da inferência. Daniel
+    # grepa "[diag] inferir_diagnostico iniciado" pra saber se a função
+    # FOI sequer chamada. Antes desse log existia debug-by-omission:
+    # se nada aparecesse no log, era impossível distinguir "não foi
+    # chamada" de "foi chamada e errou cedo".
+    logger.info(
+        "[diag] inferir_diagnostico iniciado (modelo=%s, "
+        "redacao_chars=%d, tema_chars=%d, has_redato=%s)",
+        modelo_real,
+        len(texto_redacao or ""),
+        len(tema or ""),
+        bool(redato_output),
+    )
+
     if not (texto_redacao or "").strip():
         logger.warning(
-            "diagnostico: texto_redacao vazio — pulando inferência"
+            "[diag] texto_redacao vazio — pulando inferência"
         )
         return None
 
@@ -496,7 +510,7 @@ def inferir_diagnostico(
         descritores = load_descritores()
     except Exception:  # noqa: BLE001
         logger.exception(
-            "diagnostico: falha ao carregar descritores.yaml"
+            "[diag] falha ao carregar descritores.yaml"
         )
         return None
 
@@ -513,15 +527,15 @@ def inferir_diagnostico(
         client = client_factory()
     except DiagnosticoError:
         # API key missing já dá log claro no _default_client_factory.
-        logger.exception("diagnostico: client_factory falhou")
+        logger.exception("[diag] client_factory falhou (provavelmente OPENAI_API_KEY ausente)")
         return None
     except Exception:  # noqa: BLE001
-        logger.exception("diagnostico: erro inesperado em client_factory")
+        logger.exception("[diag] erro inesperado em client_factory")
         return None
 
     logger.info(
-        "diagnostico: chamando %s, redacao_chars=%d, tema_chars=%d, timeout=%.0fs",
-        modelo_real, len(texto_redacao), len(tema or ""), timeout_seconds,
+        "[diag] chamando OpenAI: modelo=%s, prompt_chars=%d, timeout=%.0fs",
+        modelo_real, len(user_prompt), timeout_seconds,
     )
 
     try:
@@ -544,7 +558,8 @@ def inferir_diagnostico(
         # Timeout, rate limit, key inválida, modelo inexistente, rede.
         # Stack trace via logger.exception garante visibilidade em Railway.
         logger.exception(
-            "diagnostico: chamada OpenAI falhou (%s)", type(exc).__name__,
+            "[diag] chamada OpenAI falhou (%s: %s)",
+            type(exc).__name__, exc,
         )
         return None
 
@@ -556,14 +571,15 @@ def inferir_diagnostico(
         tool_calls = getattr(choice.message, "tool_calls", None) or []
         if not tool_calls:
             logger.error(
-                "diagnostico: resposta sem tool_calls (latencia=%dms)",
+                "[diag] resposta sem tool_calls (latencia=%dms) — "
+                "modelo pode ter ignorado tool_choice",
                 latencia_ms,
             )
             return None
         args_raw = tool_calls[0].function.arguments
     except Exception:  # noqa: BLE001
         logger.exception(
-            "diagnostico: estrutura de resposta inesperada",
+            "[diag] estrutura de resposta inesperada",
         )
         return None
 
@@ -571,7 +587,7 @@ def inferir_diagnostico(
         args = json.loads(args_raw)
     except json.JSONDecodeError:
         logger.exception(
-            "diagnostico: tool args não é JSON válido (raw[:200]=%r)",
+            "[diag] tool args não é JSON válido (raw[:200]=%r)",
             (args_raw or "")[:200],
         )
         return None
@@ -580,7 +596,7 @@ def inferir_diagnostico(
         validado = _validar_diagnostico(args, expected_ids)
     except DiagnosticoError as exc:
         logger.error(
-            "diagnostico: validação falhou (latencia=%dms): %s",
+            "[diag] validação falhou (latencia=%dms): %s",
             latencia_ms, exc,
         )
         return None
@@ -606,9 +622,9 @@ def inferir_diagnostico(
     }
 
     logger.info(
-        "diagnostico: ok (latencia=%dms, custo=$%.4f, "
-        "lacunas=%d, top=%s)",
-        latencia_ms, custo,
+        "[diag] inferir_diagnostico concluido em %dms, custo=$%.4f, "
+        "input_tokens=%d, output_tokens=%d, lacunas=%d, top=%s",
+        latencia_ms, custo, input_tokens, output_tokens,
         sum(1 for d in validado["descritores"] if d["status"] == "lacuna"),
         validado["lacunas_prioritarias"][:3],
     )

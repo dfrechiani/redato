@@ -1426,6 +1426,14 @@ def _process_photo(
     # Visibilidade: invisível pro aluno (frontend ignora). Visível pro
     # professor no perfil do aluno (Fase 3).
     if envio_id_postgres is not None and not postgres_falhou:
+        # Log de entry — Daniel grepa "[diag-bot]" pra confirmar que
+        # bot CHEGOU no bloco de diagnóstico (vs. nem entrar pq postgres
+        # falhou ou vs. erro silencioso).
+        logger.info(
+            "[diag-bot] chamando diagnostico para envio %s (mode=%s)",
+            envio_id_postgres,
+            mode.value if mode else "?",
+        )
         try:
             from redato_backend.diagnostico.persistencia import (
                 diagnosticar_e_persistir_envio,
@@ -1442,9 +1450,17 @@ def _process_photo(
             # catch garante que ImportError, AttributeError ou bug
             # novo no módulo não derrubem a entrega da correção.
             logger.exception(
-                "diagnostico cognitivo falhou pra envio %s — segue sem",
+                "[diag-bot] diagnostico cognitivo falhou pra envio %s — segue sem",
                 envio_id_postgres,
             )
+    else:
+        # Bloco skipado — registra motivo pra Daniel investigar quando
+        # `envios.diagnostico = NULL` aparecer em prod.
+        logger.warning(
+            "[diag-bot] PULADO: envio_id_postgres=%s, postgres_falhou=%s "
+            "(provável: postgres write falhou — diagnostico nao roda sem envio_id)",
+            envio_id_postgres, postgres_falhou,
+        )
 
     # Volta pro estado READY (limpa pending)
     P.upsert_aluno(phone, estado=READY)
