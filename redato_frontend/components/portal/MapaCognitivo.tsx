@@ -2,21 +2,22 @@
 
 /**
  * Mapa cognitivo — visualização do diagnóstico cognitivo do aluno
- * pra o professor (Fase 3, 2026-05-03).
+ * pra o professor.
  *
- * 4 sub-blocos:
- *   1. Heatmap dos 40 descritores (5 colunas × 8 linhas, hover/tap
- *      mostra tooltip)
- *   2. Lacunas prioritárias (top 5 cards horizontais com evidência)
- *   3. Resumo + Recomendação (texto da Fase 2)
- *   4. Oficinas sugeridas (cards com botão "Criar atividade" deeplink)
- *
- * Estado vazio: prop `diagnostico` null → mensagem "diagnóstico
- * aparece aqui após o aluno enviar redação".
+ * Histórico:
+ * - Fase 3 (commit 75edfcc, 2026-05-03): primeiro draft com
+ *   heatmap 5×8 (40 quadrados com IDs tipo "1.5"), cards de lacuna
+ *   só com evidência.
+ * - Fix Fase 3 (este arquivo, 2026-05-03): 3 problemas resolvidos:
+ *   #1 Heatmap reformatado: 5 colunas com nome legível ao lado de
+ *      cada descritor (não só ID — IDs sozinhos não comunicavam).
+ *   #2 Diversidade nas lacunas prioritárias forçada no backend
+ *      (max 2 por competência).
+ *   #3 Cards de lacuna ganham 3 seções: 📌 O que é (definição) +
+ *      🔍 Evidência + 🎯 Como trabalhar (sugestão pedagógica).
  *
  * Visibilidade: este componente SÓ aparece na tela do professor
- * (`/turma/[id]/aluno/[id]`). Aluno não tem acesso — não há frontend
- * dedicado pro aluno (consome correção via WhatsApp).
+ * (`/turma/[id]/aluno/[id]`). Aluno consome correção via WhatsApp.
  */
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -28,6 +29,7 @@ import { formatModoCorrecao, formatPrazo } from "@/lib/format";
 import type {
   DiagnosticoConfianca,
   DiagnosticoDescritor,
+  DiagnosticoLacunaEnriquecida,
   DiagnosticoRecente,
   DiagnosticoStatus,
 } from "@/types/portal";
@@ -40,10 +42,18 @@ interface Props {
 const COMPETENCIAS = ["C1", "C2", "C3", "C4", "C5"] as const;
 type Competencia = (typeof COMPETENCIAS)[number];
 
+const COMPETENCIA_NOME: Record<Competencia, string> = {
+  C1: "Norma culta",
+  C2: "Tema",
+  C3: "Argumentação",
+  C4: "Coesão",
+  C5: "Proposta",
+};
+
 const STATUS_COR: Record<DiagnosticoStatus, string> = {
-  dominio: "bg-emerald-500 text-white",   // verde #10B981
-  incerto: "bg-amber-500 text-white",     // amarelo #F59E0B
-  lacuna: "bg-red-500 text-white",        // vermelho #EF4444
+  dominio: "bg-emerald-500",
+  incerto: "bg-amber-500",
+  lacuna: "bg-red-500",
 };
 
 const STATUS_LABEL: Record<DiagnosticoStatus, string> = {
@@ -58,133 +68,233 @@ const CONFIANCA_LABEL: Record<DiagnosticoConfianca, string> = {
   baixa: "Baixa",
 };
 
-/** Extrai número do descritor (1..8) a partir de "C{n}.{nnn}". */
-function indiceDescritor(id: string): number | null {
-  const m = id.match(/^C[1-5]\.(\d{3})$/);
-  if (!m) return null;
-  return Number(m[1]);
-}
-
-/** Trunca evidência pra primeira linha do tooltip (100 chars). */
+/** Trunca string em max chars com reticências. */
 function truncar(s: string, max = 100): string {
   if (s.length <= max) return s;
   return s.slice(0, max - 1) + "…";
 }
 
-/**
- * Heatmap 5×8 dos 40 descritores. Cada célula é um botão clicável
- * que abre tooltip embaixo (estado simples — 1 célula selecionada
- * por vez, second click fecha).
- */
+/** Slug pra anchor do scroll-into-view (lacuna prioritária). */
+function lacunaAnchorId(descritorId: string): string {
+  return `lacuna-${descritorId.replace(/\./g, "-")}`;
+}
+
+/** Item de uma coluna do heatmap (1 descritor). */
+function HeatmapItem({
+  desc,
+  isLacunaPrioritaria,
+  turmaId,
+}: {
+  desc: DiagnosticoDescritor;
+  isLacunaPrioritaria: boolean;
+  turmaId: string;
+}) {
+  const handleClick = () => {
+    if (isLacunaPrioritaria) {
+      // Scrolla até o card detalhado da lacuna prioritária
+      const el = document.getElementById(lacunaAnchorId(desc.id));
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Highlight visual breve (CSS animation)
+      el?.classList.add("ring-2", "ring-ink", "ring-offset-2");
+      setTimeout(() => {
+        el?.classList.remove("ring-2", "ring-ink", "ring-offset-2");
+      }, 1500);
+    }
+  };
+
+  const Tag = isLacunaPrioritaria ? "button" : "div";
+  return (
+    <Tag
+      type={isLacunaPrioritaria ? "button" : undefined}
+      onClick={isLacunaPrioritaria ? handleClick : undefined}
+      className={cn(
+        "flex items-center gap-2 py-1.5 text-left",
+        isLacunaPrioritaria
+          ? "cursor-pointer hover:bg-muted rounded px-1 -mx-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink"
+          : "px-1 -mx-1",
+      )}
+      title={
+        isLacunaPrioritaria
+          ? `Lacuna prioritária — clique pra ver detalhes`
+          : `${desc.nome} — ${STATUS_LABEL[desc.status]}`
+      }
+    >
+      <span
+        className={cn(
+          "inline-block w-4 h-4 rounded shrink-0",
+          STATUS_COR[desc.status],
+        )}
+        aria-hidden="true"
+      />
+      <span className="flex-1 min-w-0">
+        <span className="block text-[13px] leading-tight truncate">
+          {desc.nome}
+          {isLacunaPrioritaria && (
+            <span className="ml-1 text-amber-700" aria-label="Lacuna prioritária">
+              ★
+            </span>
+          )}
+        </span>
+        <span className="block text-[11px] text-ink-400 font-mono">
+          {desc.id}
+        </span>
+      </span>
+    </Tag>
+  );
+}
+
+/** Coluna de uma competência no heatmap. */
+function CompetenciaColuna({
+  competencia,
+  descritores,
+  lacunasPrioritarias,
+  turmaId,
+}: {
+  competencia: Competencia;
+  descritores: DiagnosticoDescritor[];
+  lacunasPrioritarias: Set<string>;
+  turmaId: string;
+}) {
+  // Filtra descritores dessa competência e ordena por número (1-8)
+  const ordenados = useMemo(() => {
+    return descritores
+      .filter((d) => d.competencia === competencia)
+      .sort((a, b) => a.id.localeCompare(b.id));
+  }, [descritores, competencia]);
+
+  // Mini-resumo: X em domínio, Y em lacuna (de 8)
+  const resumo = useMemo(() => {
+    let dominio = 0;
+    let lacuna = 0;
+    for (const d of ordenados) {
+      if (d.status === "dominio") dominio++;
+      if (d.status === "lacuna") lacuna++;
+    }
+    return { dominio, lacuna, total: ordenados.length };
+  }, [ordenados]);
+
+  return (
+    <div className="flex-1 min-w-0">
+      <div className="mb-2 pb-2 border-b border-border">
+        <p className="font-display text-sm">
+          <span className="text-ink-400 font-mono text-xs mr-1">
+            {competencia}
+          </span>
+          {COMPETENCIA_NOME[competencia]}
+        </p>
+        <p className="text-[11px] text-ink-400 mt-0.5">
+          {resumo.dominio}/{resumo.total} em domínio
+          {resumo.lacuna > 0 && (
+            <>
+              {" · "}
+              <span className="text-red-700 font-medium">
+                {resumo.lacuna} em lacuna
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+      <ul role="list" className="space-y-0.5">
+        {ordenados.map((d) => (
+          <li key={d.id}>
+            <HeatmapItem
+              desc={d}
+              isLacunaPrioritaria={lacunasPrioritarias.has(d.id)}
+              turmaId={turmaId}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Heatmap principal: 5 colunas (desktop) ou acordeão (mobile). */
 function Heatmap({
   descritores,
+  lacunasPrioritarias,
+  turmaId,
 }: {
   descritores: DiagnosticoDescritor[];
+  lacunasPrioritarias: Set<string>;
+  turmaId: string;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  // Index por (competencia, idx) → descritor. Linhas faltantes ficam
-  // como cinza (sem dado).
-  const grid = useMemo(() => {
-    const map: Record<string, DiagnosticoDescritor> = {};
-    for (const d of descritores) {
-      map[d.id] = d;
-    }
-    return map;
-  }, [descritores]);
-
-  const selected = selectedId ? grid[selectedId] : null;
+  const [colunaExpanded, setColunaExpanded] = useState<Competencia | null>(null);
 
   return (
     <div>
-      {/* Header com nomes das competências */}
-      <div className="grid grid-cols-5 gap-1 mb-1">
+      {/* Desktop: 5 colunas lado a lado */}
+      <div className="hidden md:flex gap-4">
         {COMPETENCIAS.map((c) => (
-          <div
+          <CompetenciaColuna
             key={c}
-            className="text-center font-mono text-[11px] uppercase tracking-wider text-ink-400"
-          >
-            {c}
-          </div>
+            competencia={c}
+            descritores={descritores}
+            lacunasPrioritarias={lacunasPrioritarias}
+            turmaId={turmaId}
+          />
         ))}
       </div>
 
-      {/* Grid 5×8 */}
-      <div className="grid grid-cols-5 gap-1">
-        {COMPETENCIAS.map((comp) =>
-          Array.from({ length: 8 }, (_, i) => {
-            const num = i + 1;
-            const id = `${comp}.${String(num).padStart(3, "0")}`;
-            const desc = grid[id];
-            const status = desc?.status;
-            const isSelected = selectedId === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() =>
-                  setSelectedId(isSelected ? null : id)
+      {/* Mobile: acordeão (1 expandida por vez) */}
+      <div className="md:hidden space-y-2">
+        {COMPETENCIAS.map((c) => {
+          const isOpen = colunaExpanded === c;
+          const dominio = descritores.filter(
+            (d) => d.competencia === c && d.status === "dominio",
+          ).length;
+          const lacuna = descritores.filter(
+            (d) => d.competencia === c && d.status === "lacuna",
+          ).length;
+          return (
+            <details
+              key={c}
+              open={isOpen}
+              onToggle={(e) => {
+                if ((e.target as HTMLDetailsElement).open) {
+                  setColunaExpanded(c);
+                } else if (colunaExpanded === c) {
+                  setColunaExpanded(null);
                 }
-                title={desc ? `${id} — ${STATUS_LABEL[desc.status]}` : `${id} — sem dado`}
-                aria-label={`Descritor ${id}${desc ? ", status " + STATUS_LABEL[desc.status] : ""}`}
-                aria-pressed={isSelected}
-                className={cn(
-                  "aspect-square rounded font-mono text-[10px]",
-                  "flex items-center justify-center transition-all",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink",
-                  status
-                    ? STATUS_COR[status]
-                    : "bg-gray-300 text-gray-600",
-                  isSelected
-                    ? "ring-2 ring-offset-2 ring-ink scale-110"
-                    : "hover:scale-105",
-                )}
-              >
-                {comp.slice(1)}.{num}
-              </button>
-            );
-          })
-        )}
+              }}
+              className="border border-border rounded-lg overflow-hidden"
+            >
+              <summary className="cursor-pointer flex items-center justify-between px-3 py-2 bg-muted/50 hover:bg-muted">
+                <span className="font-display text-sm">
+                  <span className="text-ink-400 font-mono text-xs mr-1">{c}</span>
+                  {COMPETENCIA_NOME[c]}
+                </span>
+                <span className="text-[11px] text-ink-400">
+                  {dominio} dom · {lacuna > 0 ? (
+                    <span className="text-red-700 font-medium">{lacuna} lac</span>
+                  ) : (
+                    <span>0 lac</span>
+                  )}
+                </span>
+              </summary>
+              <div className="px-3 py-2">
+                <CompetenciaColuna
+                  competencia={c}
+                  descritores={descritores}
+                  lacunasPrioritarias={lacunasPrioritarias}
+                  turmaId={turmaId}
+                />
+              </div>
+            </details>
+          );
+        })}
       </div>
 
       {/* Legenda */}
-      <div className="flex flex-wrap gap-3 mt-3 text-xs text-ink-400">
+      <div className="flex flex-wrap gap-3 mt-4 text-xs text-ink-400">
         <LegendaSwatch cor="bg-emerald-500" label="Domínio" />
         <LegendaSwatch cor="bg-amber-500" label="Incerto" />
         <LegendaSwatch cor="bg-red-500" label="Lacuna" />
-        <LegendaSwatch cor="bg-gray-300" label="Sem dado" />
+        <span className="inline-flex items-center gap-1.5">
+          <span className="text-amber-700">★</span>
+          Lacuna prioritária (clique pra detalhes)
+        </span>
       </div>
-
-      {/* Tooltip do selecionado */}
-      {selected && (
-        <Card className="mt-3 p-3 border-ink-700">
-          <div className="flex items-baseline gap-2 mb-1">
-            <span className="font-mono text-xs text-ink-400">{selected.id}</span>
-            <span className={cn(
-              "font-mono text-[11px] px-1.5 py-0.5 rounded",
-              STATUS_COR[selected.status],
-            )}>
-              {STATUS_LABEL[selected.status]}
-            </span>
-            <span className="text-xs text-ink-400">
-              · Confiança: {CONFIANCA_LABEL[selected.confianca]}
-            </span>
-          </div>
-          {selected.evidencias.length > 0 ? (
-            <ul className="text-sm space-y-1">
-              {selected.evidencias.map((ev, i) => (
-                <li key={i} className="italic text-ink-700">
-                  &ldquo;{truncar(ev)}&rdquo;
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-xs text-ink-400 italic">
-              Sem evidência textual (status inferido sem citação direta).
-            </p>
-          )}
-        </Card>
-      )}
     </div>
   );
 }
@@ -198,29 +308,61 @@ function LegendaSwatch({ cor, label }: { cor: string; label: string }) {
   );
 }
 
-/** Card horizontal de uma lacuna prioritária (top 5). */
-function LacunaCard({ desc }: { desc: DiagnosticoDescritor }) {
-  const competencia = desc.id.slice(0, 2);
+/** Card detalhado de uma lacuna prioritária com 3 seções. */
+function LacunaCardEnriquecido({
+  lac,
+}: {
+  lac: DiagnosticoLacunaEnriquecida;
+}) {
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-2">
-        <Badge variant="warning">{competencia}</Badge>
-        <span className="font-mono text-[11px] text-ink-400 uppercase tracking-wider">
-          {desc.id}
-        </span>
-      </div>
-      {desc.evidencias.length > 0 ? (
-        <p className="text-sm italic text-ink-700 mb-3 line-clamp-3">
-          &ldquo;{truncar(desc.evidencias[0], 180)}&rdquo;
+    <Card
+      id={lacunaAnchorId(lac.id)}
+      className="p-4 transition-all"
+    >
+      <header className="flex items-start justify-between gap-2 mb-3">
+        <div className="min-w-0">
+          <Badge variant="warning">{lac.competencia}</Badge>
+          <h4 className="font-display text-base mt-1.5 leading-snug">
+            {lac.nome}
+          </h4>
+          <p className="font-mono text-[11px] text-ink-400 mt-0.5">
+            {lac.id} · Confiança {CONFIANCA_LABEL[lac.confianca]}
+          </p>
+        </div>
+      </header>
+
+      {/* Seção 1: O que é */}
+      <section className="mb-3">
+        <p className="font-mono text-[11px] uppercase tracking-wider text-ink-400 mb-1">
+          📌 O que é
         </p>
-      ) : (
-        <p className="text-sm italic text-ink-400 mb-3">
-          Sem evidência textual citada.
+        <p className="text-sm leading-relaxed">{lac.definicao_curta}</p>
+      </section>
+
+      {/* Seção 2: Evidência no texto */}
+      <section className="mb-3">
+        <p className="font-mono text-[11px] uppercase tracking-wider text-ink-400 mb-1">
+          🔍 Evidência no texto
         </p>
-      )}
-      <p className="text-xs text-ink-400">
-        Confiança: <strong>{CONFIANCA_LABEL[desc.confianca]}</strong>
-      </p>
+        {lac.evidencias.length > 0 ? (
+          <p className="text-sm italic text-ink-700 leading-relaxed">
+            &ldquo;{truncar(lac.evidencias[0], 200)}&rdquo;
+          </p>
+        ) : (
+          <p className="text-sm italic text-ink-400">
+            Sem evidência textual citada — diagnóstico inferiu a lacuna pelo
+            que está AUSENTE no texto.
+          </p>
+        )}
+      </section>
+
+      {/* Seção 3: Como trabalhar */}
+      <section className="bg-amber-50/40 border border-amber-200 rounded p-3 -mx-1">
+        <p className="font-mono text-[11px] uppercase tracking-wider text-amber-700 mb-1">
+          🎯 Como trabalhar
+        </p>
+        <p className="text-sm leading-relaxed">{lac.sugestao_pedagogica}</p>
+      </section>
     </Card>
   );
 }
@@ -247,13 +389,7 @@ export function MapaCognitivo({ turmaId, diagnostico }: Props) {
   }
 
   const { professor } = diagnostico;
-  const lacunasComoDescs = professor.descritores.filter((d) =>
-    professor.lacunas_prioritarias.includes(d.id),
-  );
-  // Preserva ordem de lacunas_prioritarias (que vem do LLM)
-  const lacunasOrdenadas = professor.lacunas_prioritarias
-    .map((id) => lacunasComoDescs.find((d) => d.id === id))
-    .filter((x): x is DiagnosticoDescritor => x !== undefined);
+  const lacunasSet = new Set(professor.lacunas_prioritarias);
 
   return (
     <section aria-labelledby="mapa-cog-h" className="space-y-6">
@@ -267,27 +403,32 @@ export function MapaCognitivo({ turmaId, diagnostico }: Props) {
         </p>
       </div>
 
-      {/* Sub-bloco 1 — Heatmap */}
+      {/* Sub-bloco 1 — Heatmap (5 colunas com nome legível) */}
       <Card className="p-4">
         <p className="font-mono text-[11px] uppercase tracking-wider text-ink-400 mb-3">
-          Heatmap dos 40 descritores
+          Mapa dos 40 descritores observáveis
         </p>
-        <Heatmap descritores={professor.descritores} />
+        <Heatmap
+          descritores={professor.descritores}
+          lacunasPrioritarias={lacunasSet}
+          turmaId={turmaId}
+        />
       </Card>
 
-      {/* Sub-bloco 2 — Lacunas prioritárias */}
-      {lacunasOrdenadas.length > 0 && (
+      {/* Sub-bloco 2 — Lacunas prioritárias com 3 seções */}
+      {professor.lacunas_enriquecidas.length > 0 && (
         <div>
           <h3 className="font-display text-base mb-2">
             Lacunas prioritárias
           </h3>
           <p className="text-xs text-ink-400 mb-3">
-            Top {lacunasOrdenadas.length} dos pontos onde o aluno precisa de
-            mais atenção, ordenadas por impacto pedagógico.
+            Top {professor.lacunas_enriquecidas.length} lacunas com
+            diversidade entre competências (max 2 por C). Cada card tem
+            o que é, evidência e sugestão de como trabalhar.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {lacunasOrdenadas.map((d) => (
-              <LacunaCard key={d.id} desc={d} />
+            {professor.lacunas_enriquecidas.map((lac) => (
+              <LacunaCardEnriquecido key={lac.id} lac={lac} />
             ))}
           </div>
         </div>

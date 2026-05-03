@@ -609,6 +609,24 @@ def inferir_diagnostico(
         input_tokens=input_tokens, output_tokens=output_tokens,
     )
 
+    # Pós-processamento: diversifica lacunas_prioritarias
+    # (fix Fase 3 — antes top-5 podia vir 4 da mesma competência,
+    # gerando UI redundante). Cap de 2 por competência preserva
+    # variedade pedagógica.
+    lacunas_originais = list(validado["lacunas_prioritarias"])
+    lacunas_diversas = diversificar_lacunas_prioritarias(
+        validado["descritores"],
+        lacunas_originais,
+        max_por_competencia=2,
+    )
+    if lacunas_diversas != lacunas_originais:
+        logger.info(
+            "[diag] lacunas_prioritarias diversificadas: "
+            "antes=%s depois=%s",
+            lacunas_originais, lacunas_diversas,
+        )
+    validado["lacunas_prioritarias"] = lacunas_diversas
+
     diagnostico = {
         "schema_version": SCHEMA_VERSION,
         "modelo_usado": modelo_real,
@@ -636,3 +654,123 @@ def diagnostico_habilitado() -> bool:
     via ``REDATO_DIAGNOSTICO_HABILITADO=false``."""
     val = os.environ.get("REDATO_DIAGNOSTICO_HABILITADO", "true")
     return val.strip().lower() not in {"false", "0", "no", ""}
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Pós-processamento: diversidade nas lacunas prioritárias (fix Fase 3)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Sintoma observado em prod (envio af8556f6 da validação Fase 3):
+# LLM retornou top-5 = [C5.001, C5.002, C5.003, C5.004, C3.001].
+# Aluno tinha problema severo em C5 — então 4 dos 5 "top" prioritárias
+# eram da mesma competência, com a mesma evidência ("Não há proposta
+# de intervenção, logo nenhum X é apresentado"). Card UI virou lista
+# redundante.
+#
+# Fix: pós-processa `lacunas_prioritarias` aplicando max-N por
+# competência. Mantém ordem do LLM (que reflete prioridade pedagógica
+# percebida pelo modelo) mas remove excedentes e preenche com
+# lacunas de outras competências quando há.
+
+def _competencia_de_id(descritor_id: str) -> str:
+    """Extrai 'C1'..'C5' de 'C5.001'. Vazio se mal-formado."""
+    if not isinstance(descritor_id, str) or len(descritor_id) < 2:
+        return ""
+    return descritor_id[:2]
+
+
+def _confianca_rank(c: str) -> int:
+    """Pra ordenar candidatas: alta > media > baixa. Menor = melhor."""
+    return {"alta": 0, "media": 1, "baixa": 2}.get(c, 3)
+
+
+def diversificar_lacunas_prioritarias(
+    descritores: List[Dict[str, Any]],
+    lacunas_originais: List[str],
+    max_por_competencia: int = 2,
+    target_total: int = 5,
+) -> List[str]:
+    """Garante diversidade entre competências no top-N.
+
+    Args:
+        descritores: lista de 40 entries do diagnóstico (cada uma com
+            `id`, `status`, `confianca`, `evidencias`).
+        lacunas_originais: ordem do LLM (`lacunas_prioritarias` cru).
+        max_por_competencia: cap N descritores da mesma C{x}.
+            Default 2 (briefing fix Fase 3).
+        target_total: tamanho desejado da saída. Default 5. Fica
+            menor se aluno tem < target_total lacunas no total.
+
+    Returns:
+        Lista re-ordenada (preserva ordem relativa do LLM dentro do
+        cap). Pode ter < target_total se aluno tem poucas lacunas.
+
+    Lógica:
+        1. Itera lacunas_originais em ordem; aceita até max_por_competencia
+           por C{x} e descarta o resto pra "fila de descarte".
+        2. Se ainda faltar pra completar target_total, pesca lacunas
+           de outras competências do `descritores` (status=lacuna),
+           ordenando por confiança (alta > media > baixa).
+        3. Como último recurso, reincorpora os descartados (mantém
+           ordem original) — nunca devolve lista mais curta que o
+           LLM se houver lacunas suficientes.
+    """
+    # Index: id → entry completo, pra lookup de status/confiança
+    by_id = {d.get("id"): d for d in (descritores or []) if isinstance(d, dict)}
+
+    # 1ª passada: aceita do LLM com cap por competência
+    contagem: Dict[str, int] = {}
+    aceitos: List[str] = []
+    descartados: List[str] = []
+    for did in lacunas_originais or []:
+        if not isinstance(did, str):
+            continue
+        comp = _competencia_de_id(did)
+        if not comp:
+            continue
+        if contagem.get(comp, 0) >= max_por_competencia:
+            descartados.append(did)
+            continue
+        aceitos.append(did)
+        contagem[comp] = contagem.get(comp, 0) + 1
+
+    if len(aceitos) >= target_total:
+        return aceitos[:target_total]
+
+    # 2ª passada: pesca outras lacunas (status=lacuna) de competências
+    # com vaga, priorizando alta confiança. Não duplica IDs.
+    ja_dentro: set = set(aceitos)
+    candidatas = [
+        d for d in (descritores or [])
+        if isinstance(d, dict)
+        and d.get("status") == "lacuna"
+        and d.get("id") not in ja_dentro
+    ]
+    candidatas.sort(key=lambda d: _confianca_rank(d.get("confianca", "")))
+    for d in candidatas:
+        if len(aceitos) >= target_total:
+            break
+        did = d.get("id")
+        if not isinstance(did, str):
+            continue
+        comp = _competencia_de_id(did)
+        if not comp:
+            continue
+        if contagem.get(comp, 0) >= max_por_competencia:
+            continue
+        aceitos.append(did)
+        ja_dentro.add(did)
+        contagem[comp] = contagem.get(comp, 0) + 1
+
+    # 3ª passada: se ainda faltar (aluno tem caso extremo todas C5),
+    # reincorpora descartados em ordem original. Garante len >= len
+    # do LLM original quando possível.
+    for did in descartados:
+        if len(aceitos) >= target_total:
+            break
+        if did in ja_dentro:
+            continue
+        aceitos.append(did)
+        ja_dentro.add(did)
+
+    return aceitos[:target_total]

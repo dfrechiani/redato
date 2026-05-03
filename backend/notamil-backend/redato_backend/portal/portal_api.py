@@ -2754,14 +2754,54 @@ class DiagnosticoOficinaSugerida(BaseModel):
     razao: str
 
 
+class DiagnosticoDescritorEnriquecido(BaseModel):
+    """Entry do heatmap pro frontend — diagnóstico Fase 2 + nome
+    curto do YAML pro professor entender o descritor sem precisar
+    decorar IDs.
+
+    Fix Fase 3 (2026-05-03): heatmap antigo só mostrava ID ('C5.001')
+    sem nome — UI ininteligível. Frontend agora lê `nome` direto.
+    """
+    id: str
+    status: str         # "dominio" | "lacuna" | "incerto"
+    evidencias: List[str]
+    confianca: str      # "alta" | "media" | "baixa"
+    # Adicionado no fix Fase 3:
+    nome: str           # "Concordância (verbal e nominal)"
+    competencia: str    # "C1".."C5"
+    categoria_inep: str  # "Desvios gramaticais"
+
+
+class DiagnosticoLacunaEnriquecida(BaseModel):
+    """Card de lacuna prioritária com 3 seções: o que é + evidência
+    + como trabalhar (fix Fase 3 #3 — antes só evidência)."""
+    id: str
+    nome: str           # do YAML
+    competencia: str
+    status: str
+    confianca: str
+    evidencias: List[str]
+    definicao_curta: str
+    """1-2 frases iniciais da definição YAML, truncadas a ~150 chars
+    pra caber no card sem rolagem."""
+    sugestao_pedagogica: str
+    """1-2 frases acionáveis: como o professor trabalha essa lacuna
+    com o aluno. Vem do dicionário `sugestoes_pedagogicas.py`."""
+
+
 class DiagnosticoVersaoProfessor(BaseModel):
     """Payload completo do diagnóstico pro professor — heatmap +
     lacunas + resumo + sugestões."""
-    descritores: List[Dict[str, Any]]
+    descritores: List[DiagnosticoDescritorEnriquecido]
     """40 entries do diagnóstico Fase 2 (id, status, evidencias,
-    confianca)."""
+    confianca) + nome/competencia/categoria_inep do YAML.
+    Frontend usa pra renderizar heatmap com nomes legíveis."""
     lacunas_prioritarias: List[str]
-    """Top 5 IDs (ordenados por prioridade pelo LLM)."""
+    """Top 5 IDs (ordenados por prioridade pelo LLM, com diversidade
+    forçada — max 2 por competência, fix Fase 3)."""
+    lacunas_enriquecidas: List[DiagnosticoLacunaEnriquecida]
+    """Mesmo top-5 mas com nome + definicao_curta + sugestao_pedagogica
+    pré-resolvidos. Frontend renderiza cards 3 seções direto."""
     resumo_qualitativo: str
     recomendacao_breve: str
     oficinas_sugeridas: List[DiagnosticoOficinaSugerida]
@@ -2928,11 +2968,17 @@ def _build_diagnostico_recente(
     Retorna None se aluno não tem nenhum envio diagnosticado — UI
     renderiza mensagem de estado vazio (Fase 3 spec).
     """
+    from redato_backend.diagnostico import (
+        descritores_por_id,  # YAML lookup pra nome/categoria
+    )
     from redato_backend.diagnostico.metas import (
         gerar_metas_aluno, metas_to_dicts,
     )
     from redato_backend.diagnostico.sugestoes import (
         sugerir_oficinas, sugestoes_to_dicts,
+    )
+    from redato_backend.diagnostico.sugestoes_pedagogicas import (
+        get_definicao_curta, get_sugestao_pedagogica,
     )
 
     # Query: último envio do aluno (qualquer atividade da turma) com
@@ -2967,10 +3013,72 @@ def _build_diagnostico_recente(
         return None
 
     # Versão professor — completo
-    descritores = diag.get("descritores") or []
+    descritores_diag = diag.get("descritores") or []
     lacunas = diag.get("lacunas_prioritarias") or []
     resumo = diag.get("resumo_qualitativo") or ""
     recom = diag.get("recomendacao_breve") or ""
+
+    # Lookup map: id → Descritor do YAML (Fase 1). Se o YAML for
+    # atualizado e tiver descritor novo que ainda não foi diagnosticado,
+    # aluno antigo só verá os IDs antigos no diag dele — OK.
+    yaml_lookup = descritores_por_id()
+
+    # Enriquece cada descritor com nome/competencia/categoria do YAML.
+    # Pra descritores que vieram do diag mas SUMIRAM do YAML (rebase
+    # bizarro?) usa fallback genérico em vez de quebrar.
+    descritores_enriquecidos: List[DiagnosticoDescritorEnriquecido] = []
+    for d in descritores_diag:
+        if not isinstance(d, dict):
+            continue
+        did = d.get("id", "")
+        yaml_d = yaml_lookup.get(did)
+        nome = yaml_d.nome if yaml_d else f"Descritor {did}"
+        comp = yaml_d.competencia if yaml_d else (
+            did[:2] if isinstance(did, str) and len(did) >= 2 else "?"
+        )
+        cat = yaml_d.categoria_inep if yaml_d else ""
+        descritores_enriquecidos.append(DiagnosticoDescritorEnriquecido(
+            id=did,
+            status=d.get("status", "incerto"),
+            evidencias=list(d.get("evidencias") or []),
+            confianca=d.get("confianca", "media"),
+            nome=nome,
+            competencia=comp,
+            categoria_inep=cat,
+        ))
+
+    # Pré-resolve lacunas prioritárias com 3 seções (o que é +
+    # evidência + como trabalhar). Frontend só monta o card.
+    diag_descs_by_id = {
+        d.id: d for d in descritores_enriquecidos
+    }
+    lacunas_enriquecidas: List[DiagnosticoLacunaEnriquecida] = []
+    for did in lacunas:
+        if not isinstance(did, str):
+            continue
+        d = diag_descs_by_id.get(did)
+        yaml_d = yaml_lookup.get(did)
+        if d is None:
+            # Caso raro: ID na lista de prioritárias mas não está no
+            # array de descritores. Pula em vez de quebrar.
+            logger.warning(
+                "perfil_aluno: lacuna %s sem entrada nos descritores",
+                did,
+            )
+            continue
+        definicao_curta = get_definicao_curta(
+            did, yaml_d.definicao if yaml_d else "",
+        )
+        lacunas_enriquecidas.append(DiagnosticoLacunaEnriquecida(
+            id=did,
+            nome=d.nome,
+            competencia=d.competencia,
+            status=d.status,
+            confianca=d.confianca,
+            evidencias=d.evidencias,
+            definicao_curta=definicao_curta,
+            sugestao_pedagogica=get_sugestao_pedagogica(did),
+        ))
 
     # Sugestões de oficinas filtradas pela série da turma
     sugestoes = sugerir_oficinas(
@@ -2980,8 +3088,9 @@ def _build_diagnostico_recente(
     )
 
     professor_payload = DiagnosticoVersaoProfessor(
-        descritores=list(descritores),
+        descritores=descritores_enriquecidos,
         lacunas_prioritarias=list(lacunas),
+        lacunas_enriquecidas=lacunas_enriquecidas,
         resumo_qualitativo=resumo,
         recomendacao_breve=recom,
         oficinas_sugeridas=[

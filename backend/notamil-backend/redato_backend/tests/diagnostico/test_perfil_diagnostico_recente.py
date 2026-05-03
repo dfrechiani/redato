@@ -44,12 +44,16 @@ def test_perfil_aluno_response_aceita_diagnostico_recente_none():
 
 
 def test_perfil_aluno_response_aceita_diagnostico_completo():
-    """Versão professor + versão aluno, ambos populados."""
+    """Versão professor + versão aluno, ambos populados.
+    Schema atualizado no fix Fase 3 (descritores enriquecidos +
+    lacunas_enriquecidas com 3 seções)."""
     from redato_backend.portal.portal_api import (
         AlunoPerfilResponse, AlunoPerfilResumo, AlunoPerfilStats,
         DiagnosticoRecente, DiagnosticoVersaoProfessor,
         DiagnosticoVersaoAluno, DiagnosticoMeta,
         DiagnosticoOficinaSugerida,
+        DiagnosticoDescritorEnriquecido,
+        DiagnosticoLacunaEnriquecida,
     )
     diag = DiagnosticoRecente(
         envio_id="env-uuid",
@@ -57,9 +61,27 @@ def test_perfil_aluno_response_aceita_diagnostico_completo():
         modelo="gpt-4.1-2025-04-14",
         professor=DiagnosticoVersaoProfessor(
             descritores=[
-                {"id": "C1.001", "status": "dominio", "evidencias": [], "confianca": "alta"},
+                DiagnosticoDescritorEnriquecido(
+                    id="C1.001", status="dominio",
+                    evidencias=[], confianca="alta",
+                    nome="Estrutura sintática",
+                    competencia="C1",
+                    categoria_inep="Estrutura sintática",
+                ),
             ],
             lacunas_prioritarias=["C5.001"],
+            lacunas_enriquecidas=[
+                DiagnosticoLacunaEnriquecida(
+                    id="C5.001",
+                    nome="Agente",
+                    competencia="C5",
+                    status="lacuna",
+                    confianca="alta",
+                    evidencias=["Não há proposta com agente nomeado."],
+                    definicao_curta="A proposta nomeia QUEM vai executar...",
+                    sugestao_pedagogica="Mostre exemplos de propostas com...",
+                ),
+            ],
             resumo_qualitativo="Aluno X demonstra Y.",
             recomendacao_breve="Reforço Z.",
             oficinas_sugeridas=[
@@ -98,12 +120,37 @@ def test_perfil_aluno_response_aceita_diagnostico_completo():
     assert r.diagnostico_recente is not None
     assert r.diagnostico_recente.envio_id == "env-uuid"
     assert r.diagnostico_recente.modelo == "gpt-4.1-2025-04-14"
-    # Versão professor preserva descritores + lacunas + oficinas
+    # Versão professor preserva descritores enriquecidos + lacunas + oficinas
     assert len(r.diagnostico_recente.professor.lacunas_prioritarias) == 1
+    assert len(r.diagnostico_recente.professor.lacunas_enriquecidas) == 1
+    assert r.diagnostico_recente.professor.lacunas_enriquecidas[0].nome == "Agente"
     assert len(r.diagnostico_recente.professor.oficinas_sugeridas) == 1
+    # Descritor enriquecido tem nome legível pra heatmap
+    assert r.diagnostico_recente.professor.descritores[0].nome == "Estrutura sintática"
     # Versão aluno só metas
     assert len(r.diagnostico_recente.aluno.metas) == 1
     assert r.diagnostico_recente.aluno.metas[0].competencia == "C5"
+
+
+def test_perfil_aluno_lacunas_enriquecidas():
+    """Cada lacuna prioritária deve ter nome_curto + definicao_curta
+    + sugestao_pedagogica preenchidos. Smoke estrutural."""
+    from redato_backend.portal.portal_api import DiagnosticoLacunaEnriquecida
+    lac = DiagnosticoLacunaEnriquecida(
+        id="C5.001",
+        nome="Agente",
+        competencia="C5",
+        status="lacuna",
+        confianca="alta",
+        evidencias=["trecho da redação"],
+        definicao_curta="A proposta nomeia QUEM vai executar.",
+        sugestao_pedagogica="Mostre exemplos de propostas com agentes.",
+    )
+    # 3 seções dos cards: o que é (definicao_curta) + evidência +
+    # como trabalhar (sugestao_pedagogica)
+    assert len(lac.definicao_curta) > 0
+    assert len(lac.evidencias) > 0
+    assert len(lac.sugestao_pedagogica) > 0
 
 
 # ──────────────────────────────────────────────────────────────────────

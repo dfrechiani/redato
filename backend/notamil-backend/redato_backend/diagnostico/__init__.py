@@ -49,6 +49,10 @@ from redato_backend.diagnostico.sugestoes import (
     sugerir_oficinas,
     sugestoes_to_dicts,
 )
+from redato_backend.diagnostico.sugestoes_pedagogicas import (
+    get_sugestao_pedagogica,
+    get_definicao_curta,
+)
 
 __all__ = [
     # Fase 1 — descritores
@@ -67,4 +71,7 @@ __all__ = [
     "MAX_POR_LACUNA",
     "sugerir_oficinas",
     "sugestoes_to_dicts",
+    # Fix Fase 3 — sugestões pedagógicas (cards de lacuna)
+    "get_sugestao_pedagogica",
+    "get_definicao_curta",
 ]

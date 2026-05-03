@@ -417,6 +417,27 @@ export interface DiagnosticoDescritor {
    *  pra `incerto` quando não há sinal suficiente. */
   evidencias: string[];
   confianca: DiagnosticoConfianca;
+  /** Fix Fase 3: nome curto do YAML pra heatmap mostrar texto
+   *  legível (não só ID). */
+  nome: string;
+  competencia: string;        // "C1".."C5"
+  categoria_inep: string;     // "Desvios gramaticais"
+}
+
+/** Card de lacuna prioritária com 3 seções (fix Fase 3 #3): o que
+ *  é + evidência + como trabalhar. Pré-resolvido no backend pra
+ *  frontend só renderizar. */
+export interface DiagnosticoLacunaEnriquecida {
+  id: string;
+  nome: string;
+  competencia: string;
+  status: DiagnosticoStatus;
+  confianca: DiagnosticoConfianca;
+  evidencias: string[];
+  /** 1-2 frases iniciais da definição YAML (~150 chars). */
+  definicao_curta: string;
+  /** 1-2 frases acionáveis: como o professor trabalha a lacuna. */
+  sugestao_pedagogica: string;
 }
 
 export interface DiagnosticoMeta {
@@ -437,9 +458,15 @@ export interface DiagnosticoOficinaSugerida {
 }
 
 export interface DiagnosticoVersaoProfessor {
-  /** 40 entries — uma por descritor do YAML. */
+  /** 40 entries — uma por descritor do YAML, enriquecidas com
+   *  nome+competencia+categoria_inep pro heatmap mostrar nome legível. */
   descritores: DiagnosticoDescritor[];
-  lacunas_prioritarias: string[];  // top 5 IDs
+  /** Top 5 IDs com diversidade forçada (max 2 por competência —
+   *  fix Fase 3 #2). */
+  lacunas_prioritarias: string[];
+  /** Mesmo top 5 mas pré-resolvido com nome+definicao_curta+sugestao
+   *  pedagógica. Frontend renderiza cards 3 seções direto. */
+  lacunas_enriquecidas: DiagnosticoLacunaEnriquecida[];
   resumo_qualitativo: string;
   recomendacao_breve: string;
   oficinas_sugeridas: DiagnosticoOficinaSugerida[];

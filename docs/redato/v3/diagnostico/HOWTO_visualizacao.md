@@ -1,6 +1,6 @@
 # HOWTO — Visualização do diagnóstico cognitivo (Fase 3)
 
-**Atualizado:** 2026-05-03
+**Atualizado:** 2026-05-03 (fix Fase 3: heatmap + diversidade + cards)
 
 ## O que é
 
@@ -69,34 +69,84 @@ Acessa pela navegação:
 
 Quatro sub-blocos:
 
-### 1. Heatmap dos 40 descritores
+### 1. Mapa dos 40 descritores observáveis (heatmap reformatado)
 
-Grid 5 colunas (C1..C5) × 8 linhas (descritores 001..008). Cada
-célula é um quadrado colorido com label curto (ex.: `1.5` = C1.005):
+> **Fix Fase 3 #1**: o draft anterior era grid 5×8 só com IDs
+> (`1.5`, `2.7`...). IDs sozinhos não comunicam. Reformatado pra
+> 5 colunas com **nome legível** ao lado de cada descritor.
+
+**Desktop**: 5 colunas lado a lado (C1, C2, C3, C4, C5). Cada
+coluna tem header com nome curto da competência + mini-resumo
+(`X/8 em domínio · Y em lacuna`). Dentro da coluna, lista vertical
+de 8 itens, cada um com:
+- Quadrado colorido pequeno (16×16 px) à esquerda
+- Nome do descritor (ex.: "Concordância (verbal e nominal)") em 13px
+- ID em cinza pequeno embaixo (`C1.005`)
+- ★ amarelo se for lacuna prioritária (clicável — scrolla pro card)
+
+**Mobile**: 5 colunas viram acordeão (`<details>`). Tap no header
+da competência expande/colapsa a lista de 8 descritores.
 
 | Cor | Status | Significado |
 |---|---|---|
-| Verde (#10B981) | `dominio` | Aluno demonstra controle do descritor |
-| Amarelo (#F59E0B) | `incerto` | Sinal ambíguo ou texto curto demais |
-| Vermelho (#EF4444) | `lacuna` | Erro/ausência clara |
-| Cinza (#9CA3AF) | sem dado | Descritor não classificado (raro) |
+| Verde (`#10B981`) | `dominio` | Aluno demonstra controle do descritor |
+| Amarelo (`#F59E0B`) | `incerto` | Sinal ambíguo ou texto curto demais |
+| Vermelho (`#EF4444`) | `lacuna` | Erro/ausência clara |
+| Cinza (`#9CA3AF`) | sem dado | Descritor não classificado (raro) |
 
-Clicar numa célula expande tooltip embaixo com:
-- Nome completo do descritor
-- Status + confiança (alta/media/baixa)
-- Até 3 evidências textuais (trechos literais da redação, em itálico)
+Click em descritor com ★ (lacuna prioritária) faz scroll suave até
+o card detalhado correspondente em "Lacunas prioritárias", com
+highlight visual de 1.5s.
 
-### 2. Lacunas prioritárias
+Backend: payload `descritores` é enriquecido com `nome`,
+`competencia` e `categoria_inep` lidos do YAML
+(`docs/redato/v3/diagnostico/descritores.yaml`) por
+`_build_diagnostico_recente`. Frontend consome direto, sem precisar
+fetch separado do YAML.
 
-Top 5 cards horizontais (responsivo: 1 col mobile, 2-3 desktop).
-Cada card:
-- Badge da competência ("C5")
-- ID do descritor
-- 1ª evidência destacada em itálico (truncada a 180 chars)
-- Confiança do LLM no rodapé
+### 2. Lacunas prioritárias (cards 3 seções)
 
-Ordem dos cards = ordem de `lacunas_prioritarias` do diagnóstico
-(o LLM já priorizou por impacto pedagógico).
+> **Fix Fase 3 #2** (diversidade): top 5 antes podia vir 4 da mesma
+> competência (caso real envio af8556f6 = `[C5.001, C5.002, C5.003,
+> C5.004, C3.001]`). Pós-processamento agora força **max 2 por
+> competência**, completa com lacunas de outras Cs ordenadas por
+> confiança alta→baixa. Implementação: `diversificar_lacunas_prioritarias`
+> em `redato_backend/diagnostico/inferencia.py`, aplicada DENTRO de
+> `inferir_diagnostico` antes de salvar — já vai diversificado pro
+> banco.
+
+> **Fix Fase 3 #3** (cards enriquecidos): cards antigos tinham só
+> evidência. Agora cada card tem **3 seções**:
+
+```
+┌─ Card lacuna prioritária ──────────────────┐
+│ [C5]  Agente                                │
+│ C5.001 · Confiança Alta                     │
+│                                             │
+│ 📌 O QUE É                                  │
+│ A proposta nomeia QUEM vai executar — inst- │
+│ ituição, órgão, ministério, ONG.            │
+│                                             │
+│ 🔍 EVIDÊNCIA NO TEXTO                       │
+│ "Não há proposta de intervenção..."         │
+│                                             │
+│ 🎯 COMO TRABALHAR                           │
+│ Mostre exemplos de propostas com agentes    │
+│ específicos. Trabalhe substituir 'todos'    │
+│ por agente nomeado.                         │
+└─────────────────────────────────────────────┘
+```
+
+Backend pré-resolve `lacunas_enriquecidas` com:
+- `definicao_curta`: 1-2 frases iniciais do YAML campo `definicao`
+  (truncado a ~150 chars em ponto-final)
+- `sugestao_pedagogica`: vem do dicionário fixo
+  `redato_backend/diagnostico/sugestoes_pedagogicas.py` (40 entries
+  com 1-2 frases acionáveis cada)
+
+Ordem dos cards = ordem de `lacunas_prioritarias` (o LLM priorizou
+por impacto pedagógico, e a diversificação preservou essa ordem
+dentro do cap).
 
 ### 3. Resumo + Recomendação
 
@@ -165,6 +215,24 @@ Ações disponíveis pro professor nesse caso:
   a mesma meta. Personalização (LLM gera meta sob medida) custaria
   +$0.01-0.02 por redação e tem ROI duvidoso enquanto não validamos
   o impacto das metas determinísticas com cursinhos parceiros.
+
+- **Sugestão pedagógica também é determinística** (mesmo descritor →
+  mesma frase pra qualquer aluno). Pra primeiro draft é OK — meta-
+  análise pedagógica pode personalizar depois quando tivermos
+  dataset de validação humana.
+
+## Pendências futuras (sub-meta C do Daniel)
+
+Cards de lacuna podem ganhar ainda:
+
+- **Link pra material de estudo específico do descritor** — capítulo
+  do livro 1S/2S/3S, vídeo, exercício. Hoje só apontamos OFICINAS
+  no sub-bloco 4 (granularidade competência); link granular por
+  descritor exige catálogo de material que ainda não existe.
+
+Fica registrado pra Fase 4 ou 5 — quando tiver catálogo de material
+estudo mapeado por descritor, frontend renderiza chip clicável "📖
+Ver material" no rodapé de cada card de lacuna.
 
 ## Tests
 
