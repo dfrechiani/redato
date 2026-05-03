@@ -325,6 +325,73 @@ export interface AlunoEvolucao {
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// M9.7 — Perfil do aluno (drill-down completo da turma)
+// Espelha schemas em
+// `redato_backend/portal/portal_api.py::AlunoPerfilResponse`.
+// ──────────────────────────────────────────────────────────────────────
+
+/** Tendência calculada comparando média das últimas 3 com média das 3
+ *  anteriores. `dados_insuficientes` quando aluno tem < 6 envios com
+ *  nota válida — ruído alto domina diferenças pequenas. */
+export type AlunoTendencia =
+  | "subindo"
+  | "caindo"
+  | "estavel"
+  | "dados_insuficientes";
+
+export type CompetenciaKey = "c1" | "c2" | "c3" | "c4" | "c5";
+
+export interface AlunoPerfilResumo {
+  id: string;
+  nome: string;
+  telefone_mascarado: string;
+  entrou_em: string;  // ISO UTC
+  ativo: boolean;
+}
+
+export interface AlunoPerfilStats {
+  total_envios: number;
+  envios_com_nota: number;
+  /** Envios cujo redato_output falhou ou não tem nota_total —
+   *  candidatos a reprocessar via POST /portal/envios/{id}/reprocessar. */
+  envios_com_problema: number;
+  /** Média de nota_total entre envios com nota. `null` se 0 envios
+   *  com nota. */
+  media_geral: number | null;
+  /** Médias por competência. `null` pra competência sem dados (ex.:
+   *  aluno só fez foco_c2 → c1, c3, c4, c5 ficam null). */
+  medias_cN: Record<CompetenciaKey, number | null>;
+  tendencia: AlunoTendencia;
+  /** Competência com maior média (ex.: "C2"). `null` se sem dados. */
+  ponto_forte: string | null;
+  /** Competência com menor média. `null` se sem dados. */
+  ponto_fraco: string | null;
+}
+
+export interface AlunoPerfilEnvio {
+  id: string;            // envio_id (pra reprocessar)
+  atividade_id: string;
+  atividade_codigo: string;   // ex.: "RJ1·OF14·MF"
+  atividade_titulo: string;
+  oficina_numero: number;
+  modo_correcao: string;
+  criado_em: string;     // ISO UTC; UI converte pra BRT
+  nota_total: number | null;
+  notas_cN: Record<CompetenciaKey, number | null>;
+  tem_feedback: boolean;
+  /** True se redato_output null/error/sem nota — botão Reprocessar
+   *  aparece. */
+  tem_problema: boolean;
+}
+
+export interface AlunoPerfil {
+  aluno: AlunoPerfilResumo;
+  stats: AlunoPerfilStats;
+  /** Ordenado por `criado_em` desc (mais recente em cima). */
+  envios: AlunoPerfilEnvio[];
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // M8 — PDF
 // ──────────────────────────────────────────────────────────────────────
 

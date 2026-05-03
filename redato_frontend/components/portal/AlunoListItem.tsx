@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -15,6 +16,16 @@ interface Props {
   onAlteracao?: () => void;
 }
 
+/**
+ * Item da lista "Alunos cadastrados" na página da turma.
+ *
+ * M9.7: nome+meta viraram link clicável pro perfil
+ * (`/turma/{id}/aluno/{aluno_id}`). O botão "Remover" mantém-se à
+ * direita FORA do link pra evitar clique acidental — clique no
+ * botão abre modal de confirmação com `stopPropagation` no Link
+ * (Next.js: <Link> wrapping não captura evento do <button> interno
+ * porque o botão chama setOpen sem propagar pra navegação).
+ */
 export function AlunoListItem({ turmaId, aluno, onAlteracao }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,21 +48,40 @@ export function AlunoListItem({ turmaId, aluno, onAlteracao }: Props) {
   const dataEntrada = new Date(aluno.vinculado_em).toLocaleDateString("pt-BR");
 
   return (
-    <li className="flex items-center justify-between gap-3 py-3 px-3 sm:px-4 hover:bg-muted rounded-lg">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium truncate">{aluno.nome}</p>
-        <p className="text-xs text-ink-400 font-mono">
-          {aluno.telefone_mascarado} · entrou em {dataEntrada}
-        </p>
-      </div>
-      <div className="text-xs text-ink-400 hidden sm:block">
-        {aluno.n_envios} envio{aluno.n_envios !== 1 ? "s" : ""}
-      </div>
+    <li className="flex items-center gap-2 py-3 px-3 sm:px-4 hover:bg-muted rounded-lg">
+      <Link
+        href={`/turma/${turmaId}/aluno/${aluno.id}`}
+        className="flex items-center gap-3 min-w-0 flex-1 group"
+        aria-label={`Abrir perfil de ${aluno.nome}`}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium truncate group-hover:text-ink">
+            {aluno.nome}
+          </p>
+          <p className="text-xs text-ink-400 font-mono">
+            {aluno.telefone_mascarado} · entrou em {dataEntrada}
+          </p>
+        </div>
+        <div className="text-xs text-ink-400 hidden sm:block">
+          {aluno.n_envios} envio{aluno.n_envios !== 1 ? "s" : ""}
+        </div>
+        <span
+          className="text-ink-400 group-hover:text-ink shrink-0 ml-2"
+          aria-hidden="true"
+        >
+          ›
+        </span>
+      </Link>
       <Button
         variant="ghost"
         size="md"
-        onClick={() => setOpen(true)}
-        className="text-danger hover:bg-danger/10 px-3"
+        onClick={(e) => {
+          // Stop propagation pra garantir que o Link irmão não seja
+          // ativado se layout vier a aninhá-los no futuro.
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className="text-danger hover:bg-danger/10 px-3 shrink-0"
         aria-label={`Remover ${aluno.nome} da turma`}
       >
         Remover

@@ -199,6 +199,37 @@ OU coordenador da escola.
 `ja_notificada_em` sem reenviar. Sem `TWILIO_ACCOUNT_SID` no env,
 opera em modo dry-run e registra em `data/portal/audit_log.jsonl`.
 
+### `GET /portal/turmas/{turma_id}/alunos/{aluno_turma_id}/perfil` (M9.7)
+
+Drill-down do aluno na turma. Diferente de `/evolucao` (orientado ao
+histórico didático + PDF), esse endpoint agrega **stats operacionais**
+pra dashboard:
+
+- `stats.media_geral`, `stats.medias_cN` (c1..c5)
+- `stats.tendencia` — `subindo`/`caindo`/`estavel`/`dados_insuficientes`
+  (compara últimas 3 com 3 anteriores; `dados_insuficientes` se < 6
+  envios com nota válida)
+- `stats.ponto_forte`, `stats.ponto_fraco` — competência com maior/menor
+  média entre as 5
+- `stats.envios_com_problema` — alimenta o botão Reprocessar inline na UI
+
+Auth: `_check_view_turma` (mesma de `detalhe_turma` — professor da
+turma OU coordenador da escola).
+
+Erros:
+- 404 se turma não existe / aluno não pertence à turma
+- 403 se usuário não tem permissão de view na turma
+
+Estado vazio: `total_envios=0`, `envios=[]` — frontend mostra mensagem
+e esconde os 3 blocos de stats/chart/tabela.
+
+Tests: [tests/portal/test_perfil_aluno.py](../tests/portal/test_perfil_aluno.py)
+(16 cenários: schemas + helpers de tendência/médias/problema/feedback +
+estrutura crítica do endpoint).
+
+Como interpretar/limitações: ver
+[docs/redato/v3/HOWTO_perfil_aluno.md](../../../../docs/redato/v3/HOWTO_perfil_aluno.md).
+
 ## Política de soft delete
 
 Tabelas com `deleted_at TIMESTAMPTZ NULLABLE`:

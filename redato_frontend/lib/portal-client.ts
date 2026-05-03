@@ -10,6 +10,7 @@
 import { ApiError, type ApiErrorBody } from "@/types/api";
 import type {
   AlunoEvolucao,
+  AlunoPerfil,
   AtividadeDetail,
   AtividadeListItem,
   CriarAtividadeRequest,
@@ -251,6 +252,19 @@ export async function evolucaoAluno(
 ): Promise<AlunoEvolucao> {
   return fetchJson<AlunoEvolucao>(
     `/api/portal/turmas/${turmaId}/alunos/${alunoTurmaId}/evolucao`,
+  );
+}
+
+// M9.7 — Perfil do aluno (drill-down da turma).
+// Diferente de `evolucaoAluno`: traz stats agregadas (média geral,
+// médias C1-C5, tendência, ponto forte/fraco) + flags por envio
+// (tem_problema → botão Reprocessar na UI).
+export async function perfilAluno(
+  turmaId: string,
+  alunoTurmaId: string,
+): Promise<AlunoPerfil> {
+  return fetchJson<AlunoPerfil>(
+    `/api/portal/turmas/${turmaId}/alunos/${alunoTurmaId}/perfil`,
   );
 }
 

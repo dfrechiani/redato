@@ -2077,6 +2077,7 @@ def _coletar_envios_full(
         redato = _parse_redato_output(it.redato_output) if it else None
         nota = _nota_total_de(redato)
         out.append({
+            "envio_id": envio.id,
             "atividade_id": ativ.id,
             "missao_codigo": missao.codigo,
             "missao_titulo": missao.titulo,
@@ -2439,6 +2440,286 @@ def dashboard_escola(
                 EvolucaoPonto(**p) for p in _evolucao_temporal(envios_all)
             ],
             comparacao_turmas=comparacao,
+        )
+
+
+# ──────────────────────────────────────────────────────────────────────
+# GET /portal/turmas/{turma_id}/alunos/{aluno_turma_id}/perfil
+# ──────────────────────────────────────────────────────────────────────
+#
+# Drill-down do aluno na turma — agrega stats (média geral, médias por
+# competência, tendência, ponto forte/fraco) + lista completa de envios
+# com flags pra UI (tem_feedback, tem_problema).
+#
+# Por que separado de `evolucao`:
+# - `evolucao` é orientado ao histórico didático (envios + chart +
+#   pendências) e alimenta o PDF do aluno.
+# - `perfil` é orientado a métricas pra dashboard de drill-down: stats
+#   agregadas + flags operacionais (envios com problema, pra reprocessar).
+# Reusa `_coletar_envios_full` mas devolve uma resposta diferente.
+
+def _calc_tendencia(notas_em_ordem: List[Optional[int]]) -> str:
+    """Calcula tendência comparando média das últimas 3 com média das
+    3 anteriores. Considera apenas envios com nota válida.
+
+    - Se total de notas válidas < 6: "dados_insuficientes" (ruído alto
+      domina diferenças pequenas).
+    - Diferença > +30: "subindo".
+    - Diferença < -30: "caindo".
+    - Senão: "estavel".
+
+    `notas_em_ordem`: lista ordenada por data ASC. None é ignorado
+    (envios com problema ou sem nota não contribuem).
+    """
+    notas = [n for n in notas_em_ordem if n is not None]
+    if len(notas) < 6:
+        return "dados_insuficientes"
+    last3 = notas[-3:]
+    prev3 = notas[-6:-3]
+    diff = (sum(last3) / 3) - (sum(prev3) / 3)
+    if diff > 30:
+        return "subindo"
+    if diff < -30:
+        return "caindo"
+    return "estavel"
+
+
+def _calc_medias_cN(
+    redatos: List[Optional[Dict[str, Any]]],
+) -> Dict[str, Optional[int]]:
+    """Médias por competência (c1..c5). Foco contribui só pra
+    competência focada; completo/completo_parcial pros 5.
+
+    Retorna dict com todas 5 keys. Valor é `None` se a competência não
+    foi avaliada em nenhum envio (ex.: aluno só fez foco_c2 → c1, c3,
+    c4, c5 ficam None).
+    """
+    soma: Dict[str, int] = {f"c{i}": 0 for i in range(1, 6)}
+    cont: Dict[str, int] = {f"c{i}": 0 for i in range(1, 6)}
+    for r in redatos:
+        if not r:
+            continue
+        for comp, nota in _competencias_de(r):
+            ck = comp.lower()  # "C2" → "c2"
+            if ck in soma:
+                soma[ck] += nota
+                cont[ck] += 1
+    return {
+        ck: int(soma[ck] / cont[ck]) if cont[ck] > 0 else None
+        for ck in soma
+    }
+
+
+def _ponto_forte_fraco(
+    medias_cN: Dict[str, Optional[int]],
+) -> Tuple[Optional[str], Optional[str]]:
+    """Competência com maior/menor média (entre as que têm dados).
+
+    Retorna ("C2", "C1") em caps. None pra ambos se nenhuma competência
+    tem nota.
+    """
+    validos = [(k, v) for k, v in medias_cN.items() if v is not None]
+    if not validos:
+        return None, None
+    forte = max(validos, key=lambda kv: kv[1])
+    fraco = min(validos, key=lambda kv: kv[1])
+    return forte[0].upper(), fraco[0].upper()
+
+
+def _envio_tem_problema(
+    redato: Optional[Dict[str, Any]], nota_total: Optional[int],
+) -> bool:
+    """Detecta envio com falha de pipeline. True se:
+    - redato_output é None / ausente
+    - redato_output contém key 'error' (caminho do reprocessar quando
+      pipeline falha)
+    - nota_total é None mesmo com redato_output (parser não conseguiu
+      extrair → reprocessar pode ressuscitar)
+    """
+    if not redato:
+        return True
+    if "error" in redato:
+        return True
+    if nota_total is None:
+        return True
+    return False
+
+
+def _envio_tem_feedback(redato: Optional[Dict[str, Any]]) -> bool:
+    """True se há análise pedagógica pro professor abrir no modal.
+    Reusa `_analise_da_redacao_de` — qualquer um dos campos populados
+    conta como feedback disponível.
+    """
+    if not redato or "error" in redato:
+        return False
+    analise = _analise_da_redacao_de(redato)
+    return any(
+        analise.get(k)
+        for k in (
+            "pontos_fortes", "pontos_fracos",
+            "padrao_falha", "transferencia", "prosa_completa",
+        )
+    )
+
+
+class AlunoPerfilResumo(BaseModel):
+    id: str
+    nome: str
+    telefone_mascarado: str
+    entrou_em: str
+    ativo: bool
+
+
+class AlunoPerfilStats(BaseModel):
+    total_envios: int
+    envios_com_nota: int
+    envios_com_problema: int
+    """Envios cujo redato_output falhou ou não tem nota_total —
+    candidatos pra reprocessar."""
+    media_geral: Optional[int]
+    """Média de `nota_total` entre envios com nota. None se 0 envios
+    com nota."""
+    medias_cN: Dict[str, Optional[int]]
+    """Médias por competência (c1..c5). None pra competência sem dados."""
+    tendencia: str
+    """'subindo' | 'caindo' | 'estavel' | 'dados_insuficientes'."""
+    ponto_forte: Optional[str]
+    """Competência com maior média (C1..C5). None se sem dados."""
+    ponto_fraco: Optional[str]
+    """Competência com menor média. None se sem dados."""
+
+
+class AlunoPerfilEnvio(BaseModel):
+    id: str
+    atividade_id: str
+    atividade_codigo: str
+    atividade_titulo: str
+    oficina_numero: int
+    modo_correcao: str
+    criado_em: str
+    nota_total: Optional[int]
+    notas_cN: Dict[str, Optional[int]]
+    tem_feedback: bool
+    tem_problema: bool
+
+
+class AlunoPerfilResponse(BaseModel):
+    aluno: AlunoPerfilResumo
+    stats: AlunoPerfilStats
+    envios: List[AlunoPerfilEnvio]
+    """Ordenado por `criado_em` desc (mais recente em cima — pra UI)."""
+
+
+@router.get(
+    "/turmas/{turma_id}/alunos/{aluno_turma_id}/perfil",
+    response_model=AlunoPerfilResponse,
+)
+def perfil_aluno(
+    turma_id: uuid.UUID,
+    aluno_turma_id: uuid.UUID,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> AlunoPerfilResponse:
+    """Drill-down do aluno: identificação + stats agregadas + envios.
+
+    Permissão: `can_view_turma` (professor da turma OU coordenador da
+    escola — mesma de `detalhe_turma` e `evolucao_aluno`).
+
+    Erros:
+    - 404 se turma não existe ou aluno não pertence à turma.
+    - 403 se usuário não tem permissão de view na turma.
+
+    Estado vazio:
+    - Aluno sem envios → stats com zeros/None, envios=[].
+      Frontend renderiza mensagem "Nenhum envio ainda".
+    """
+    with Session(get_engine()) as session:
+        turma = _get_turma_or_404(session, turma_id)
+        _check_view_turma(auth, turma)
+        aluno = session.get(AlunoTurma, aluno_turma_id)
+        if aluno is None or aluno.turma_id != turma_id:
+            raise HTTPException(
+                status_code=404,
+                detail="Aluno não encontrado nessa turma",
+            )
+
+        # Coleta envios da turma e filtra pelo aluno (mesma estratégia
+        # de `evolucao_aluno` — N+1 evitado por _coletar_envios_full).
+        atividades = session.execute(
+            select(Atividade).where(
+                Atividade.turma_id == turma_id,
+                Atividade.deleted_at.is_(None),
+            ).order_by(Atividade.data_inicio)
+        ).scalars().all()
+        envios_full = _coletar_envios_full(
+            session, [a.id for a in atividades],
+        )
+        envios_aluno = [
+            e for e in envios_full if e["aluno_turma_id"] == aluno_turma_id
+        ]
+        # Ordenado por enviado_em ASC pra cálculo de tendência;
+        # invertemos pra UI no fim.
+        envios_aluno.sort(key=lambda e: e["enviado_em"])
+
+        # Stats agregadas
+        notas_em_ordem = [e["nota_total"] for e in envios_aluno]
+        notas_validas = [n for n in notas_em_ordem if n is not None]
+        media_geral = (
+            int(sum(notas_validas) / len(notas_validas))
+            if notas_validas else None
+        )
+        medias_cN = _calc_medias_cN([e["redato_output"] for e in envios_aluno])
+        forte, fraco = _ponto_forte_fraco(medias_cN)
+        tendencia = _calc_tendencia(notas_em_ordem)
+        n_problema = sum(
+            1 for e in envios_aluno
+            if _envio_tem_problema(e["redato_output"], e["nota_total"])
+        )
+
+        stats = AlunoPerfilStats(
+            total_envios=len(envios_aluno),
+            envios_com_nota=len(notas_validas),
+            envios_com_problema=n_problema,
+            media_geral=media_geral,
+            medias_cN=medias_cN,
+            tendencia=tendencia,
+            ponto_forte=forte,
+            ponto_fraco=fraco,
+        )
+
+        # Lista de envios (desc — mais recente em cima pra UI)
+        envios_resp: List[AlunoPerfilEnvio] = []
+        for e in sorted(
+            envios_aluno, key=lambda e: e["enviado_em"], reverse=True,
+        ):
+            redato = e["redato_output"]
+            comps = dict(_competencias_de(redato))  # {"C1": 160, ...}
+            notas_cN = {
+                f"c{i}": comps.get(f"C{i}") for i in range(1, 6)
+            }
+            envios_resp.append(AlunoPerfilEnvio(
+                id=str(e["envio_id"]),
+                atividade_id=str(e["atividade_id"]),
+                atividade_codigo=e["missao_codigo"],
+                atividade_titulo=e["missao_titulo"],
+                oficina_numero=e["oficina_numero"],
+                modo_correcao=e["modo"],
+                criado_em=e["enviado_em"].isoformat(),
+                nota_total=e["nota_total"],
+                notas_cN=notas_cN,
+                tem_feedback=_envio_tem_feedback(redato),
+                tem_problema=_envio_tem_problema(redato, e["nota_total"]),
+            ))
+
+        return AlunoPerfilResponse(
+            aluno=AlunoPerfilResumo(
+                id=str(aluno.id),
+                nome=aluno.nome,
+                telefone_mascarado=_mascarar_telefone(aluno.telefone),
+                entrou_em=aluno.vinculado_em.isoformat(),
+                ativo=aluno.ativo,
+            ),
+            stats=stats,
+            envios=envios_resp,
         )
 
 
