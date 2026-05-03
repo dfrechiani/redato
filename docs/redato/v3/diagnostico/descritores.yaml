@@ -1,0 +1,590 @@
+# Descritores observáveis pra diagnóstico cognitivo de redação ENEM.
+#
+# Versão validada Daniel + Claude em 2026-05-02. INEP-aligned.
+# Consumido pelo pipeline da Fase 2 (inferência via LLM a partir de
+# redato_output + texto da redação).
+#
+# NÃO editar este arquivo sem versionar (mudar `versao` + criar entrada
+# em ../HOWTO_diagnostico_pedagogico.md).
+
+versao: "1.0"
+data_criacao: "2026-05-02"
+fonte: "Matriz INEP 2024-2025 + iteração Daniel-Claude"
+total_descritores: 40
+distribuicao:
+  C1: 8
+  C2: 8
+  C3: 8
+  C4: 8
+  C5: 8
+
+descritores:
+  # ════════════════════════════════════════════════════════════════
+  # COMPETÊNCIA 1 — DOMÍNIO DA NORMA CULTA
+  # ════════════════════════════════════════════════════════════════
+
+  - id: "C1.001"
+    competencia: "C1"
+    categoria_inep: "Estrutura sintática"
+    nome: "Estrutura sintática"
+    definicao: |-
+      Períodos completos com sujeito, verbo e complementos
+      identificáveis. Sem fragmentos, orações truncadas ou
+      aglomerados de palavras sem ligação. Critério INEP nível 5
+      admite no máximo 1 falha de estrutura sintática.
+    indicador_lacuna: |-
+      Períodos truncados, frases sem verbo, orações principais
+      sem subordinadas exigidas, amontoado de palavras sem
+      conexão sintática.
+    exemplo_lacuna: "A pobreza no Brasil. Muitas pessoas. Sem oportunidade."
+
+  - id: "C1.002"
+    competencia: "C1"
+    categoria_inep: "Convenções da escrita"
+    nome: "Acentuação gráfica"
+    definicao: |-
+      Aplicação correta das regras de acentuação para oxítonas,
+      paroxítonas, proparoxítonas, monossílabos tônicos e casos
+      especiais (porquê/por que/por quê).
+    indicador_lacuna: |-
+      Omissão de acento em paroxítonas terminadas em ditongo
+      (-ia, -io, -eu); confusão 'está/esta'; uso indevido de
+      'porquê' em interrogativas diretas.
+    exemplo_lacuna: "O cafe esta pronto e a maquina e nova."
+
+  - id: "C1.003"
+    competencia: "C1"
+    categoria_inep: "Convenções da escrita"
+    nome: "Ortografia de palavras frequentes"
+    definicao: |-
+      Grafia correta de palavras comuns, incluindo confusões
+      clássicas (mal/mau, mais/mas, há/a, encima/em cima,
+      afim/a fim) e uso correto de letras s/ss/ç, x/ch, h inicial.
+    indicador_lacuna: |-
+      Trocas sistemáticas mal/mau e mais/mas; 'x' e 'ch' mal usados;
+      's/ss/ç' mal aplicados; ausência de 'h' em palavras como
+      'haver', 'hoje'.
+    exemplo_lacuna: "O mau não pode previlecer e a sociedade tem que enchergar isso."
+
+  - id: "C1.004"
+    competencia: "C1"
+    categoria_inep: "Desvios gramaticais"
+    nome: "Pontuação"
+    definicao: |-
+      Uso correto de vírgula, ponto, dois-pontos e ponto-e-vírgula
+      em estruturas comuns: separação de orações, vocativo, aposto,
+      enumeração, oração subordinada deslocada.
+    indicador_lacuna: |-
+      Vírgula entre sujeito e verbo; ausência de vírgula em oração
+      subordinada deslocada; uso de vírgula no lugar de ponto;
+      ponto-e-vírgula nunca utilizado.
+    exemplo_lacuna: "Os jovens, devem participar mais da política e por isso, eles precisam estudar."
+
+  - id: "C1.005"
+    competencia: "C1"
+    categoria_inep: "Desvios gramaticais"
+    nome: "Concordância (verbal e nominal)"
+    definicao: |-
+      Verbo concorda com sujeito em número e pessoa, incluindo
+      casos especiais (sujeito composto, posposto, expressões de
+      quantidade, partícula 'se'). Adjetivos, artigos, pronomes
+      concordam com substantivo.
+    indicador_lacuna: |-
+      'Fazem X anos'; 'houveram problemas'; 'a maioria dos jovens são';
+      'anexo as fotos'; 'menas pessoas'; 'é proibido a entrada'.
+    exemplo_lacuna: "Existe muitos problemas e a maioria das pessoas sentem isso."
+
+  - id: "C1.006"
+    competencia: "C1"
+    categoria_inep: "Desvios gramaticais"
+    nome: "Regência (verbal e nominal)"
+    definicao: |-
+      Uso correto das preposições com verbos e nomes que exigem
+      complemento (aspirar a, esquecer-se de, preferir X a Y,
+      obediência a, simpatizar com).
+    indicador_lacuna: |-
+      'Prefiro mais X do que Y'; 'obediência da lei'; 'esqueci o
+      nome' (sem 'de'); regência genérica ausente.
+    exemplo_lacuna: "A população prefere mais a segurança do que a economia."
+
+  - id: "C1.007"
+    competencia: "C1"
+    categoria_inep: "Escolha de registro"
+    nome: "Escolha de registro"
+    definicao: |-
+      Adequação à modalidade escrita formal, sem coloquialismos,
+      gírias, marcas de oralidade, abreviações de internet, palavras
+      de baixo calão, ou uso indevido de 1ª pessoa em contexto que
+      pede impessoalidade.
+    indicador_lacuna: |-
+      'Tipo assim', 'né', 'vc', 'pra', 'eu acho', 'na minha opinião',
+      'a gente', 'cara', 'rolar'.
+    exemplo_lacuna: "Tipo, na minha opinião, eu acho que a gente tem que pensar mais sobre isso, sabe?"
+
+  - id: "C1.008"
+    competencia: "C1"
+    categoria_inep: "Escolha vocabular"
+    nome: "Escolha vocabular"
+    definicao: |-
+      Uso de vocabulário preciso — palavras com sentido correto,
+      adequadas ao contexto formal-argumentativo. Sem repetição
+      vocabular pobre, sem palavras 'inseguras' (usadas com sentido
+      errado), sem pomposidade mal aplicada.
+    indicador_lacuna: |-
+      Palavra usada com sentido errado; repetição do mesmo vocábulo
+      em período curto; vocabulário pomposo aplicado fora de contexto.
+    exemplo_lacuna: "A pobreza é um fenômeno mórbido na sociedade brasileira."
+
+  # ════════════════════════════════════════════════════════════════
+  # COMPETÊNCIA 2 — COMPREENSÃO DA PROPOSTA
+  # ════════════════════════════════════════════════════════════════
+
+  - id: "C2.001"
+    competencia: "C2"
+    categoria_inep: "Tema"
+    nome: "Pertinência ao tema proposto"
+    definicao: |-
+      Aluno aborda o tema proposto sem fugir, tangenciar ou
+      substituir por tema correlato. Desenvolve a problemática
+      específica, não só menciona palavras-chave.
+    indicador_lacuna: |-
+      Redação genérica que serve pra qualquer tema; foco em aspecto
+      periférico; troca do tema proposto por outro relacionado.
+    exemplo_lacuna: "Tema 'Desafios da inclusão digital' e aluno escreve sobre 'importância geral da educação'."
+
+  - id: "C2.002"
+    competencia: "C2"
+    categoria_inep: "Tema"
+    nome: "Recorte temático específico"
+    definicao: |-
+      Aluno define qual aspecto específico do tema vai discutir.
+      Não trata 'tudo' do tema, escolhe um ângulo de ataque
+      argumentativo.
+    indicador_lacuna: |-
+      Tese ampla demais ('violência é ruim'); múltiplos recortes
+      desconexos; redação tentando cobrir o tema inteiro sem
+      profundidade.
+    exemplo_lacuna: "A violência contra a mulher é um problema social complexo que envolve cultura, economia e política."
+
+  - id: "C2.003"
+    competencia: "C2"
+    categoria_inep: "Tipo textual"
+    nome: "Estrutura dissertativo-argumentativa"
+    definicao: |-
+      Aluno mantém estrutura de introdução + desenvolvimento(s) +
+      conclusão. Não confunde com narração, descrição, carta,
+      crônica, depoimento.
+    indicador_lacuna: |-
+      Trechos narrativos extensos, descrições gratuitas, parágrafos
+      sem função argumentativa, estrutura epistolar ou de crônica.
+    exemplo_lacuna: "Maria, uma menina de 13 anos, sofreu violência. Sua história começa quando..."
+
+  - id: "C2.004"
+    competencia: "C2"
+    categoria_inep: "Tipo textual"
+    nome: "Predomínio do tipo dissertativo"
+    definicao: |-
+      Predominam verbos no presente do indicativo, 3ª pessoa,
+      modalidade argumentativa. Sem expressões narrativas (passado
+      de ações, personagens), poéticas ou de slogan.
+    indicador_lacuna: |-
+      Verbos no pretérito perfeito narrando situações; personagens
+      com nome; diálogo; lirismo; frase de efeito tipo slogan.
+    exemplo_lacuna: "Em 2019, João decidiu lutar contra a desigualdade. Ele caminhou pelas ruas..."
+
+  - id: "C2.005"
+    competencia: "C2"
+    categoria_inep: "Repertório"
+    nome: "Presença de repertório sociocultural"
+    definicao: |-
+      Uso de informações, fatos, citações ou experiências socialmente
+      reconhecidas como argumento — autores, obras, conceitos, dados,
+      leis, fatos históricos, instituições.
+    indicador_lacuna: |-
+      Ausência de qualquer referência externa; argumentação puramente
+      baseada em opinião pessoal; senso comum sem fonte.
+    exemplo_lacuna: "Todos sabem que a desigualdade é um problema grave que precisa ser resolvido."
+
+  - id: "C2.006"
+    competencia: "C2"
+    categoria_inep: "Repertório"
+    nome: "Pertinência do repertório ao tema"
+    definicao: |-
+      O repertório usado dialoga diretamente com o tema. Não é
+      decorativo nem desconectado. Conecta a referência com o
+      problema discutido.
+    indicador_lacuna: |-
+      Citação 'colada' sem integração; repertório que contradiz a
+      tese; repertório fora de contexto temático.
+    exemplo_lacuna: "Como dizia Aristóteles, 'o homem é um animal político'. A inclusão digital é importante."
+
+  - id: "C2.007"
+    competencia: "C2"
+    categoria_inep: "Repertório"
+    nome: "Repertório produtivo (uso, não menção)"
+    definicao: |-
+      Aluno usa o repertório como ferramenta argumentativa — explica
+      como ele sustenta o argumento, extrai consequência, aplica ao
+      caso. Não basta citar e abandonar.
+    indicador_lacuna: |-
+      Nome do autor ou obra mencionado e abandonado na frase seguinte;
+      repertório como 'enfeite' sem trabalho intelectual; ausência de
+      'extração de consequência' do repertório.
+    exemplo_lacuna: "Segundo Karl Marx, a sociedade é dividida em classes. A pobreza é um problema brasileiro grave."
+
+  - id: "C2.008"
+    competencia: "C2"
+    categoria_inep: "Repertório"
+    nome: "Repertório legítimo (não 'de bolso')"
+    definicao: |-
+      Repertório nomeável — autor, obra, lei, dado com fonte, fato
+      histórico específico. Evita fórmulas genéricas como 'estudos
+      mostram', 'pesquisas indicam', 'muitos especialistas afirmam'.
+      INEP usa termo oficial 'repertório de bolso' pra referências
+      prontas e genéricas.
+    indicador_lacuna: |-
+      Uso de 'estudos', 'pesquisas', 'dados', 'especialistas',
+      'autores' sem nomear ninguém; afirmações de autoridade sem
+      fonte; 'muitos' + verbo de dizer.
+    exemplo_lacuna: "Estudos mostram que a desigualdade é um problema grave no Brasil."
+
+  # ════════════════════════════════════════════════════════════════
+  # COMPETÊNCIA 3 — ARGUMENTAÇÃO
+  # ════════════════════════════════════════════════════════════════
+
+  - id: "C3.001"
+    competencia: "C3"
+    categoria_inep: "Tese / posicionamento"
+    nome: "Existência e clareza da tese"
+    definicao: |-
+      Aluno apresenta posicionamento claro sobre o tema. Tese é a
+      resposta que o aluno dá ao problema — 'X deve ser feito porque
+      Y'. Não basta dizer 'é importante refletir'.
+    indicador_lacuna: |-
+      Introdução só descreve o tema sem posicionamento; tese implícita
+      nunca recuperada; 'é necessário refletir sobre' como pseudo-tese.
+    exemplo_lacuna: "A inclusão digital é um tema importante na sociedade atual."
+
+  - id: "C3.002"
+    competencia: "C3"
+    categoria_inep: "Articulação tese-argumentos"
+    nome: "Sustentação da tese pelos argumentos"
+    definicao: |-
+      Argumentos no desenvolvimento defendem a tese apresentada na
+      introdução. Não são argumentos genéricos sobre o tema — são
+      razões específicas pra acreditar na tese.
+    indicador_lacuna: |-
+      Tese sobre causa A, desenvolvimento sobre causa B; argumentos
+      contradizem a tese; desenvolvimentos tratando de subtemas
+      desconectados da tese.
+    exemplo_lacuna: "Tese: 'falta investimento em saúde'. D1: 'preconceito cultural contra portadores de deficiência'."
+
+  - id: "C3.003"
+    competencia: "C3"
+    categoria_inep: "Organização argumentativa"
+    nome: "Tópico frasal claro em cada desenvolvimento"
+    definicao: |-
+      Cada parágrafo de desenvolvimento abre com frase que anuncia
+      qual argumento será defendido naquele parágrafo. Sem isso,
+      parágrafo vira lista de ideias soltas.
+    indicador_lacuna: |-
+      Parágrafo abre com dado/exemplo sem ancoragem; abertura com
+      conectivo + frase descritiva; ausência de 'ideia-guia' do
+      parágrafo.
+    exemplo_lacuna: "Parágrafo D1 abre com 'Dados do IBGE mostram que 30% dos brasileiros...' (sem tópico frasal)."
+
+  - id: "C3.004"
+    competencia: "C3"
+    categoria_inep: "Argumento consistente"
+    nome: "Profundidade do argumento"
+    definicao: |-
+      Aluno desenvolve o argumento explicando causa, consequência ou
+      raiz do problema. Não fica na superfície ('é ruim', 'afeta as
+      pessoas'). Articula o 'porquê' e o 'como funciona'.
+    indicador_lacuna: |-
+      Parágrafo enumera fatos sem analisar; 'isso é grave porque é
+      grave'; ausência de explicação de mecanismo.
+    exemplo_lacuna: "A pobreza causa exclusão. Pessoas pobres são excluídas. Isso é um problema social."
+
+  - id: "C3.005"
+    competencia: "C3"
+    categoria_inep: "Argumento consistente"
+    nome: "Diversidade de argumentos"
+    definicao: |-
+      D1 e D2 abordam aspectos DIFERENTES do problema, não o mesmo
+      aspecto com palavras trocadas. Ex: D1=causa estrutural,
+      D2=consequência prática; ou D1=histórico, D2=atual.
+    indicador_lacuna: |-
+      D1 e D2 dizem essencialmente a mesma coisa; falta de progressão
+      argumentativa; desenvolvimento 'espelho'.
+    exemplo_lacuna: "D1: 'falta de acesso à internet'. D2: 'dificuldade de acessar a internet'."
+
+  - id: "C3.006"
+    competencia: "C3"
+    categoria_inep: "Articulação textual"
+    nome: "Articulação tese-argumentos-conclusão"
+    definicao: |-
+      A redação tem fio condutor — tese é defendida pelos argumentos,
+      conclusão retoma o que foi defendido. Não é '3 textos diferentes
+      em 1 redação'.
+    indicador_lacuna: |-
+      Conclusão sem retomar tese; argumentos isolados; falta de
+      ligação entre os 3 blocos.
+    exemplo_lacuna: "Introdução sobre causa A, D1 e D2 sobre causa B, conclusão sobre tema C — 3 textos desconectados."
+
+  - id: "C3.007"
+    competencia: "C3"
+    categoria_inep: "Defesa de ponto de vista"
+    nome: "Defesa de ponto de vista (não só descrição)"
+    definicao: |-
+      Aluno toma posição sobre o tema e a defende. Não basta listar
+      causas/efeitos: precisa argumentar A FAVOR de uma leitura ou
+      solução. Lacuna mais frequente em C3 nota 120-160.
+    indicador_lacuna: |-
+      Redação descritiva (apresenta o problema mas não defende
+      leitura); neutralidade artificial; ausência de juízo
+      argumentativo.
+    exemplo_lacuna: "Existem causas A, B e C. Há consequências X e Y. É importante pensar sobre o tema."
+
+  - id: "C3.008"
+    competencia: "C3"
+    categoria_inep: "Autoria"
+    nome: "Autoria"
+    definicao: |-
+      A redação tem voz própria do aluno — sintetiza, contrasta, faz
+      inferência. Não é repetição de senso comum nem paráfrase dos
+      textos motivadores. Diferencial pra nota 200.
+    indicador_lacuna: |-
+      Redação inteiramente baseada em senso comum; ausência de
+      leitura própria; frases prontas tipo 'é necessário que todos
+      se conscientizem'.
+    exemplo_lacuna: "É preciso que todos se unam pra combater esse problema e construir um país melhor."
+
+  # ════════════════════════════════════════════════════════════════
+  # COMPETÊNCIA 4 — COESÃO TEXTUAL
+  # ════════════════════════════════════════════════════════════════
+
+  - id: "C4.001"
+    competencia: "C4"
+    categoria_inep: "Conectivos"
+    nome: "Variedade de conectivos"
+    definicao: |-
+      Aluno usa conectivos de categorias DIFERENTES ao longo do texto
+      (causa, consequência, oposição, adição, conclusão,
+      exemplificação). Não fica preso em 'além disso', 'porém',
+      'portanto'.
+    indicador_lacuna: |-
+      4+ ocorrências de 'além disso'; uso repetitivo de 'também';
+      ausência de conectivos de causa, consequência, conclusão.
+    exemplo_lacuna: "Além disso, X. Além disso, Y. Também, Z. Além disso, W."
+
+  - id: "C4.002"
+    competencia: "C4"
+    categoria_inep: "Conectivos"
+    nome: "Adequação semântica do conectivo"
+    definicao: |-
+      O conectivo escolhido expressa a relação lógica CORRETA entre
+      as orações. Conectivo de oposição entre ideias que se somam é
+      erro grave de coesão.
+    indicador_lacuna: |-
+      'Porém' / 'no entanto' no lugar de 'portanto'; 'porque' no
+      lugar de 'porém'; 'ou seja' introduzindo informação nova em
+      vez de reformulação.
+    exemplo_lacuna: "A pobreza aumenta a desigualdade. Portanto, a desigualdade afeta a educação."
+
+  - id: "C4.003"
+    competencia: "C4"
+    categoria_inep: "Articulação"
+    nome: "Conectivos entre parágrafos"
+    definicao: |-
+      Passagens entre parágrafos são marcadas com conectivos no
+      início do parágrafo seguinte ou na frase final do anterior.
+      Não é abrupto.
+    indicador_lacuna: |-
+      2º parágrafo começa sem conectivo nem retomada; parágrafos
+      parecem 'blocos soltos'; ausência de 'em segundo lugar',
+      'ademais', 'outrossim'.
+    exemplo_lacuna: "[D1 termina com 'pobreza'.] [D2 começa com] 'A educação brasileira também enfrenta desafios.'"
+
+  - id: "C4.004"
+    competencia: "C4"
+    categoria_inep: "Referenciação"
+    nome: "Referenciação por pronomes e sinônimos"
+    definicao: |-
+      Aluno retoma elementos já mencionados usando pronomes ('isso',
+      'esse problema', 'tal situação') ou sinônimos ('a desigualdade'
+      → 'a disparidade social'), em vez de repetir o termo.
+    indicador_lacuna: |-
+      Repetição literal do mesmo substantivo 4+ vezes; ausência de
+      pronomes anafóricos; abuso de 'o problema' / 'a questão'.
+    exemplo_lacuna: "A pobreza é grave. A pobreza afeta milhões. A pobreza precisa ser combatida."
+
+  - id: "C4.005"
+    competencia: "C4"
+    categoria_inep: "Referenciação"
+    nome: "Clareza da referência (sem ambiguidade)"
+    definicao: |-
+      Pronomes e expressões referenciais apontam CLARAMENTE pro
+      antecedente. Sem ambiguidade ('isso' pode se referir a 3
+      coisas diferentes).
+    indicador_lacuna: |-
+      'Isso' sem antecedente claro; 'a questão' referindo-se a algo
+      distante demais; retomada que confunde leitor.
+    exemplo_lacuna: "O governo investe pouco em educação. Isso é grave. (Isso = investir pouco? Educação? A negligência?)"
+
+  - id: "C4.006"
+    competencia: "C4"
+    categoria_inep: "Progressão"
+    nome: "Progressão temática"
+    definicao: |-
+      Cada parágrafo traz informação NOVA, não reescreve o anterior.
+      A redação avança ao invés de circular sobre as mesmas ideias.
+    indicador_lacuna: |-
+      D2 repete D1 com palavras diferentes; conclusão repete a
+      introdução literalmente; redação 'parou no lugar'.
+    exemplo_lacuna: "D1 sobre 'falta de acesso à internet' + D2 sobre 'pessoas que não têm internet' (mesma ideia)."
+
+  - id: "C4.007"
+    competencia: "C4"
+    categoria_inep: "Articulação"
+    nome: "Articulação intraparágrafo (entre orações)"
+    definicao: |-
+      Orações DENTRO do parágrafo são ligadas por conectivos que
+      explicitam relação lógica. Não há justaposição sem ligação
+      ('A. B. C.' sem 'porque', 'assim', 'logo').
+    indicador_lacuna: |-
+      Parágrafo com orações justapostas sem conectivo; abuso de 'e'
+      como ligação; ausência de articulação causal/explicativa entre
+      orações vizinhas.
+    exemplo_lacuna: "A pobreza aumentou. Pessoas perdem oportunidades. A desigualdade cresce."
+
+  - id: "C4.008"
+    competencia: "C4"
+    categoria_inep: "Articulação"
+    nome: "Conectivos de transição estrutural"
+    definicao: |-
+      Transições entre os 4 blocos do texto (introdução-D1-D2-conclusão)
+      são marcadas com conectivos específicos de articulação textual
+      ('em primeiro lugar', 'ademais', 'por fim', 'diante disso',
+      'em virtude desses fatos').
+    indicador_lacuna: |-
+      2º parágrafo começa sem conectivo de articulação estrutural;
+      conclusão sem marcador inicial ('portanto', 'diante do exposto');
+      'não dá pra saber qual é o D1, D2, conclusão sem ler conteúdo'.
+    exemplo_lacuna: "D1 começa: 'A educação brasileira...' (sem 'primeiramente', 'em primeiro lugar')."
+
+  # ════════════════════════════════════════════════════════════════
+  # COMPETÊNCIA 5 — PROPOSTA DE INTERVENÇÃO
+  # ════════════════════════════════════════════════════════════════
+
+  - id: "C5.001"
+    competencia: "C5"
+    categoria_inep: "5 elementos da proposta"
+    nome: "Agente"
+    definicao: |-
+      A proposta nomeia QUEM vai executar — instituição, órgão,
+      ministério, ONG, escola, mídia. Específico, não genérico
+      ('a sociedade', 'todos nós', 'o governo' sem qualificar).
+    indicador_lacuna: |-
+      Agentes genéricos ('a sociedade', 'as autoridades', 'todos');
+      agente impessoalizado ('é necessário que se faça'); nenhum
+      agente nomeado.
+    exemplo_lacuna: "É necessário que a sociedade combata esse problema."
+
+  - id: "C5.002"
+    competencia: "C5"
+    categoria_inep: "5 elementos da proposta"
+    nome: "Ação"
+    definicao: |-
+      A proposta diz O QUE o agente vai fazer — verbo de ação claro
+      (criar, implementar, fiscalizar, ampliar, reduzir, capacitar).
+      Não 'trabalhar pra resolver' ou 'lutar contra'.
+    indicador_lacuna: |-
+      Ações vagas ('combater', 'lutar contra', 'trabalhar em prol');
+      verbos genéricos sem objeto; infinitivo sem complemento.
+    exemplo_lacuna: "O governo deve combater a desigualdade."
+
+  - id: "C5.003"
+    competencia: "C5"
+    categoria_inep: "5 elementos da proposta"
+    nome: "Meio/modo"
+    definicao: |-
+      A proposta explica COMO a ação será feita — instrumentos,
+      recursos, parcerias, programas, mecanismos. É o operacional
+      da proposta.
+    indicador_lacuna: |-
+      Salto direto de ação pra finalidade sem dizer como; ausência
+      de 'por meio de', 'através de', 'a partir de'; meio inexistente
+      ou tautológico.
+    exemplo_lacuna: "O Ministério da Educação deve criar programas para reduzir a evasão escolar."
+
+  - id: "C5.004"
+    competencia: "C5"
+    categoria_inep: "5 elementos da proposta"
+    nome: "Finalidade"
+    definicao: |-
+      A proposta tem PROPÓSITO explícito — para que será feita,
+      qual problema resolve. Marcadores: 'para', 'a fim de', 'com
+      o objetivo de'.
+    indicador_lacuna: |-
+      Ausência de 'para', 'a fim de', 'com o objetivo de';
+      finalidade implícita; proposta termina sem enunciar pra quê.
+    exemplo_lacuna: "O governo deve criar programas, por meio de parcerias, com agentes locais."
+
+  - id: "C5.005"
+    competencia: "C5"
+    categoria_inep: "5 elementos da proposta"
+    nome: "Detalhamento (pelo menos 1 elemento)"
+    definicao: |-
+      Aluno detalha PELO MENOS 1 dos 5 elementos — explica,
+      exemplifica, especifica, expande. Pode ser detalhamento de
+      agente (qualifica quem), ação (especifica o quê), meio
+      (explica como), finalidade (expande pra quê) ou destinatário
+      (público-alvo nomeado). Pré-requisito INEP pra C5 nota 200.
+    indicador_lacuna: |-
+      5 elementos como lista mecânica sem expansão; ausência de
+      explicação adicional; frase de fechamento genérica ('para que
+      isso seja resolvido').
+    exemplo_lacuna: "O governo deve criar programas, por meio de parcerias, para resolver o problema, com a ajuda da população."
+
+  - id: "C5.006"
+    competencia: "C5"
+    categoria_inep: "Articulação proposta-discussão"
+    nome: "Articulação ao tema/problema"
+    definicao: |-
+      A proposta resolve, mitiga ou enfrenta O PROBLEMA DISCUTIDO
+      nos desenvolvimentos. Não é proposta solta sobre o tema geral.
+      Retoma causas e afetados nomeados na argumentação.
+    indicador_lacuna: |-
+      D1 sobre causa A + D2 sobre causa B + proposta sobre causa C;
+      proposta sobre tema correlato sem ligação argumentativa;
+      proposta que ignora os afetados nomeados nos desenvolvimentos.
+    exemplo_lacuna: "D1 e D2 discutem falta de infraestrutura digital + proposta sobre 'campanha de conscientização sobre cidadania'."
+
+  - id: "C5.007"
+    competencia: "C5"
+    categoria_inep: "Direitos humanos"
+    nome: "Respeito aos direitos humanos"
+    definicao: |-
+      A proposta NÃO viola direitos humanos — não defende violência,
+      censura, discriminação, exclusão de grupos, pena de morte,
+      esterilização forçada, controle autoritário. Critério
+      ELIMINATÓRIO no ENEM (zera C5).
+    indicador_lacuna: |-
+      Proposta com tom punitivista extremo; exclusão explícita de
+      grupo social; defesa de violência institucional como solução.
+    exemplo_lacuna: "O governo deve prender os marginais e impedir que se reproduzam."
+
+  - id: "C5.008"
+    competencia: "C5"
+    categoria_inep: "5 elementos da proposta"
+    nome: "Completude (5 elementos presentes)"
+    definicao: |-
+      Meta-descritor de COBERTURA: a proposta apresenta TODOS os 5
+      elementos canônicos (agente + ação + meio + finalidade +
+      detalhamento). INEP pontua C5 num gradiente: 0-1 elementos
+      = 0-40 pts; 2 = 80; 3 = 120; 4 = 160; 5 detalhados = 200.
+    indicador_lacuna: |-
+      Proposta apresenta só 2-3 elementos; faltam meio ou finalidade;
+      ação genérica que mascara ausência de meio.
+    exemplo_lacuna: "O governo deve combater a desigualdade. (apenas 2 elementos: agente e ação)"
