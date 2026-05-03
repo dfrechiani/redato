@@ -484,6 +484,19 @@ class Envio(Base):
         Integer, nullable=False, default=1, server_default="1",
     )
 
+    # Fase 2 (2026-05-03, migration k0a1b2c3d4e5): diagnóstico
+    # cognitivo gerado pelo pipeline GPT-4.1 a partir de
+    # `interactions.redato_output` + texto da redação. JSONB schema
+    # documentado em `docs/redato/v3/diagnostico/HOWTO_inferencia.md`.
+    # Nullable porque é opcional — pipeline pode estar desabilitado
+    # (REDATO_DIAGNOSTICO_HABILITADO=false), falhar (timeout, erro
+    # OpenAI) ou ser pré-Fase 2 (envios antigos com NULL).
+    # Visibilidade: invisível pro aluno (frontend ignora). Visível
+    # pro professor no perfil do aluno (Fase 3).
+    diagnostico: Mapped[Optional[dict]] = mapped_column(
+        PG_JSONB, nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, nullable=False,
     )

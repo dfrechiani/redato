@@ -1,6 +1,6 @@
 # Diagnóstico cognitivo de redação ENEM
 
-**Atualizado:** 2026-05-03 · Fase 1 (descritores)
+**Atualizado:** 2026-05-03 · Fase 2 (pipeline de inferência)
 
 ## Contexto e objetivo
 
@@ -85,37 +85,33 @@ Cada descritor tem 7 campos obrigatórios:
 - `indicador_lacuna` — como detectar quando aluno NÃO domina
 - `exemplo_lacuna` — trecho de redação ilustrando o erro
 
-## Como o YAML é consumido (Fase 2)
+## Como o YAML é consumido (Fase 2 — implementado)
 
-O pipeline da Fase 2 (não construído ainda) lerá
-[`descritores.yaml`](descritores.yaml) e usará pra montar prompt do LLM:
+Pipeline em `redato_backend/diagnostico/`:
 
 ```python
-import yaml
+from redato_backend.diagnostico.inferencia import inferir_diagnostico
 
-descritores = yaml.safe_load(open("descritores.yaml"))["descritores"]
-
-prompt = f"""
-Você é avaliador de redação ENEM. Dada a redação abaixo + saída
-do corretor automático, identifique quais descritores cognitivos
-o aluno NÃO domina.
-
-DESCRITORES (40 disponíveis):
-{render_descritores(descritores)}
-
-REDAÇÃO: {texto_redacao}
-SAÍDA DO CORRETOR: {redato_output}
-
-Para cada descritor que o aluno NÃO domina, retorne:
-- id do descritor
-- confianca (0.0-1.0)
-- evidencia (trecho exato da redação que prova a lacuna)
-"""
+resultado = inferir_diagnostico(
+    texto_redacao=texto_ocr,
+    redato_output=tool_args,            # cN_audit do FT/Claude
+    tema="Tema da proposta",
+)
+# resultado: dict com 40 descritores classificados (dominio/lacuna/incerto)
+# + evidências + lacunas_prioritarias + resumo_qualitativo + recomendacao_breve
+# Ver docs/redato/v3/diagnostico/HOWTO_inferencia.md pro schema completo.
 ```
 
-A Fase 2 vai rodar esse prompt por redação e persistir o output
-estruturado (lacunas inferidas) em tabela nova
-`diagnostico_lacunas` (modelagem na Fase 3).
+Storage: coluna nova `envios.diagnostico` (JSONB nullable, migration
+`k0a1b2c3d4e5_envios_diagnostico`). Não-bloqueante — falha do
+pipeline OpenAI não derruba a entrega da correção ao aluno.
+
+Visibilidade:
+- **Aluno**: invisível (frontend ignora a coluna).
+- **Professor**: visível no perfil do aluno (Fase 3 entrega UI).
+
+Detalhes operacionais (modelo, custo, env vars, retry endpoint) em
+[`HOWTO_inferencia.md`](HOWTO_inferencia.md).
 
 ## Fontes de verdade INEP
 
@@ -159,10 +155,10 @@ do professor — o `categoria_inep` mantém a rastreabilidade.
 | Fase | Status | Descrição |
 |---|---|---|
 | **1** Descritores | ✅ 2026-05-03 | YAML 40 descritores INEP-aligned (este diretório) |
-| **2** Inferência LLM | ⏳ próxima | Endpoint `POST /portal/envios/{id}/diagnosticar` que lê descritores.yaml + redato_output e devolve lacunas |
-| **3** Storage | ⏳ pendente | Modelo `DiagnosticoLacuna` + agregação por aluno (perfil) e turma (dashboard) |
-| **4** UI | ⏳ pendente | Visualização das lacunas no perfil do aluno + drill nota → lacuna específica |
-| **5** Recomendação | ⏳ pendente | Mapear lacuna → oficina/exercício do livro pra reforço (livro 1S/2S/3S) |
+| **2** Inferência LLM | ✅ 2026-05-03 | Pipeline GPT-4.1 + endpoint `POST /portal/envios/{id}/diagnosticar` + storage em `envios.diagnostico` JSONB |
+| **3** Agregação + UI professor | ⏳ próxima | Visualização das lacunas no perfil do aluno + agregado por turma |
+| **4** Recomendação | ⏳ pendente | Mapear lacuna → oficina/exercício do livro pra reforço (livro 1S/2S/3S) |
+| **5** Validação humana | ⏳ pendente | Métricas de precisão (concordância com avaliador humano) + ajustes de prompt |
 
 ## Validação
 

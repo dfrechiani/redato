@@ -1904,6 +1904,140 @@ def reprocessar_envio(
 
 
 # ──────────────────────────────────────────────────────────────────────
+# POST /portal/envios/{envio_id}/diagnosticar (Fase 2 — diagnóstico)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Reroda inferência de diagnóstico cognitivo pra um envio específico.
+# Útil pra:
+# - Envios pré-Fase 2 (envios.diagnostico = NULL).
+# - Envios cuja inferência falhou na pipeline original (timeout, key
+#   missing, etc.) e o operador quer retentar.
+# - Envios afetados por mudança de descritores.yaml (versão nova de
+#   prompt/granularidade) — re-rodar atualiza a coluna.
+#
+# Permissão: mesma de reprocessar_envio (professor da turma OU
+# coordenador da escola). Coerente — quem pode mexer na correção,
+# pode mexer no diagnóstico derivado.
+
+class DiagnosticarEnvioResponse(BaseModel):
+    ok: bool
+    """True se diagnóstico foi gerado e persistido com sucesso. False
+    se inferência falhou (timeout, parser, key missing) — `error` traz
+    o motivo. Status HTTP é 200 — não é erro do endpoint, é erro do
+    pipeline OpenAI (mesma convenção do reprocessar_envio)."""
+    error: Optional[str] = None
+    diagnostico: Optional[Dict[str, Any]] = None
+
+
+@router.post(
+    "/envios/{envio_id}/diagnosticar",
+    response_model=DiagnosticarEnvioResponse,
+)
+def diagnosticar_envio(
+    envio_id: uuid.UUID,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> DiagnosticarEnvioResponse:
+    """Reroda diagnóstico cognitivo pra um envio específico.
+
+    Permissão: professor da turma do envio OU coordenador da escola
+    (mesma de `reprocessar_envio`).
+
+    Pré-condições:
+    - Envio existe.
+    - Tem `interaction_id` (envio precisa do texto OCR-ado).
+    - Interaction tem `texto_transcrito` não-vazio.
+
+    Comportamento:
+    - Sucesso: `inferir_diagnostico` retorna dict, helper persiste em
+      `envios.diagnostico`. Retorna `ok=true` + `diagnostico`.
+    - Falha do pipeline: retorna `ok=false` + `error`. Status HTTP
+      é 200 — não é erro do endpoint, é erro do pipeline OpenAI.
+      Coluna `envios.diagnostico` NÃO é atualizada (preserva o que
+      tinha antes — nullable ou diagnóstico anterior).
+    """
+    with Session(get_engine()) as session:
+        envio = session.get(Envio, envio_id)
+        if envio is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Envio não encontrado",
+            )
+        # Permission via atividade — reusa helper que cobre prof OU
+        # coordenador.
+        _check_permission_atividade(auth, envio.atividade_id)
+
+        if envio.interaction_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Envio sem interaction (provavelmente pré-M4). "
+                    "Diagnóstico requer texto OCR-ado."
+                ),
+            )
+
+        interaction = session.get(Interaction, envio.interaction_id)
+        texto = (interaction.texto_transcrito or "") if interaction else ""
+        if not texto.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "Diagnóstico requer texto OCR-ado. Esse envio não "
+                    "tem transcrição — peça pro aluno reenviar a foto."
+                ),
+            )
+
+        redato = (
+            _parse_redato_output(interaction.redato_output)
+            if interaction else None
+        )
+
+    # Roda inferência + persiste fora da sessão acima (helper abre
+    # sessão própria). Não bloqueia — retorna None em falha.
+    from redato_backend.diagnostico.persistencia import (
+        diagnosticar_e_persistir_envio,
+    )
+    try:
+        diagnostico = diagnosticar_e_persistir_envio(
+            envio_id=envio_id,
+            texto_redacao=texto,
+            redato_output=redato,
+            tema="Tema livre (foto enviada via WhatsApp)",
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            "diagnosticar_envio: erro inesperado pra envio %s", envio_id,
+        )
+        return DiagnosticarEnvioResponse(
+            ok=False,
+            error=f"{type(exc).__name__}: {exc}"[:300],
+        )
+
+    if diagnostico is None:
+        return DiagnosticarEnvioResponse(
+            ok=False,
+            error=(
+                "inferência retornou None — ver logs (timeout, "
+                "key missing, schema inválido). Tente novamente em "
+                "alguns segundos."
+            ),
+        )
+
+    _audit({
+        "event": "envio_diagnosticado",
+        "envio_id": str(envio_id),
+        "actor_id": str(auth.user_id),
+        "modelo": diagnostico.get("modelo_usado"),
+        "latencia_ms": diagnostico.get("latencia_ms"),
+        "custo_estimado_usd": diagnostico.get("custo_estimado_usd"),
+    })
+
+    return DiagnosticarEnvioResponse(
+        ok=True,
+        diagnostico=diagnostico,
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
 # PATCH /portal/turmas/{turma_id}/alunos/{aluno_turma_id}
 # ──────────────────────────────────────────────────────────────────────
 

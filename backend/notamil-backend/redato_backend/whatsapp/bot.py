@@ -1393,8 +1393,9 @@ def _process_photo(
     # warning silencioso que escondia state inconsistente por dias.
     tentativa_n: int = 1
     postgres_falhou = False
+    envio_id_postgres = None
     try:
-        _, _, tentativa_n = PL.criar_interaction_e_envio_postgres(
+        _, envio_id_postgres, tentativa_n = PL.criar_interaction_e_envio_postgres(
             aluno_phone=phone,
             aluno_turma_id=aluno_vinculo.aluno_turma_id,
             atividade_id=atividade.atividade_id,
@@ -1416,6 +1417,34 @@ def _process_photo(
             "(SQLite legado já salvou): %r", exc,
         )
         postgres_falhou = True
+
+    # Fase 2 (2026-05-03): diagnóstico cognitivo via GPT-4.1.
+    # Roda APÓS o write do envio em Postgres, pra ter envio_id válido
+    # pra UPDATE. Se diagnóstico falhar (timeout, key missing, parser),
+    # log via logger.exception e segue — NÃO bloqueia entrega ao aluno
+    # (resposta já foi computada acima e será retornada abaixo).
+    # Visibilidade: invisível pro aluno (frontend ignora). Visível pro
+    # professor no perfil do aluno (Fase 3).
+    if envio_id_postgres is not None and not postgres_falhou:
+        try:
+            from redato_backend.diagnostico.persistencia import (
+                diagnosticar_e_persistir_envio,
+            )
+            diagnosticar_e_persistir_envio(
+                envio_id=envio_id_postgres,
+                texto_redacao=ocr.text or "",
+                redato_output=tool_args if isinstance(tool_args, dict) else None,
+                tema="Tema livre (foto enviada via WhatsApp)",
+            )
+        except Exception:  # noqa: BLE001
+            # Defesa em profundidade — diagnosticar_e_persistir já
+            # captura tudo internamente e retorna None em falha. Esse
+            # catch garante que ImportError, AttributeError ou bug
+            # novo no módulo não derrubem a entrega da correção.
+            logger.exception(
+                "diagnostico cognitivo falhou pra envio %s — segue sem",
+                envio_id_postgres,
+            )
 
     # Volta pro estado READY (limpa pending)
     P.upsert_aluno(phone, estado=READY)
