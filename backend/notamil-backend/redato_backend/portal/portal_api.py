@@ -2737,11 +2737,60 @@ class AlunoPerfilEnvio(BaseModel):
     tem_problema: bool
 
 
+class DiagnosticoMeta(BaseModel):
+    """Meta amigável pro aluno (Fase 3 — versão simplificada)."""
+    id: str            # "M1", "M2", ...
+    competencia: str   # "C1".."C5"
+    titulo: str
+    descricao: str
+
+
+class DiagnosticoOficinaSugerida(BaseModel):
+    """Oficina recomendada pra trabalhar lacuna(s) do aluno."""
+    codigo: str
+    titulo: str
+    modo_correcao: str
+    oficina_numero: int
+    razao: str
+
+
+class DiagnosticoVersaoProfessor(BaseModel):
+    """Payload completo do diagnóstico pro professor — heatmap +
+    lacunas + resumo + sugestões."""
+    descritores: List[Dict[str, Any]]
+    """40 entries do diagnóstico Fase 2 (id, status, evidencias,
+    confianca)."""
+    lacunas_prioritarias: List[str]
+    """Top 5 IDs (ordenados por prioridade pelo LLM)."""
+    resumo_qualitativo: str
+    recomendacao_breve: str
+    oficinas_sugeridas: List[DiagnosticoOficinaSugerida]
+
+
+class DiagnosticoVersaoAluno(BaseModel):
+    """Payload simplificado pro aluno — só metas em linguagem
+    motivacional. Sem expor status/lacunas/heatmap (decisão Daniel)."""
+    metas: List[DiagnosticoMeta]
+
+
+class DiagnosticoRecente(BaseModel):
+    """Último envio com diagnostico IS NOT NULL — alimenta os 2
+    blocos da UI (professor + aluno)."""
+    envio_id: str
+    criado_em: str        # ISO timestamp do envio
+    modelo: Optional[str]  # "gpt-4.1-2025-04-14" se disponível
+    professor: DiagnosticoVersaoProfessor
+    aluno: DiagnosticoVersaoAluno
+
+
 class AlunoPerfilResponse(BaseModel):
     aluno: AlunoPerfilResumo
     stats: AlunoPerfilStats
     envios: List[AlunoPerfilEnvio]
     """Ordenado por `criado_em` desc (mais recente em cima — pra UI)."""
+    diagnostico_recente: Optional[DiagnosticoRecente] = None
+    """Último envio com diagnóstico cognitivo (Fase 3). None se aluno
+    não tem nenhum envio diagnosticado — frontend mostra estado vazio."""
 
 
 @router.get(
@@ -2844,6 +2893,15 @@ def perfil_aluno(
                 tem_problema=_envio_tem_problema(redato, e["nota_total"]),
             ))
 
+        # Fase 3: diagnóstico cognitivo do último envio com
+        # `diagnostico IS NOT NULL`. Buscado dentro da MESMA sessão
+        # pra evitar abrir conexão Postgres adicional só pra essa
+        # consulta. Se aluno não tem nenhum envio diagnosticado,
+        # `diagnostico_recente=None` e frontend mostra estado vazio.
+        diagnostico_recente = _build_diagnostico_recente(
+            session, turma=turma, aluno_turma_id=aluno_turma_id,
+        )
+
         return AlunoPerfilResponse(
             aluno=AlunoPerfilResumo(
                 id=str(aluno.id),
@@ -2854,7 +2912,96 @@ def perfil_aluno(
             ),
             stats=stats,
             envios=envios_resp,
+            diagnostico_recente=diagnostico_recente,
         )
+
+
+def _build_diagnostico_recente(
+    session: Session,
+    *,
+    turma: Turma,
+    aluno_turma_id: uuid.UUID,
+) -> Optional[DiagnosticoRecente]:
+    """Busca o último envio do aluno com diagnostico populado e monta
+    o payload da Fase 3 (versão professor + versão aluno).
+
+    Retorna None se aluno não tem nenhum envio diagnosticado — UI
+    renderiza mensagem de estado vazio (Fase 3 spec).
+    """
+    from redato_backend.diagnostico.metas import (
+        gerar_metas_aluno, metas_to_dicts,
+    )
+    from redato_backend.diagnostico.sugestoes import (
+        sugerir_oficinas, sugestoes_to_dicts,
+    )
+
+    # Query: último envio do aluno (qualquer atividade da turma) com
+    # diagnostico populado. Filtra por turma_id via JOIN com Atividade
+    # — protege contra aluno de outra turma (defesa em profundidade
+    # mesmo já tendo passado por _check_view_turma).
+    row = session.execute(
+        select(Envio)
+        .join(Atividade, Atividade.id == Envio.atividade_id)
+        .where(
+            Envio.aluno_turma_id == aluno_turma_id,
+            Atividade.turma_id == turma.id,
+            Atividade.deleted_at.is_(None),
+            Envio.diagnostico.isnot(None),
+        )
+        .order_by(Envio.enviado_em.desc())
+        .limit(1)
+    ).scalar_one_or_none()
+
+    if row is None:
+        return None
+
+    diag = row.diagnostico
+    if not isinstance(diag, dict):
+        # Defesa em profundidade — JSONB devolve dict; se vier outra
+        # coisa por bug futuro, melhor tratar como ausente do que
+        # explodir o endpoint inteiro.
+        logger.warning(
+            "perfil_aluno: envio %s.diagnostico tipo inesperado %s",
+            row.id, type(diag).__name__,
+        )
+        return None
+
+    # Versão professor — completo
+    descritores = diag.get("descritores") or []
+    lacunas = diag.get("lacunas_prioritarias") or []
+    resumo = diag.get("resumo_qualitativo") or ""
+    recom = diag.get("recomendacao_breve") or ""
+
+    # Sugestões de oficinas filtradas pela série da turma
+    sugestoes = sugerir_oficinas(
+        diagnostico=diag,
+        serie_aluno=turma.serie,
+        db_session=session,
+    )
+
+    professor_payload = DiagnosticoVersaoProfessor(
+        descritores=list(descritores),
+        lacunas_prioritarias=list(lacunas),
+        resumo_qualitativo=resumo,
+        recomendacao_breve=recom,
+        oficinas_sugeridas=[
+            DiagnosticoOficinaSugerida(**s) for s in sugestoes_to_dicts(sugestoes)
+        ],
+    )
+
+    # Versão aluno — simplificada (3-5 metas)
+    metas = gerar_metas_aluno(diag)
+    aluno_payload = DiagnosticoVersaoAluno(
+        metas=[DiagnosticoMeta(**m) for m in metas_to_dicts(metas)],
+    )
+
+    return DiagnosticoRecente(
+        envio_id=str(row.id),
+        criado_em=row.enviado_em.isoformat(),
+        modelo=diag.get("modelo_usado"),
+        professor=professor_payload,
+        aluno=aluno_payload,
+    )
 
 
 # ──────────────────────────────────────────────────────────────────────

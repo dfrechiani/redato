@@ -389,6 +389,77 @@ export interface AlunoPerfil {
   stats: AlunoPerfilStats;
   /** Ordenado por `criado_em` desc (mais recente em cima). */
   envios: AlunoPerfilEnvio[];
+  /** Último envio do aluno com diagnóstico cognitivo (Fase 3).
+   *  `null` se aluno não tem nenhum envio diagnosticado — UI mostra
+   *  estado vazio no bloco "Mapa cognitivo". */
+  diagnostico_recente: DiagnosticoRecente | null;
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// Fase 3 — Visualização do diagnóstico cognitivo
+// Espelha schemas em `redato_backend/portal/portal_api.py`:
+//   DiagnosticoRecente, DiagnosticoVersaoProfessor,
+//   DiagnosticoVersaoAluno, DiagnosticoMeta, DiagnosticoOficinaSugerida.
+// ──────────────────────────────────────────────────────────────────────
+
+/** Status de cada um dos 40 descritores observáveis pra um envio
+ *  específico. Inferido pelo pipeline GPT-4.1 (Fase 2). */
+export type DiagnosticoStatus = "dominio" | "lacuna" | "incerto";
+
+/** Confiança do LLM no status atribuído. Alta = 2+ evidências claras;
+ *  baixa = texto curto ou sinal ambíguo. */
+export type DiagnosticoConfianca = "alta" | "media" | "baixa";
+
+export interface DiagnosticoDescritor {
+  id: string;            // ex.: "C5.001"
+  status: DiagnosticoStatus;
+  /** Trechos LITERAIS do texto da redação. Máx 3. Pode estar vazia
+   *  pra `incerto` quando não há sinal suficiente. */
+  evidencias: string[];
+  confianca: DiagnosticoConfianca;
+}
+
+export interface DiagnosticoMeta {
+  id: string;            // "M1", "M2", ...
+  competencia: string;   // "C1".."C5"
+  titulo: string;
+  descricao: string;
+}
+
+export interface DiagnosticoOficinaSugerida {
+  codigo: string;        // ex.: "RJ2·OF12·MF"
+  titulo: string;
+  modo_correcao: string;
+  oficina_numero: number;
+  /** Por que essa oficina foi sugerida (ex.: "Trabalha proposta de
+   *  intervenção (C5)"). */
+  razao: string;
+}
+
+export interface DiagnosticoVersaoProfessor {
+  /** 40 entries — uma por descritor do YAML. */
+  descritores: DiagnosticoDescritor[];
+  lacunas_prioritarias: string[];  // top 5 IDs
+  resumo_qualitativo: string;
+  recomendacao_breve: string;
+  oficinas_sugeridas: DiagnosticoOficinaSugerida[];
+}
+
+export interface DiagnosticoVersaoAluno {
+  /** 0-5 metas em linguagem motivacional. Versão simplificada — sem
+   *  status, lacunas, evidências (decisão Daniel). */
+  metas: DiagnosticoMeta[];
+}
+
+export interface DiagnosticoRecente {
+  envio_id: string;
+  /** ISO UTC do envio que produziu este diagnóstico. */
+  criado_em: string;
+  /** Modelo usado (ex.: "gpt-4.1-2025-04-14"). `null` em payloads
+   *  legacy sem campo `modelo_usado`. */
+  modelo: string | null;
+  professor: DiagnosticoVersaoProfessor;
+  aluno: DiagnosticoVersaoAluno;
 }
 
 // ──────────────────────────────────────────────────────────────────────

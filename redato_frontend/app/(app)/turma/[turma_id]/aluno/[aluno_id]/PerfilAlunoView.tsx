@@ -20,6 +20,7 @@
 import Link from "next/link";
 
 import { EvolucaoChart } from "@/components/portal/EvolucaoChart";
+import { MapaCognitivo } from "@/components/portal/MapaCognitivo";
 import { ReprocessarEnvioButton } from "@/components/portal/ReprocessarEnvioButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -260,7 +261,16 @@ export function PerfilAlunoView({ turmaId, turmaCodigo, perfil }: Props) {
             </Card>
           </section>
 
-          {/* ─── Bloco 3 — Gráfico de evolução ─────────────── */}
+          {/* ─── Bloco 3 — Mapa cognitivo (Fase 3) ─────────── */}
+          {/* Heatmap dos 40 descritores + lacunas prioritárias +
+              resumo + recomendação + oficinas sugeridas. Renderiza
+              estado vazio quando aluno não tem envio diagnosticado. */}
+          <MapaCognitivo
+            turmaId={turmaId}
+            diagnostico={perfil.diagnostico_recente}
+          />
+
+          {/* ─── Bloco 4 — Gráfico de evolução ─────────────── */}
           <section aria-labelledby="evolucao-h">
             <h2 id="evolucao-h" className="font-display text-xl mb-3">
               Evolução

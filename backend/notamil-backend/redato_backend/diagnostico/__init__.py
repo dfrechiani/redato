@@ -36,11 +36,35 @@ from redato_backend.diagnostico.descritores import (
     descritores_por_id,
     descritor_ids,
 )
+from redato_backend.diagnostico.metas import (
+    Meta,
+    MAX_METAS,
+    gerar_metas_aluno,
+    metas_to_dicts,
+    render_metas_whatsapp,
+)
+from redato_backend.diagnostico.sugestoes import (
+    OficinaSugerida,
+    MAX_POR_LACUNA,
+    sugerir_oficinas,
+    sugestoes_to_dicts,
+)
 
 __all__ = [
+    # Fase 1 — descritores
     "Descritor",
     "DEFAULT_YAML_PATH",
     "load_descritores",
     "descritores_por_id",
     "descritor_ids",
+    # Fase 3 — metas (aluno) e sugestões (professor)
+    "Meta",
+    "MAX_METAS",
+    "gerar_metas_aluno",
+    "metas_to_dicts",
+    "render_metas_whatsapp",
+    "OficinaSugerida",
+    "MAX_POR_LACUNA",
+    "sugerir_oficinas",
+    "sugestoes_to_dicts",
 ]

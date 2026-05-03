@@ -1,6 +1,6 @@
 # Diagnóstico cognitivo de redação ENEM
 
-**Atualizado:** 2026-05-03 · Fase 2 (pipeline de inferência)
+**Atualizado:** 2026-05-03 · Fase 3 (visualização)
 
 ## Contexto e objetivo
 
@@ -156,8 +156,8 @@ do professor — o `categoria_inep` mantém a rastreabilidade.
 |---|---|---|
 | **1** Descritores | ✅ 2026-05-03 | YAML 40 descritores INEP-aligned (este diretório) |
 | **2** Inferência LLM | ✅ 2026-05-03 | Pipeline GPT-4.1 + endpoint `POST /portal/envios/{id}/diagnosticar` + storage em `envios.diagnostico` JSONB |
-| **3** Agregação + UI professor | ⏳ próxima | Visualização das lacunas no perfil do aluno + agregado por turma |
-| **4** Recomendação | ⏳ pendente | Mapear lacuna → oficina/exercício do livro pra reforço (livro 1S/2S/3S) |
+| **3** Visualização | ✅ 2026-05-03 | Aluno: 3-5 metas via WhatsApp. Professor: heatmap 5×8 + lacunas prioritárias + recomendação + sugestão de oficinas (filtrada por série). Detalhes em [`HOWTO_visualizacao.md`](HOWTO_visualizacao.md). |
+| **4** Agregação por turma | ⏳ próxima | Heatmap agregado da turma (% alunos com lacuna em cada descritor) + drill por aluno |
 | **5** Validação humana | ⏳ pendente | Métricas de precisão (concordância com avaliador humano) + ajustes de prompt |
 
 ## Validação

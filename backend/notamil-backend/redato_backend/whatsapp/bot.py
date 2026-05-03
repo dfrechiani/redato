@@ -1425,6 +1425,7 @@ def _process_photo(
     # (resposta já foi computada acima e será retornada abaixo).
     # Visibilidade: invisível pro aluno (frontend ignora). Visível pro
     # professor no perfil do aluno (Fase 3).
+    diagnostico_dict: Optional[Dict[str, Any]] = None
     if envio_id_postgres is not None and not postgres_falhou:
         # Log de entry — Daniel grepa "[diag-bot]" pra confirmar que
         # bot CHEGOU no bloco de diagnóstico (vs. nem entrar pq postgres
@@ -1438,7 +1439,7 @@ def _process_photo(
             from redato_backend.diagnostico.persistencia import (
                 diagnosticar_e_persistir_envio,
             )
-            diagnosticar_e_persistir_envio(
+            diagnostico_dict = diagnosticar_e_persistir_envio(
                 envio_id=envio_id_postgres,
                 texto_redacao=ocr.text or "",
                 redato_output=tool_args if isinstance(tool_args, dict) else None,
@@ -1462,6 +1463,32 @@ def _process_photo(
             envio_id_postgres, postgres_falhou,
         )
 
+    # Fase 3 (2026-05-03): renderiza metas em mensagem WhatsApp adicional
+    # pro aluno. Linguagem motivacional, 3-5 metas, sem expor lacunas/
+    # heatmap/dados crus. Aluno consome correção via WhatsApp (não tem
+    # frontend dedicado), então metas chegam como chunk extra na
+    # sequência de outbound messages.
+    metas_msg: Optional[str] = None
+    if diagnostico_dict is not None:
+        try:
+            from redato_backend.diagnostico.metas import (
+                gerar_metas_aluno, render_metas_whatsapp,
+            )
+            metas = gerar_metas_aluno(diagnostico_dict)
+            metas_msg = render_metas_whatsapp(metas)
+            if metas_msg:
+                logger.info(
+                    "[diag-bot] metas geradas pra envio %s (n=%d)",
+                    envio_id_postgres, len(metas),
+                )
+        except Exception:  # noqa: BLE001
+            # Falha ao renderizar metas não pode derrubar o feedback
+            # principal — aluno já recebeu correção, metas são bônus.
+            logger.exception(
+                "[diag-bot] falha ao renderizar metas pra envio %s — segue sem",
+                envio_id_postgres,
+            )
+
     # Volta pro estado READY (limpa pending)
     P.upsert_aluno(phone, estado=READY)
 
@@ -1470,6 +1497,7 @@ def _process_photo(
         skip_duplicate_check=skip_duplicate_check,
         postgres_falhou=postgres_falhou,
         tentativa_n=tentativa_n,
+        metas_msg=metas_msg,
     )
 
 
@@ -1479,6 +1507,7 @@ def _build_messages_pos_correcao(
     skip_duplicate_check: bool,
     postgres_falhou: bool,
     tentativa_n: int,
+    metas_msg: Optional[str] = None,
 ) -> List[OutboundMessage]:
     """Monta a sequência de OutboundMessages depois que o pipeline de
     correção terminou. Extraído de `_process_photo` em M9.6 pra ser
@@ -1494,6 +1523,15 @@ def _build_messages_pos_correcao(
     - Se Postgres falhou na nova tentativa, NÃO mostra o ack pra
       não comunicar um número que pode estar errado (a contagem em
       Postgres ficou inconsistente).
+
+    Fase 3 (2026-05-03):
+    - Se `metas_msg` é não-vazio, anexa como ÚLTIMA mensagem da
+      sequência. Aluno lê: feedback INEP em vários chunks → metas
+      pra próxima redação. Ordem importa — feedback precisa vir
+      antes pras metas fazerem sentido.
+    - Metas são opcionais: se diagnostico falhou ou flag desabilitada,
+      `metas_msg=None` e UX do aluno volta ao pré-Fase 3 (correção
+      + ack opcional).
     """
     msgs: List[OutboundMessage] = []
     if skip_duplicate_check and not postgres_falhou and tentativa_n > 1:
@@ -1502,6 +1540,8 @@ def _build_messages_pos_correcao(
             f"nova versão..."
         ))
     msgs.append(OutboundMessage(resposta))
+    if metas_msg:
+        msgs.append(OutboundMessage(metas_msg))
     return msgs
 
 
