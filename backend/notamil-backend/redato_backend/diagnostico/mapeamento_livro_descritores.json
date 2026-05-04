@@ -1,18 +1,18 @@
 {
   "versao": "1.0",
-  "gerado_em": "2026-05-04T11:51:20.620818+00:00",
-  "gerador": "heuristico",
-  "modelo_usado": "heuristico-v1",
+  "gerado_em": "2026-05-04T12:10:09.053548+00:00",
+  "gerador": "llm",
+  "modelo_usado": "gpt-4.1-2025-04-14",
   "status": "em_revisao",
-  "descricao": "Mapeamento BASELINE gerado por heurística (keyword match), SEM LLM. Cobre todas as oficinas mas perde nuance. Re-rodar com OPENAI_API_KEY pra upgradear pra LLM. Status 'em_revisao' até Daniel revisar e/ou substituir pelo output LLM.",
+  "descricao": "Mapeamento automático livro→descritores gerado por LLM (GPT-4.1). AVISO: rascunho não revisado por especialista — Daniel revisa em sessão futura (Fase 5A.1.review).",
   "estatisticas": {
     "total_oficinas": 42,
     "mapeamentos_ok": 42,
     "mapeamentos_falhos": 0,
-    "total_descritores_atribuidos": 94,
-    "custo_total_usd": 0.0,
-    "latencia_total_min": 0.0,
-    "elapsed_global_min": 0.01
+    "total_descritores_atribuidos": 242,
+    "custo_total_usd": 0.4707,
+    "latencia_total_min": 4.02,
+    "elapsed_global_min": 4.03
   },
   "oficinas": [
     {
@@ -23,37 +23,42 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C5.004",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Finalidade' — termos: para que"
+          "id": "C1.008",
+          "intensidade": "alta",
+          "razao": "O foco central da oficina é a precisão lexical: nomear, qualificar e localizar elementos, evitando linguagem vaga e ambígua, o que treina diretamente a escolha vocabular adequada ao contexto."
         },
         {
-          "id": "C1.004",
+          "id": "C1.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: pontuação"
-        },
-        {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+          "razao": "A atividade exige que o aluno produza instruções completas e claras, o que demanda períodos sintaticamente corretos para evitar ambiguidades."
         },
         {
           "id": "C4.005",
+          "intensidade": "alta",
+          "razao": "A oficina explora explicitamente o problema da ambiguidade e a necessidade de clareza referencial, já que instruções vagas levam a interpretações erradas."
+        },
+        {
+          "id": "C4.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Clareza da referência (sem ambiguidade)' — termos: Ambiguidade"
+          "razao": "Os alunos precisam retomar elementos já mencionados de modo claro para que os colegas compreendam a instrução, exercitando referenciação por pronomes e sinônimos."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "baixa",
+          "razao": "Embora não seja o foco, a clareza do posicionamento (tese) é tangenciada ao exigir que o aluno comunique de forma inequívoca o que deve ser desenhado."
         }
       ],
       "competencias_principais": [
-        "C5",
         "C1",
-        "C2"
+        "C3",
+        "C4"
       ],
-      "tipo_atividade": "pratica",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 8943,
+      "custo_estimado_usd": 0.01097,
+      "input_tokens": 4317,
+      "output_tokens": 292,
       "mapeamento_falhou": false
     },
     {
@@ -64,20 +69,36 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C1.004",
+          "id": "C1.001",
+          "intensidade": "alta",
+          "razao": "O jogo exige que os alunos montem frases completas com sujeito, verbo e complementos, validando a estrutura sintática correta."
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "alta",
+          "razao": "A oficina foca na escolha vocabular precisa ao discutir como cada classe de palavra contribui para o sentido e clareza do texto argumentativo."
+        },
+        {
+          "id": "C1.005",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: pontuação"
+          "razao": "Ao montar frases e validar sua correção, os alunos precisam garantir concordância verbal e nominal entre os elementos das frases."
+        },
+        {
+          "id": "C4.005",
+          "intensidade": "media",
+          "razao": "A oficina aborda a eliminação de ambiguidade ao escolher a palavra certa e ao discutir a função de cada classe, promovendo clareza referencial."
         }
       ],
       "competencias_principais": [
-        "C1"
+        "C1",
+        "C4"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3920,
+      "custo_estimado_usd": 0.010396,
+      "input_tokens": 4370,
+      "output_tokens": 207,
       "mapeamento_falhou": false
     },
     {
@@ -90,23 +111,40 @@
         {
           "id": "C3.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+          "razao": "O jogo e os checkpoints explicitam a importância de delimitar o campo semântico da tese, mostrando que teses vagas (pistas largas) levam à perda de pontos na Competência 3."
+        },
+        {
+          "id": "C2.002",
+          "intensidade": "alta",
+          "razao": "A dinâmica central do jogo é circunscrever o campo temático, treinando o recorte temático específico ao evitar generalizações e delimitar o foco do argumento."
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "A oficina trabalha a escolha vocabular ao exigir pistas precisas e ao discutir o significado e o campo semântico das palavras."
         },
         {
           "id": "C3.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: mecanismo"
+          "razao": "Os checkpoints e a reescrita de pistas incentivam a busca por argumentos mais profundos e específicos, evitando superficialidade."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "baixa",
+          "razao": "Ao mostrar que pistas vagas não sustentam a tese, a oficina tangencia a relação entre argumentos e a defesa da tese."
         }
       ],
       "competencias_principais": [
-        "C3"
+        "C3",
+        "C2",
+        "C1"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6478,
+      "custo_estimado_usd": 0.011148,
+      "input_tokens": 4502,
+      "output_tokens": 268,
       "mapeamento_falhou": false
     },
     {
@@ -119,35 +157,39 @@
         {
           "id": "C1.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Estrutura sintática' — termos: sujeito, Período, estrutura sintática"
+          "razao": "O jogo e a produção final exigem frases e períodos compostos completos, com sujeito, verbo e complementos, evitando fragmentos."
         },
         {
           "id": "C1.007",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha de registro' — termos: Registro formal"
+          "razao": "A missão final exige registro formal em todo o parágrafo, com revisão e troca entre colegas para garantir adequação."
         },
         {
-          "id": "C4.008",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Conectivos de transição estrutural' — termos: Ademais"
+          "id": "C4.001",
+          "intensidade": "alta",
+          "razao": "A oficina foca explicitamente no uso variado de conectivos e locuções, com pontuação maior para frases mais articuladas."
         },
         {
-          "id": "C5.004",
+          "id": "C4.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Finalidade' — termos: a fim de"
+          "razao": "Os alunos precisam escolher conectivos adequados para criar relações lógicas corretas entre as ideias nas frases e no parágrafo."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "alta",
+          "razao": "A produção de frases e do parágrafo exige articulação clara entre orações dentro do mesmo período e parágrafo, evitando justaposição."
         }
       ],
       "competencias_principais": [
         "C1",
-        "C4",
-        "C5"
+        "C4"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4205,
+      "custo_estimado_usd": 0.009872,
+      "input_tokens": 3960,
+      "output_tokens": 244,
       "mapeamento_falhou": false
     },
     {
@@ -158,26 +200,42 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.004",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+          "razao": "O jogo e a atividade substituta exigem que o aluno reconheça o predomínio do tipo dissertativo, narrativo, descritivo, expositivo ou injuntivo a partir de marcas linguísticas."
+        },
+        {
+          "id": "C2.003",
+          "intensidade": "media",
+          "razao": "A oficina treina a diferenciação entre estruturas dissertativo-argumentativas e outros tipos, ao pedir que o aluno identifique o tipo textual de fragmentos."
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "O foco em vocabulário preciso e marcas lexicais de cada tipo textual desenvolve a escolha vocabular adequada ao contexto."
         },
         {
           "id": "C4.001",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Variedade de conectivos' — termos: Além disso"
+          "intensidade": "baixa",
+          "razao": "O uso de cartas de conectivos e a discussão sobre sua função nos diferentes tipos textuais tangenciam a variedade de conectivos."
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "baixa",
+          "razao": "A identificação de registros adequados a cada tipo textual (formal, injuntivo, narrativo etc.) é trabalhada de modo tangencial."
         }
       ],
       "competencias_principais": [
         "C2",
-        "C4"
+        "C1",
+        "C3"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5822,
+      "custo_estimado_usd": 0.010934,
+      "input_tokens": 4359,
+      "output_tokens": 277,
       "mapeamento_falhou": false
     },
     {
@@ -189,25 +247,46 @@
       "descritores_trabalhados": [
         {
           "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "A oficina foca explicitamente em transformar trajetórias de vida em repertório sociocultural, orientando o uso de detalhes biográficos como argumento."
+        },
+        {
+          "id": "C2.006",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório"
+          "razao": "Os alunos são orientados a garantir que os detalhes e palavras inseridas estejam conectados ao perfil do personagem e ao tema da biografia, evitando inserções decorativas."
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "A atividade incentiva a explicação de causas e consequências na trajetória do personagem, aprofundando o argumento biográfico além da simples listagem de fatos."
         },
         {
           "id": "C1.008",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha vocabular' — termos: vocabulário, palavra precisa"
+          "razao": "A seleção e inserção natural de palavras do campo semântico da biografia desenvolve o uso de vocabulário preciso e adequado ao contexto."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "baixa",
+          "razao": "A oficina sugere o uso da técnica 'E por causa disso...' para criar ligação lógica entre frases, promovendo articulação intraparágrafo."
+        },
+        {
+          "id": "C2.002",
+          "intensidade": "baixa",
+          "razao": "Ao organizar a biografia em quatro atos, os alunos aprendem a definir recortes temáticos específicos dentro da trajetória do personagem."
         }
       ],
       "competencias_principais": [
         "C2",
+        "C3",
         "C1"
       ],
       "tipo_atividade": "pratica",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5189,
+      "custo_estimado_usd": 0.011252,
+      "input_tokens": 4362,
+      "output_tokens": 316,
       "mapeamento_falhou": false
     },
     {
@@ -220,18 +299,35 @@
         {
           "id": "C1.004",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 32 matches em keywords associados a 'Pontuação' — termos: vírgula, Pontuação, dois-pontos"
+          "razao": "A oficina tem como foco central a restauração dos sinais de pontuação em trechos desprovidos deles, exigindo uso correto de vírgula, ponto, dois-pontos, ponto e vírgula, etc."
+        },
+        {
+          "id": "C1.001",
+          "intensidade": "media",
+          "razao": "Ao pontuar, os alunos precisam estruturar períodos completos, identificando sujeito, verbo e complementos para evitar fragmentos e garantir sentido."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "baixa",
+          "razao": "A atividade de pontuação pode levar os alunos a pensar na ligação lógica entre orações dentro do parágrafo, ainda que não seja o foco principal."
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "baixa",
+          "razao": "Ao reorganizar e pontuar os trechos, os alunos refletem sobre como pequenas decisões mudam o sentido e a profundidade do texto, ainda que de modo tangencial."
         }
       ],
       "competencias_principais": [
-        "C1"
+        "C1",
+        "C3",
+        "C4"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6154,
+      "custo_estimado_usd": 0.010578,
+      "input_tokens": 4325,
+      "output_tokens": 241,
       "mapeamento_falhou": false
     },
     {
@@ -242,26 +338,41 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+          "id": "C4.001",
+          "intensidade": "alta",
+          "razao": "A oficina foca explicitamente na variedade de conectivos, pedindo aos alunos que experimentem diferentes tipos (adição, oposição, causa, consequência, tempo) para transformar frases soltas em narrativa coesa."
         },
         {
-          "id": "C4.001",
+          "id": "C4.002",
+          "intensidade": "alta",
+          "razao": "Os alunos são levados a refletir sobre a adequação semântica dos conectivos, testando trocas e observando como a relação lógica entre as frases muda conforme o conectivo escolhido."
+        },
+        {
+          "id": "C4.007",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Variedade de conectivos' — termos: Variedade de conectivos, conectivo por outro da mesma categoria e verifica se o sentido se mantém. Depois: troca um conectivo de categoria"
+          "razao": "A atividade de reescrita e conexão de frases dentro do parágrafo exercita a articulação intraparágrafo, tornando explícita a ligação lógica entre orações."
+        },
+        {
+          "id": "C3.006",
+          "intensidade": "media",
+          "razao": "Ao transformar frases desconexas em uma história, os alunos praticam a articulação do fio condutor textual, aproximando-se da lógica tese-argumentos-conclusão."
+        },
+        {
+          "id": "C4.004",
+          "intensidade": "baixa",
+          "razao": "A oficina sugere o uso de pronomes e sinônimos para evitar repetições e melhorar a coesão, embora não seja o foco central."
         }
       ],
       "competencias_principais": [
-        "C2",
-        "C4"
+        "C4",
+        "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4929,
+      "custo_estimado_usd": 0.011332,
+      "input_tokens": 4454,
+      "output_tokens": 303,
       "mapeamento_falhou": false
     },
     {
@@ -272,26 +383,47 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+          "id": "C1.007",
+          "intensidade": "alta",
+          "razao": "A oficina tem como foco central a adequação do registro ao gênero formal, comparando diferentes registros e exigindo linguagem formal na produção do currículo."
         },
         {
-          "id": "C1.007",
+          "id": "C1.008",
+          "intensidade": "alta",
+          "razao": "Os alunos são orientados a usar vocabulário preciso e formal, inclusive com a introdução e uso deliberado de palavras como 'pleitear' e 'embasar'."
+        },
+        {
+          "id": "C5.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha de registro' — termos: registro formal, informal"
+          "razao": "Na montagem do currículo, há ênfase em descrever ações realizadas (verbo de ação), o que treina a clareza da ação na proposta de intervenção."
+        },
+        {
+          "id": "C1.001",
+          "intensidade": "media",
+          "razao": "A produção de narrativas e a conversão para currículo exigem períodos completos e sintaticamente corretos."
+        },
+        {
+          "id": "C1.004",
+          "intensidade": "baixa",
+          "razao": "A revisão e reescrita de textos para o currículo podem envolver atenção à pontuação, embora não seja o foco principal."
+        },
+        {
+          "id": "C5.005",
+          "intensidade": "baixa",
+          "razao": "O detalhamento de experiências e habilidades no currículo estimula o aluno a especificar pelo menos um elemento, similar ao detalhamento exigido na proposta de intervenção."
         }
       ],
       "competencias_principais": [
-        "C2",
-        "C1"
+        "C1",
+        "C5",
+        "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6516,
+      "custo_estimado_usd": 0.011264,
+      "input_tokens": 4368,
+      "output_tokens": 316,
       "mapeamento_falhou": false
     },
     {
@@ -302,26 +434,47 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C3.002",
+          "intensidade": "alta",
+          "razao": "O jogo exige que os alunos construam frases argumentativas que sustentem uma conclusão a partir de premissas, treinando a relação entre tese e argumentos."
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "alta",
+          "razao": "A oficina foca em aprofundar argumentos, pedindo que os alunos detalhem causa, consequência e especificidade ao construir frases e parágrafos."
+        },
+        {
+          "id": "C4.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+          "razao": "O uso de conectivos nas fases do jogo e a validação das relações lógicas entre frases treinam a escolha adequada de conectivos."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "media",
+          "razao": "A montagem de frases e parágrafos com cartas e a exigência de ligação lógica entre ideias exercitam a articulação intraparágrafo."
         },
         {
           "id": "C1.008",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha vocabular' — termos: vocabulário"
+          "razao": "O upgrade de vocabulário com 'mitigar' e 'exacerbar' e a escolha de palavras precisas nas cartas trabalham a precisão vocabular."
+        },
+        {
+          "id": "C2.002",
+          "intensidade": "baixa",
+          "razao": "A atividade substituta pede recorte temático ao exigir que o aluno especifique causa e consequência, não ficando no genérico."
         }
       ],
       "competencias_principais": [
-        "C2",
+        "C3",
+        "C4",
         "C1"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 9525,
+      "custo_estimado_usd": 0.01148,
+      "input_tokens": 4488,
+      "output_tokens": 313,
       "mapeamento_falhou": false
     },
     {
@@ -334,17 +487,22 @@
         {
           "id": "C4.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Variedade de conectivos' — termos: Variedade de conectivos, além disso"
-        },
-        {
-          "id": "C3.004",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: causal explica causa ou consequência; o temporal ordena no tempo. Trocar um pelo outro não muda só o registro: muda o argumento. A relação lógica que cada tipo cria ADVERSATIVO porém · contudo · mas A ←→ B opostos ADITIVO além disso · também · e A + B somam CAUSAL porque · portanto · logo A → B causa/consequência, mecanismo"
+          "razao": "O jogo e as atividades exigem que o aluno utilize conectivos de diferentes categorias (adversativo, aditivo, conclusivo, causal) para conectar frases, promovendo a variedade de conectivos."
         },
         {
           "id": "C4.002",
+          "intensidade": "alta",
+          "razao": "A dinâmica central do jogo é identificar se o conectivo escolhido expressa corretamente a relação lógica entre as frases, com contestações quando o conectivo é inadequado."
+        },
+        {
+          "id": "C4.007",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Adequação semântica do conectivo' — termos: relação lógica"
+          "razao": "Os alunos praticam a ligação lógica entre orações dentro do parágrafo ao conectar frases argumentativas usando operadores lógicos."
+        },
+        {
+          "id": "C3.006",
+          "intensidade": "baixa",
+          "razao": "Ao exigir que os alunos conectem argumentos de forma lógica e coesa, a oficina tangencia a articulação entre tese, argumentos e conclusão."
         }
       ],
       "competencias_principais": [
@@ -352,11 +510,11 @@
         "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 7178,
+      "custo_estimado_usd": 0.010706,
+      "input_tokens": 4449,
+      "output_tokens": 226,
       "mapeamento_falhou": false
     },
     {
@@ -367,26 +525,51 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+          "id": "C5.001",
+          "intensidade": "alta",
+          "razao": "A oficina foca explicitamente em ensinar o aluno a identificar e nomear o AGENTE da proposta, usando o conceito de protagonismo e incentivando a especificidade."
+        },
+        {
+          "id": "C5.002",
+          "intensidade": "alta",
+          "razao": "Os alunos são orientados a preencher a lacuna de AÇÃO com verbos fortes e precisos, substituindo verbos genéricos, e a identificar claramente o que será feito."
+        },
+        {
+          "id": "C5.003",
+          "intensidade": "alta",
+          "razao": "A atividade pede que os alunos identifiquem e preencham o MEIO/modo da proposta, explicitando como a ação será realizada."
+        },
+        {
+          "id": "C5.004",
+          "intensidade": "alta",
+          "razao": "A oficina exige que os alunos identifiquem e formulem a FINALIDADE da proposta, explicitando o propósito da ação."
+        },
+        {
+          "id": "C5.005",
+          "intensidade": "alta",
+          "razao": "O critério de detalhamento é avaliado e os alunos precisam expandir pelo menos um dos elementos da proposta, promovendo a especificidade."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A atividade central é identificar e garantir a presença dos 5 elementos canônicos da proposta de intervenção, cobrindo o meta-descritor de completude."
         },
         {
           "id": "C1.008",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha vocabular' — termos: Vocabulário"
+          "razao": "A escolha vocabular é trabalhada ao incentivar o uso de palavras precisas e institucionais (ex.: 'erradicar', 'fomentar') em vez de termos genéricos."
         }
       ],
       "competencias_principais": [
-        "C2",
+        "C5",
         "C1"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 7613,
+      "custo_estimado_usd": 0.012036,
+      "input_tokens": 4526,
+      "output_tokens": 373,
       "mapeamento_falhou": false
     },
     {
@@ -397,42 +580,47 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 9 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, citação, dado"
-        },
-        {
           "id": "C3.003",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Tópico frasal claro em cada desenvolvimento' — termos: Tópico Frasal"
+          "razao": "A oficina foca explicitamente na identificação e construção de tópicos frasais claros em cada parágrafo, usando cartas estruturais para garantir a abertura argumentativa."
         },
         {
-          "id": "C1.004",
+          "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pontuação' — termos: pontuação"
+          "razao": "Os alunos devem montar argumentos que sustentem o tópico frasal, promovendo a relação entre argumento e tese, ainda que de forma parcial e lúdica."
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "O uso de repertório sociocultural é incentivado nas cartas e na montagem dos parágrafos, com exemplos e dados para corroborar argumentos."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "A escolha de conectivos é parte do draft e da montagem das frases, promovendo variedade e adequação de conectores no texto."
         },
         {
           "id": "C1.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Concordância (verbal e nominal)' — termos: â"
+          "intensidade": "baixa",
+          "razao": "A rubrica de pontuação avalia concordância verbal e nominal ao preencher as lacunas das cartas, ainda que não seja o foco central."
         },
         {
-          "id": "C3.001",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+          "id": "C4.007",
+          "intensidade": "baixa",
+          "razao": "A oficina estimula a ligação entre frases dentro do parágrafo, buscando coesão e fluidez textual ao montar e ler as cartas em sequência."
         }
       ],
       "competencias_principais": [
         "C3",
-        "C1",
-        "C2"
+        "C2",
+        "C4"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 7769,
+      "custo_estimado_usd": 0.012292,
+      "input_tokens": 4522,
+      "output_tokens": 406,
       "mapeamento_falhou": false
     },
     {
@@ -443,37 +631,57 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 12 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, autor, dado"
-        },
-        {
           "id": "C2.003",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Estrutura dissertativo-argumentativa' — termos: ã"
+          "intensidade": "alta",
+          "razao": "O jogo exige a construção de uma redação completa com introdução, desenvolvimento e conclusão, reforçando a estrutura dissertativo-argumentativa."
         },
         {
-          "id": "C1.004",
+          "id": "C4.001",
+          "intensidade": "alta",
+          "razao": "O uso de cartas de conectivos e a pontuação específica para conectivos bem empregados treinam a variedade de conectivos."
+        },
+        {
+          "id": "C5.001",
+          "intensidade": "alta",
+          "razao": "A proposta de intervenção na conclusão deve obrigatoriamente nomear o agente, com orientação explícita para isso."
+        },
+        {
+          "id": "C5.002",
+          "intensidade": "alta",
+          "razao": "A proposta de intervenção exige que o grupo explicite o que o agente fará, com foco em verbos de ação claros."
+        },
+        {
+          "id": "C5.003",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pontuação' — termos: Pontuação"
+          "razao": "A oficina orienta que a proposta de intervenção detalhe o 'como' (meio/modo), embora não seja o foco principal."
+        },
+        {
+          "id": "C5.004",
+          "intensidade": "media",
+          "razao": "A proposta de intervenção deve apresentar a finalidade, com perguntas orientadoras sobre o propósito da ação."
         },
         {
           "id": "C3.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese"
+          "razao": "O jogo orienta a construção de tese clara na introdução, com votação e validação pelo grupo."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "media",
+          "razao": "O preenchimento de lacunas com conectivos e a votação de frases treinam a articulação intraparágrafo."
         }
       ],
       "competencias_principais": [
         "C2",
-        "C1",
-        "C3"
+        "C4",
+        "C5"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 8546,
+      "custo_estimado_usd": 0.012088,
+      "input_tokens": 4600,
+      "output_tokens": 361,
       "mapeamento_falhou": false
     },
     {
@@ -484,26 +692,37 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "A oficina explora o conceito de repertório e pede exemplos de uso, incentivando o uso de vocabulário preciso e adequado ao contexto formal-argumentativo."
         },
         {
-          "id": "C3.001",
+          "id": "C2.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+          "razao": "A avaliação diagnóstica inclui perguntas sobre diferença entre notícia e artigo de opinião, estimulando o reconhecimento do foco temático e da pertinência ao tema."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "alta",
+          "razao": "A parte B da avaliação diagnóstica pede que os alunos completem frases com conectivos adequados, exercitando deliberadamente a variedade de conectivos."
+        },
+        {
+          "id": "C4.002",
+          "intensidade": "media",
+          "razao": "Ao pedir que os alunos escolham conectivos que expressem a relação lógica correta entre ideias, a oficina trabalha a adequação semântica do conectivo."
         }
       ],
       "competencias_principais": [
+        "C1",
         "C2",
-        "C3"
+        "C4"
       ],
       "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4838,
+      "custo_estimado_usd": 0.010386,
+      "input_tokens": 4281,
+      "output_tokens": 228,
       "mapeamento_falhou": false
     },
     {
@@ -514,20 +733,42 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 6 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+          "razao": "O jogo exige que os alunos criem frases e notícias conectando elementos aparentemente desconexos, exercitando diretamente a pertinência ao tema proposto a partir de estímulos variados."
+        },
+        {
+          "id": "C4.002",
+          "intensidade": "alta",
+          "razao": "A atividade central é criar conexões lógicas entre signos (imagem e texto), o que demanda escolha adequada de conectivos e relações semânticas corretas."
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Ao criar notícias a partir de imagens e manchetes, os alunos precisam mobilizar repertório sociocultural para dar sentido às conexões, mesmo que de modo lúdico."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "media",
+          "razao": "A oficina estimula a articulação entre orações dentro das frases criadas, pois o desafio é justamente ligar elementos distintos de forma coesa."
+        },
+        {
+          "id": "C1.001",
+          "intensidade": "baixa",
+          "razao": "A produção de frases completas e notícias curtas exige estrutura sintática básica, ainda que não seja o foco principal."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C4",
+        "C1"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5291,
+      "custo_estimado_usd": 0.01096,
+      "input_tokens": 4384,
+      "output_tokens": 274,
       "mapeamento_falhou": false
     },
     {
@@ -539,13 +780,28 @@
       "descritores_trabalhados": [
         {
           "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+          "intensidade": "alta",
+          "razao": "O jogo e os exercícios focam na identificação e uso de informações confiáveis e repertório sociocultural (dados, fatos, fontes) para sustentar argumentos e distinguir verdade de fake news."
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "alta",
+          "razao": "A oficina exige que os alunos avaliem se o repertório (informações das cartas) é pertinente ao tema e à construção da notícia, diferenciando dados relevantes de irrelevantes ou enganosos."
         },
         {
           "id": "C3.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: mecanismo"
+          "razao": "Ao analisar e justificar a veracidade das informações, os alunos precisam aprofundar argumentos, explicando causas e consequências da desinformação."
+        },
+        {
+          "id": "C3.007",
+          "intensidade": "media",
+          "razao": "A dinâmica do jogo e os debates exigem que os alunos defendam pontos de vista sobre a confiabilidade das informações, indo além da simples descrição dos fatos."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "baixa",
+          "razao": "A atividade reforça a necessidade de manter o foco no tema proposto (construção de notícia confiável), embora não seja o objetivo central."
         }
       ],
       "competencias_principais": [
@@ -553,11 +809,11 @@
         "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 7426,
+      "custo_estimado_usd": 0.010888,
+      "input_tokens": 4308,
+      "output_tokens": 284,
       "mapeamento_falhou": false
     },
     {
@@ -568,20 +824,36 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C3.008",
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "O jogo e a discussão focam em identificar e avaliar o uso de informações, dados e citações como repertório sociocultural legítimo para sustentar argumentos."
+        },
+        {
+          "id": "C2.008",
+          "intensidade": "alta",
+          "razao": "A oficina treina o reconhecimento de fontes legítimas e a distinção entre repertório válido (nomeável, com fonte) e genérico, por meio da classificação e discussão das cartas."
+        },
+        {
+          "id": "C2.006",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Autoria' — termos: autoria"
+          "razao": "Ao comparar critérios de confiabilidade e pertinência das fontes ao tema, os alunos exercitam a conexão entre repertório e problemática discutida."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "baixa",
+          "razao": "A defesa de classificações e justificativas entre grupos estimula a relação entre argumentos e sustentação de posicionamentos, ainda que de modo indireto."
         }
       ],
       "competencias_principais": [
+        "C2",
         "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4969,
+      "custo_estimado_usd": 0.010376,
+      "input_tokens": 4280,
+      "output_tokens": 227,
       "mapeamento_falhou": false
     },
     {
@@ -590,14 +862,44 @@
       "oficina_numero": 5,
       "titulo": "Fato ou Opinião?",
       "tem_redato_avaliavel": false,
-      "descritores_trabalhados": [],
-      "competencias_principais": [],
+      "descritores_trabalhados": [
+        {
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "A oficina foca em identificar e classificar informações pertinentes ao tema proposto (fato) e distinguir de opiniões, exercitando a pertinência ao tema."
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Os alunos analisam o uso de dados, citações e informações objetivas (repertório sociocultural) nas declarações, diferenciando-os de opiniões."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "A atividade exige que os alunos identifiquem a tese (opinião) nas falas dos personagens, distinguindo posicionamentos claros sobre o tema."
+        },
+        {
+          "id": "C3.007",
+          "intensidade": "media",
+          "razao": "Ao classificar opiniões e argumentos, os alunos exercitam a defesa de ponto de vista, reconhecendo quando há posicionamento e argumentação."
+        },
+        {
+          "id": "C4.002",
+          "intensidade": "media",
+          "razao": "A identificação de marcadores linguísticos de opinião envolve analisar a adequação semântica de conectivos e expressões que indicam julgamento ou subjetividade."
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C3",
+        "C4"
+      ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5388,
+      "custo_estimado_usd": 0.010692,
+      "input_tokens": 4258,
+      "output_tokens": 272,
       "mapeamento_falhou": false
     },
     {
@@ -608,41 +910,52 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
+          "id": "C2.003",
+          "intensidade": "alta",
+          "razao": "A oficina exige que o aluno produza um artigo de opinião com estrutura completa (introdução, desenvolvimento, conclusão), diferenciando-o da notícia."
+        },
+        {
           "id": "C3.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 14 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese, posicionamento, ponto de vista"
-        },
-        {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor"
-        },
-        {
-          "id": "C2.004",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Predomínio do tipo dissertativo' — termos: impessoalidade"
+          "razao": "O aluno deve formular e explicitar uma tese clara ao assumir a voz do personagem, sendo este um dos objetivos centrais da oficina."
         },
         {
           "id": "C3.002",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Sustentação da tese pelos argumentos' — termos: argumentos e propõe caminhos. Nesta oficina, cada aluno assumirá a voz de um dos personagens do projeto e escreverá um artigo de opinião coerente com o perfil mapeado na Wiki. 🎯 Objetivo da oficina Diferenciar notícia de artigo de opinião, dominar a estrutura do gênero argumentativo (tese, argumentos, conclusão) e produzir um artigo de opinião assumindo a perspectiva de um personagem, mantendo coerência com o perfil da Wiki. 🟢 Orientação ao professor Retome a Wiki da Oficina 5: \"Vocês mapearam a voz de 6 personagens. Hoje, vocês vão assumir uma dessas vozes e escrever um artigo de opinião. A turma vai tentar adivinhar quem vocês são.\" Certifique-se de que todos os alunos tenham a Wiki preenchida antes de iniciar. ══════════ 2 · PALAVRAS DO DIA ══════════ Seção 2 Palavras do Dia Palavra Significado Exemplo de uso Artigo de opinião Gênero textual argumentativo em que o autor defende publicamente um ponto de vista, sustentando-o com argumentos e evidências. Diferencia-se da notícia por ser assinado e assumir posicionamento. \"O artigo de opinião publicado no jornal defendia a ampliação do transporte público como solução para a mobilidade urbana.\" Tese Proposição central que o autor defende ao longo do texto. Funciona como o eixo organizador da argumentação: todos os argumentos devem sustentá-la. \"A tese"
+          "intensidade": "alta",
+          "razao": "O planejamento e a produção do artigo orientam o aluno a sustentar a tese com dois argumentos coerentes com o perfil do personagem."
         },
         {
-          "id": "C3.004",
+          "id": "C3.007",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: mecanismo"
+          "razao": "A atividade demanda que o aluno defenda um ponto de vista, indo além da descrição dos fatos, ao assumir uma posição argumentativa."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "media",
+          "razao": "O aluno deve abordar o tema sorteado sem fugir ou tangenciar, mantendo-se pertinente ao tema proposto."
+        },
+        {
+          "id": "C3.006",
+          "intensidade": "media",
+          "razao": "A oficina orienta a articulação entre tese, argumentos e conclusão, reforçando o fio condutor do texto argumentativo."
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "baixa",
+          "razao": "Há orientação para adequação ao registro formal, já que o texto deve simular um artigo de opinião publicado."
         }
       ],
       "competencias_principais": [
+        "C2",
         "C3",
-        "C2"
+        "C1"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 8455,
+      "custo_estimado_usd": 0.011286,
+      "input_tokens": 4319,
+      "output_tokens": 331,
       "mapeamento_falhou": false
     },
     {
@@ -655,23 +968,44 @@
         {
           "id": "C3.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese"
+          "razao": "A oficina ensina explicitamente o conceito de tese, sua clareza e objetividade, com exemplos de conclusões claras versus confusas."
         },
         {
           "id": "C3.002",
+          "intensidade": "alta",
+          "razao": "O foco central é mostrar como argumentos (premissas) devem sustentar a tese, evitando opiniões soltas e exigindo justificativas lógicas."
+        },
+        {
+          "id": "C3.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Sustentação da tese pelos argumentos' — termos: Argumentos # Tese"
+          "razao": "A oficina orienta a aprofundar argumentos, explicando causas e consequências, e a evitar saltos lógicos superficiais."
+        },
+        {
+          "id": "C2.002",
+          "intensidade": "media",
+          "razao": "Há ênfase em escolher um recorte específico para a tese e argumentos, não tratando o tema de forma genérica."
+        },
+        {
+          "id": "C2.004",
+          "intensidade": "baixa",
+          "razao": "A oficina reforça o predomínio do tipo dissertativo ao diferenciar opinião de argumento e exigir estrutura lógica."
+        },
+        {
+          "id": "C3.007",
+          "intensidade": "baixa",
+          "razao": "Ao exigir defesa de ponto de vista com justificativa, a oficina trabalha a defesa argumentativa, não só a descrição."
         }
       ],
       "competencias_principais": [
+        "C2",
         "C3"
       ],
-      "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "conceitual",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5282,
+      "custo_estimado_usd": 0.010914,
+      "input_tokens": 4297,
+      "output_tokens": 290,
       "mapeamento_falhou": false
     },
     {
@@ -682,14 +1016,34 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "A oficina exige que os alunos extraiam palavras-chave e camadas argumentativas de temas de vestibular, garantindo abordagem direta e específica do tema proposto."
         },
         {
-          "id": "C3.001",
+          "id": "C2.002",
+          "intensidade": "alta",
+          "razao": "Os alunos precisam definir o recorte temático ao identificar camadas (problema, causa/consequência, solução) para cada tema, exercitando o foco em aspectos específicos."
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "alta",
+          "razao": "A análise das camadas argumentativas (problema, causa/consequência, solução) treina a profundidade do argumento, indo além da superfície do tema."
+        },
+        {
+          "id": "C3.005",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese"
+          "razao": "Ao selecionar diferentes camadas e temas para personagens distintos, a oficina estimula a diversidade de argumentos e perspectivas."
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "A oficina introduz o conceito de repertório temático e incentiva a busca de informações e argumentos além dos textos motivadores."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "baixa",
+          "razao": "Ao conectar argumentos às camadas e personagens, há um início de trabalho com a sustentação da tese pelos argumentos, embora não seja o foco central."
         }
       ],
       "competencias_principais": [
@@ -697,11 +1051,11 @@
         "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5466,
+      "custo_estimado_usd": 0.011082,
+      "input_tokens": 4297,
+      "output_tokens": 311,
       "mapeamento_falhou": false
     },
     {
@@ -712,26 +1066,41 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C1.004",
+          "id": "C3.004",
+          "intensidade": "alta",
+          "razao": "O jogo foca explicitamente em construir argumentos em diferentes camadas de profundidade (problema, causa, raiz), treinando o desenvolvimento argumentativo para além da superfície."
+        },
+        {
+          "id": "C3.005",
+          "intensidade": "alta",
+          "razao": "A dinâmica exige que os grupos equilibrem argumentos em áreas distintas (social, econômica, política), promovendo a diversidade de argumentos sobre o tema."
+        },
+        {
+          "id": "C2.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: Pontuação"
+          "razao": "Os alunos precisam coletar argumentos pertinentes ao tema central (inclusão digital), evitando fuga temática ao construir a árvore de argumentos."
         },
         {
           "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Sustentação da tese pelos argumentos' — termos: argumento: jogo cooperativo de exploração e construção COM JOGO FICHA TÉCNICA Ficha Técnica Série 2ª Série do Ensino Médio Bimestre 2º Bimestre Duração 2 aulas (90 minutos) — aprox. 30 min de jogo Tipo Jogo Cooperativo + Síntese"
+          "razao": "A oficina orienta a construção de argumentos que sustentam uma meta coletiva, alinhando os argumentos à defesa de um posicionamento sobre o tema."
+        },
+        {
+          "id": "C2.002",
+          "intensidade": "baixa",
+          "razao": "Ao explorar diferentes cenários e camadas, os alunos praticam o recorte temático ao escolher quais aspectos do tema abordar em profundidade."
         }
       ],
       "competencias_principais": [
-        "C1",
-        "C3"
+        "C3",
+        "C2"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4290,
+      "custo_estimado_usd": 0.01089,
+      "input_tokens": 4389,
+      "output_tokens": 264,
       "mapeamento_falhou": false
     },
     {
@@ -742,20 +1111,36 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C1.004",
+          "id": "C2.002",
+          "intensidade": "alta",
+          "razao": "A oficina gira em torno da escolha estratégica de recortes temáticos, levando os alunos a definir qual aspecto específico do tema vão abordar."
+        },
+        {
+          "id": "C3.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: pontuação"
+          "razao": "Ao avaliar a profundidade dos argumentos das cartas ofertadas (camadas 1, 2, 3), os alunos praticam diferenciar níveis de aprofundamento argumentativo."
+        },
+        {
+          "id": "C3.005",
+          "intensidade": "media",
+          "razao": "A dinâmica incentiva a diversidade de argumentos, pois os grupos precisam selecionar cartas de diferentes camadas e temas para maximizar suas chances no leilão."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "baixa",
+          "razao": "A pertinência ao tema é exercitada ao relacionar as cartas-palavra-chave e argumentos ao tema sorteado, evitando fuga temática."
         }
       ],
       "competencias_principais": [
-        "C1"
+        "C2",
+        "C3"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2602,
+      "custo_estimado_usd": 0.01066,
+      "input_tokens": 4454,
+      "output_tokens": 219,
       "mapeamento_falhou": false
     },
     {
@@ -768,29 +1153,39 @@
         {
           "id": "C2.005",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 14 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, Citação, Dado"
-        },
-        {
-          "id": "C3.008",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 10 matches em keywords associados a 'Autoria' — termos: autoria"
+          "razao": "A oficina orienta a coleta e seleção de repertório sociocultural (dados, citações, leis) para fundamentar argumentos, com exemplos explícitos de uso de fontes como IBGE."
         },
         {
           "id": "C2.006",
+          "intensidade": "alta",
+          "razao": "Os alunos são instruídos a garantir que o repertório coletado dialogue diretamente com o tema arrematado, evitando informações desconectadas."
+        },
+        {
+          "id": "C2.008",
+          "intensidade": "alta",
+          "razao": "A atividade enfatiza a importância de repertório legítimo, exigindo autoria, data, fonte e verificabilidade, e desqualificando fontes genéricas ou anônimas."
+        },
+        {
+          "id": "C2.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertório sociocultural COM JOGO FICHA TÉCNICA Ficha Técnica Série 2ª Série do Ensino Médio Bimestre 2º Bimestre Duração 2 aulas (90 minutos) + atividade para casa Tipo Pesquisa Orientada + Produção de Gráfico Posição Oficina 11 de 15 — Projeto Integrador, Etapa 4 Materiais Livro do aluno, acesso à internet ou materiais impressos, cartas PALAVRA-CHAVE restantes da Oficina 10 Retoma Oficina 10: Tema arrematado no Leilão Prepara Oficina 12: Proposta de Intervenção 📋 BNCC — Habilidades Habilidades mobilizadas EM13LP11 EM13LP29 EM13LP39 EM13LP11 Fazer curadoria de informações, selecionando fontes confiáveis. EM13LP29 Produzir textos argumentativos que sustentam posição sobre temas de interesse. EM13LP39 Analisar textos de gêneros jornalísticos, considerando a combinação de linguagens. Competências ENEM C2 C3 📋 Resumo Os grupos pesquisam fontes confiáveis sobre o tema"
+          "razao": "A oficina reforça a necessidade de pertinência ao tema ao orientar a pesquisa e curadoria de informações diretamente relacionadas ao tema sorteado."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "baixa",
+          "razao": "Ao selecionar repertório para sustentar argumentos, a oficina tangencia a ideia de que argumentos devem defender a tese, embora não seja o foco principal."
         }
       ],
       "competencias_principais": [
         "C2",
         "C3"
       ],
-      "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "pratica",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3838,
+      "custo_estimado_usd": 0.010812,
+      "input_tokens": 4306,
+      "output_tokens": 275,
       "mapeamento_falhou": false
     },
     {
@@ -801,36 +1196,56 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C5.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 8 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, autor, dado"
+          "razao": "A oficina exige que cada proposta de intervenção nomeie explicitamente o agente responsável, diferenciando agentes genéricos de específicos."
         },
         {
-          "id": "C5.007",
+          "id": "C5.002",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Respeito aos direitos humanos' — termos: direitos humanos"
+          "razao": "Os alunos devem formular a ação clara que o agente irá executar, sendo um dos elementos centrais do jogo."
         },
         {
           "id": "C5.003",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Meio/modo' — termos: por meio de"
+          "intensidade": "alta",
+          "razao": "A oficina obriga a explicitação do meio/modo pelo qual a ação será realizada, como parte do sistema de montagem da proposta."
         },
         {
           "id": "C5.004",
+          "intensidade": "alta",
+          "razao": "A finalidade da proposta é um dos cinco elementos obrigatórios, e os alunos precisam explicitá-la para pontuar."
+        },
+        {
+          "id": "C5.005",
+          "intensidade": "alta",
+          "razao": "O detalhamento é incentivado e pontuado, sendo necessário para alcançar a pontuação máxima e usando o tile curinga."
+        },
+        {
+          "id": "C5.006",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Finalidade' — termos: a fim de"
+          "razao": "A proposta deve estar articulada ao problema-tema sorteado, sendo critério de votação e pontuação."
+        },
+        {
+          "id": "C5.007",
+          "intensidade": "media",
+          "razao": "O respeito aos direitos humanos é critério explícito de pontuação e pode anular a rodada se violado."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A completude dos 5 elementos é o objetivo do jogo, sendo critério máximo de pontuação e foco da atividade."
         }
       ],
       "competencias_principais": [
         "C5",
-        "C2"
+        "C3"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5381,
+      "custo_estimado_usd": 0.011626,
+      "input_tokens": 4381,
+      "output_tokens": 358,
       "mapeamento_falhou": false
     },
     {
@@ -841,29 +1256,39 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 11 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, autor, dado"
-        },
-        {
-          "id": "C3.001",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
-        },
-        {
           "id": "C2.003",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Estrutura dissertativo-argumentativa' — termos: ã"
+          "intensidade": "alta",
+          "razao": "O jogo exige que os grupos montem uma redação completa com introdução, dois desenvolvimentos e conclusão, seguindo a estrutura dissertativo-argumentativa."
         },
         {
-          "id": "C2.006",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertório e treinaram propostas de intervenção. Cada uma dessas habilidades era uma peça isolada. Hoje, todas as peças se juntam: o objetivo é montar uma dissertação completa, do primeiro ao último parágrafo, usando o sistema"
+          "id": "C3.006",
+          "intensidade": "alta",
+          "razao": "A oficina foca na articulação entre tese, argumentos e conclusão, com revisão final para garantir o fio condutor do texto."
+        },
+        {
+          "id": "C4.003",
+          "intensidade": "alta",
+          "razao": "Há uma etapa específica de revisão da costura entre parágrafos, incentivando o uso de conectivos para transição entre blocos do texto."
         },
         {
           "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A conclusão exige proposta de intervenção com todos os 5 elementos (agente, ação, meio, finalidade, detalhamento), cobrando completude."
+        },
+        {
+          "id": "C2.005",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Completude (5 elementos presentes)' — termos: Agente + Ação + Meio"
+          "razao": "O uso de cartas de repertório obriga os alunos a inserir informações socioculturais relevantes nos argumentos."
+        },
+        {
+          "id": "C3.005",
+          "intensidade": "media",
+          "razao": "O jogo pontua a diversidade de argumentos, exigindo que D1 e D2 abordem aspectos diferentes do problema."
+        },
+        {
+          "id": "C5.006",
+          "intensidade": "media",
+          "razao": "A proposta de intervenção deve estar articulada ao problema discutido nos desenvolvimentos, não sendo solta."
         }
       ],
       "competencias_principais": [
@@ -871,12 +1296,12 @@
         "C3",
         "C5"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4501,
+      "custo_estimado_usd": 0.011626,
+      "input_tokens": 4461,
+      "output_tokens": 338,
       "mapeamento_falhou": false
     },
     {
@@ -887,25 +1312,57 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C1.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+          "razao": "A produção de uma redação completa permite observar se o aluno constrói períodos completos, sem fragmentos ou orações truncadas."
         },
         {
-          "id": "C2.006",
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "O diagnóstico exige que o aluno aborde o tema proposto, sendo avaliado se há fuga ou tangenciamento."
+        },
+        {
+          "id": "C2.003",
+          "intensidade": "alta",
+          "razao": "A estrutura dissertativo-argumentativa é central, pois a redação deve seguir o modelo ENEM (introdução, desenvolvimento, conclusão)."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "A clareza da tese é observada na redação diagnóstica, sendo um dos principais focos da avaliação inicial."
+        },
+        {
+          "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertório prévio da turma. Imprima ou projete a proposta escolhida. A Opção A usa o tema do ENEM 2024; a Opção B traz tema alternativo igualmente adequado para o diagnóstico. 🟢 Dica pedagógica — produção Mantenha silêncio e ambiente de prova. Se algum aluno terminar muito antes, pode revisar em silêncio. Não responda dúvidas sobre o tema"
+          "razao": "A oficina permite avaliar se os argumentos apresentados sustentam a tese, ainda que não seja o único foco."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "A produção textual completa permite observar a variedade de conectivos, embora não seja o foco exclusivo."
+        },
+        {
+          "id": "C5.001",
+          "intensidade": "media",
+          "razao": "A proposta de intervenção é parte obrigatória da redação ENEM, sendo avaliada a presença do agente na proposta."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "media",
+          "razao": "A completude da proposta de intervenção (todos os 5 elementos) é observada na autoavaliação e na análise do texto."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
       "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6619,
+      "custo_estimado_usd": 0.011504,
+      "input_tokens": 4296,
+      "output_tokens": 364,
       "mapeamento_falhou": false
     },
     {
@@ -916,37 +1373,42 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
-        },
-        {
           "id": "C4.001",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Variedade de conectivos' — termos: conectivo estabelece um tipo diferente de relação lógica. No jogo, essas relações ficam visíveis porque a história precisa fazer sentido. Na ficha (Lado B), você registrou quantas cartas de cada categoria, além disso"
+          "intensidade": "alta",
+          "razao": "O jogo e a reconstrução escrita exigem uso variado de conectivos de diferentes categorias, objetivo central da oficina."
         },
         {
           "id": "C4.002",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Adequação semântica do conectivo' — termos: relação lógica"
+          "intensidade": "alta",
+          "razao": "Os alunos precisam escolher conectivos adequados à relação lógica entre frases, sendo corrigidos pelo grupo quando a escolha não faz sentido."
         },
         {
-          "id": "C3.004",
+          "id": "C4.007",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: causa ou consequência, mecanismo"
+          "razao": "A atividade de reconstrução escrita e o jogo treinam a ligação lógica entre orações dentro do parágrafo, evitando justaposição."
+        },
+        {
+          "id": "C4.003",
+          "intensidade": "baixa",
+          "razao": "A reconstrução da história pode estimular o uso de conectivos entre blocos de ideias, mas não é foco central."
+        },
+        {
+          "id": "C1.004",
+          "intensidade": "baixa",
+          "razao": "A produção escrita final pode demandar uso correto de pontuação ao empregar conectivos, mas não é foco explícito."
         }
       ],
       "competencias_principais": [
         "C4",
-        "C2",
+        "C1",
         "C3"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4640,
+      "custo_estimado_usd": 0.010674,
+      "input_tokens": 4357,
+      "output_tokens": 245,
       "mapeamento_falhou": false
     },
     {
@@ -957,20 +1419,42 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.001",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, citação"
+          "razao": "A oficina foca em diferenciar tema e problema social, garantindo que o aluno compreenda e delimite o problema a ser investigado, evitando fuga ou tangenciamento do tema."
+        },
+        {
+          "id": "C2.002",
+          "intensidade": "alta",
+          "razao": "Os alunos são orientados a escolher um recorte específico do tema para o dossiê, respondendo às 4 Perguntas Essenciais e delimitando o aspecto a ser investigado."
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "A oficina introduz o conceito de repertório sociocultural e orienta os alunos a buscar dados, autores e informações relevantes para fundamentar a análise do problema."
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "media",
+          "razao": "Há ênfase em selecionar repertório pertinente ao problema, evitando o uso decorativo e promovendo a conexão direta entre referência e problemática."
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Ao investigar causas, contexto e afetados, a oficina estimula o aprofundamento da análise do problema, indo além da superfície."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "pratica",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 7583,
+      "custo_estimado_usd": 0.011068,
+      "input_tokens": 4422,
+      "output_tokens": 278,
       "mapeamento_falhou": false
     },
     {
@@ -981,20 +1465,47 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
+          "id": "C2.002",
+          "intensidade": "alta",
+          "razao": "A oficina foca em classificar e delimitar o recorte temático ao organizar causas, sintomas, consequências e contexto, evitando abordagem genérica do tema."
+        },
+        {
           "id": "C3.004",
+          "intensidade": "alta",
+          "razao": "O exercício central é aprofundar o entendimento do problema ao diferenciar causas, sintomas e consequências, promovendo argumentação mais profunda."
+        },
+        {
+          "id": "C3.005",
+          "intensidade": "alta",
+          "razao": "A montagem da árvore argumentativa exige que o aluno diversifique os argumentos, separando causas, consequências e sintomas em ramos distintos."
+        },
+        {
+          "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Profundidade do argumento' — termos: Causas, Sintomas, Consequências e Contextos organizados em árvore Retoma OF3: Seção 1 do Dossiê (definição, contexto, dados, afetados) Prepara OF5: Atores Envolvidos (quem causa, quem sofre, quem pode resolver) Competências ENEM C2 (compreensão do tema e repertório) · C3 (organização dos argumentos) 📋 BNCC — Habilidades Habilidades mobilizadas EM13LP01 EM13LP02 EM13LP04 EM13LP01 Relacionar o texto à organização discursiva e identificar posições refutadas ou sustentadas. EM13LP02 Estabelecer relações lógico-discursivas variadas em textos argumentativos. EM13LP04 Analisar logicamente os argumentos de um texto, identificando premissas e conclusões. Competências ENEM C1 C3 C4 C5 📦 Conceito central Esta oficina é a ponte entre entender o problema (OF3) e escrever a redação. Sem ela, o aluno escreve introduções desconectadas dos desenvolvimentos, confunde causas com consequências e repete informações sem progressão. A Árvore Argumentativa organiza todos os elementos do problema em uma estrutura que mapeia diretamente para a estrutura da redação ENEM: contexto → introdução, causas → desenvolvimentos, consequências → impacto, proposta → conclusão. Seção 1 Abertura A planta baixa da redação Na Oficina 3, seu grupo investigou um problema social e preencheu a Seção 1 do Dossiê (O QUÊ, ONDE, QUANTO, QUEM). Agora vem a pergunta mais importante: POR QUÊ esse problema existe? E o que acontece quando ele não é resolvido? Entender a diferença entre causa, sintoma, consequência"
+          "razao": "A oficina conecta explicitamente a árvore argumentativa à sustentação da tese, mostrando como cada ramo serve de base para os desenvolvimentos."
+        },
+        {
+          "id": "C4.006",
+          "intensidade": "media",
+          "razao": "Ao estruturar a árvore, o aluno aprende a evitar repetição e garantir progressão temática entre os parágrafos da redação."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "baixa",
+          "razao": "Ao organizar os elementos do problema, a oficina reforça a pertinência ao tema, embora não seja o foco principal."
         }
       ],
       "competencias_principais": [
-        "C3"
+        "C2",
+        "C3",
+        "C4"
       ],
-      "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "pratica",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4058,
+      "custo_estimado_usd": 0.011036,
+      "input_tokens": 4322,
+      "output_tokens": 299,
       "mapeamento_falhou": false
     },
     {
@@ -1005,20 +1516,42 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C3.004",
+          "id": "C5.001",
+          "intensidade": "alta",
+          "razao": "A oficina tem como objetivo central identificar e justificar o agente da proposta de intervenção, com debate e preenchimento do dossiê focados em quem executa a ação."
+        },
+        {
+          "id": "C5.005",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: causas identificadas → quem ataca essas causas?) Prepara OF6: Avaliação Estratégica (atributos do problema + ficha Nemesis) Competência ENEM C5 (proposta de intervenção com agente definido) Seção do Dossiê Seção 3: Atores Envolvidos 📋 BNCC — Habilidades Habilidades mobilizadas EM13LP01 EM13LP02 EM13LP04 EM13LP25 EM13LP01 Relacionar o texto à organização discursiva e identificar posições sustentadas. EM13LP02 Estabelecer relações lógico-discursivas variadas em textos argumentativos. EM13LP04 Analisar logicamente os argumentos, identificando premissas e conclusões. EM13LP25 Participar de práticas de produção de textos em grupo, atuando de forma cooperativa. Competências ENEM C1 C3 C4 C5 📦 Conceito central O aluno já sabe O QUE causa o problema (OF4). Agora precisa descobrir QUEM está envolvido. Sem essa etapa, faz propostas de intervenção vagas (\"o governo deve resolver\"), não identifica quem tem PODER e DEVER de agir, e perde pontos na C5. Com o mapeamento dos atores e o debate, o aluno entenderá que cada problema tem múltiplos envolvidos e que escolher o AGENTE certo é a chave para uma proposta de intervenção nota 200. Seção 1 Abertura Quem são os atores do problema? Na Oficina 4, vocês organizaram as informações do tema em uma Árvore Argumentativa: descobriram O QUE causa o problema, o que é sintoma, o que é consequência"
+          "razao": "Os alunos devem detalhar o agente escolhido, justificando com critérios de poder e dever, o que exige detalhamento de pelo menos um elemento da proposta."
+        },
+        {
+          "id": "C5.006",
+          "intensidade": "media",
+          "razao": "A escolha do agente é articulada diretamente ao problema discutido, pois o debate gira em torno de quem tem poder e dever de resolver o problema central do tema."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "baixa",
+          "razao": "O mapeamento dos atores e a discussão sobre quem é afetado, causador e solucionador reforçam a pertinência ao tema, evitando propostas genéricas."
+        },
+        {
+          "id": "C3.007",
+          "intensidade": "baixa",
+          "razao": "O debate estruturado (role-play) obriga o aluno a defender um ponto de vista sobre qual agente é mais adequado, exercitando a defesa argumentativa."
         }
       ],
       "competencias_principais": [
-        "C3"
+        "C5",
+        "C3",
+        "C2"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "pratica",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5266,
+      "custo_estimado_usd": 0.010944,
+      "input_tokens": 4344,
+      "output_tokens": 282,
       "mapeamento_falhou": false
     },
     {
@@ -1029,36 +1562,52 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Dado, lei"
+          "id": "C5.001",
+          "intensidade": "alta",
+          "razao": "O jogo exige que o grupo escolha e nomeie explicitamente o agente responsável pela intervenção, discutindo especificidade e pertinência."
+        },
+        {
+          "id": "C5.002",
+          "intensidade": "alta",
+          "razao": "A oficina orienta a definição clara da ação a ser realizada pelo agente, com verbos de ação explícitos, como parte obrigatória do jogo."
         },
         {
           "id": "C5.003",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Meio/modo' — termos: por meio de"
-        },
-        {
-          "id": "C5.008",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Completude (5 elementos presentes)' — termos: AGENTE + AÇÃO + MEIO"
+          "intensidade": "alta",
+          "razao": "O grupo deve detalhar o meio/modo de execução da ação, discutindo recursos, instrumentos e operacionalização durante o jogo."
         },
         {
           "id": "C5.004",
+          "intensidade": "alta",
+          "razao": "A finalidade da proposta é debatida e registrada como slot obrigatório no tile da conclusão, garantindo que o propósito da ação seja explicitado."
+        },
+        {
+          "id": "C5.005",
+          "intensidade": "alta",
+          "razao": "O jogo incentiva o detalhamento de pelo menos um elemento da proposta, promovendo a expansão e especificação de agentes, ações ou meios."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A atividade só é considerada completa quando todos os 5 elementos (agente, ação, meio, finalidade, detalhamento) estão presentes na proposta construída."
+        },
+        {
+          "id": "C5.006",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Finalidade' — termos: a fim de"
+          "razao": "O grupo precisa garantir que a proposta construída esteja articulada ao problema discutido no dossiê, promovendo coerência temática."
         }
       ],
       "competencias_principais": [
         "C5",
-        "C2"
+        "C3",
+        "C1"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5166,
+      "custo_estimado_usd": 0.01165,
+      "input_tokens": 4441,
+      "output_tokens": 346,
       "mapeamento_falhou": false
     },
     {
@@ -1069,20 +1618,47 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C1.007",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: dado"
+          "razao": "O jogo faz os alunos identificarem e discutirem erros de registro formal, já que cartas de erro incluem inadequações de linguagem."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "A oficina destaca a fuga ao tema como um dos erros mais graves, levando os alunos a reconhecer e priorizar a pertinência ao tema."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "media",
+          "razao": "Os alunos analisam erros de sustentação de tese por argumentos, discutindo como a falta de defesa clara prejudica a nota."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "O jogo inclui cartas sobre conectivos e coesão, levando os alunos a identificar problemas de variedade e uso inadequado de conectores."
+        },
+        {
+          "id": "C5.001",
+          "intensidade": "alta",
+          "razao": "A proposta de intervenção é foco de cartas de erro, especialmente a ausência de agente, levando à discussão sobre a importância desse elemento."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "media",
+          "razao": "A oficina aborda a completude da proposta de intervenção, já que os alunos precisam identificar quando faltam elementos essenciais."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C5",
+        "C4"
       ],
       "tipo_atividade": "jogo",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6881,
+      "custo_estimado_usd": 0.011188,
+      "input_tokens": 4430,
+      "output_tokens": 291,
       "mapeamento_falhou": false
     },
     {
@@ -1094,41 +1670,46 @@
       "descritores_trabalhados": [
         {
           "id": "C1.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Concordância (verbal e nominal)' — termos: â"
+          "intensidade": "alta",
+          "razao": "A oficina propõe análise e correção de erros de concordância verbal e nominal em trechos reais, com gabarito detalhado."
         },
         {
-          "id": "C1.008",
+          "id": "C1.006",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Escolha vocabular' — termos: repetição"
+          "razao": "Inclui exercícios de identificação e correção de erros de regência, como o uso de crase e preposições, em exemplos práticos."
         },
         {
-          "id": "C2.005",
-          "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, citação"
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "Os alunos classificam textos como fuga, tangenciamento ou pertinência ao tema, justificando a relação com o tema proposto."
         },
         {
-          "id": "C3.008",
+          "id": "C3.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Autoria' — termos: Senso comum"
+          "razao": "A oficina aborda o conceito de progressão e repetição, levando o aluno a identificar falta de aprofundamento e circularidade nos argumentos."
         },
         {
           "id": "C4.004",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Referenciação por pronomes e sinônimos' — termos: Referenciação"
+          "razao": "Trabalha referenciação por pronomes e sinônimos, com exemplos de referenciação confusa e exercícios de identificação."
+        },
+        {
+          "id": "C4.006",
+          "intensidade": "media",
+          "razao": "Explora o conceito de progressão temática, pedindo que alunos identifiquem quando o texto avança ou repete ideias."
         }
       ],
       "competencias_principais": [
         "C1",
         "C2",
-        "C3"
+        "C4"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "pratica",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4262,
+      "custo_estimado_usd": 0.011866,
+      "input_tokens": 4389,
+      "output_tokens": 386,
       "mapeamento_falhou": false
     },
     {
@@ -1139,20 +1720,57 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.003",
+          "intensidade": "alta",
+          "razao": "A oficina exige a produção de um texto dissertativo-argumentativo completo no formato ENEM, com estrutura de introdução, desenvolvimento e conclusão."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "O simulado demanda que o aluno formule uma tese clara sobre o tema saúde mental dos jovens, como parte central da redação."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "alta",
+          "razao": "A sustentação da tese por argumentos é cobrada, pois o aluno deve defender seu ponto de vista ao longo do texto, articulando argumentos nos desenvolvimentos."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A proposta de intervenção deve conter os 5 elementos canônicos (agente, ação, meio, finalidade, detalhamento), sendo critério explícito do simulado."
+        },
+        {
+          "id": "C2.001",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, Lei"
+          "razao": "O aluno precisa abordar o tema proposto (saúde mental dos jovens) sem tangenciar, sendo critério de avaliação do simulado."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "O uso variado de conectivos é avaliado, pois o checklist de revisão e a produção completa exigem articulação textual adequada."
+        },
+        {
+          "id": "C5.006",
+          "intensidade": "media",
+          "razao": "A proposta de intervenção deve estar articulada ao problema discutido, sendo cobrado que a solução proposta dialogue com o desenvolvimento."
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "baixa",
+          "razao": "A adequação ao registro formal é exigida, pois a redação deve seguir a modalidade escrita formal, mas não é o foco central da oficina."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
       "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6410,
+      "custo_estimado_usd": 0.011952,
+      "input_tokens": 4368,
+      "output_tokens": 402,
       "mapeamento_falhou": false
     },
     {
@@ -1163,20 +1781,47 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
+          "id": "C3.004",
+          "intensidade": "alta",
+          "razao": "A oficina exige que os alunos identifiquem e corrijam argumentos rasos, promovendo o aprofundamento argumentativo nos desenvolvimentos."
+        },
+        {
+          "id": "C4.002",
+          "intensidade": "alta",
+          "razao": "Os alunos precisam diagnosticar e corrigir conectivos inadequados, focando na adequação semântica das relações lógicas entre ideias."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A oficina inclui a identificação e correção de propostas de intervenção incompletas, exigindo a presença dos 5 elementos canônicos."
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "media",
+          "razao": "O diagnóstico de argumentos que não sustentam a tese é parte do jogo, levando os alunos a revisar a relação entre tese e argumentos."
+        },
+        {
           "id": "C2.005",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+          "razao": "A oficina aborda o uso e análise de repertório sociocultural, especialmente quando o erro envolve repertório mal utilizado ou decorativo."
+        },
+        {
+          "id": "C4.007",
+          "intensidade": "media",
+          "razao": "Os alunos revisam a articulação lógica entre orações dentro dos parágrafos ao identificar e corrigir problemas de coesão."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C3",
+        "C4",
+        "C5"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5530,
+      "custo_estimado_usd": 0.012004,
+      "input_tokens": 4450,
+      "output_tokens": 388,
       "mapeamento_falhou": false
     },
     {
@@ -1187,20 +1832,47 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "A oficina exige que o aluno produza uma redação completa sobre o tema 'inclusão digital', sendo avaliado quanto à pertinência ao tema proposto, inclusive com feedback da IA sobre esse aspecto."
+        },
+        {
+          "id": "C2.003",
+          "intensidade": "alta",
+          "razao": "O foco é a produção de texto dissertativo-argumentativo completo, com estrutura formal (introdução, desenvolvimento, conclusão), avaliado e revisado com apoio da IA."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "A clareza e existência da tese são avaliadas tanto na produção inicial quanto na análise e reescrita orientada pela IA."
+        },
+        {
+          "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+          "razao": "A oficina orienta o aluno a revisar se os argumentos sustentam a tese, com sugestões da IA para fortalecer essa relação."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "A IA aponta e sugere melhorias no uso de conectivos, e o aluno reescreve trechos para aprimorar a variedade de conectores."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "media",
+          "razao": "A proposta de intervenção é avaliada quanto à completude dos 5 elementos, com feedback detalhado da IA e reescrita orientada."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
       "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4891,
+      "custo_estimado_usd": 0.011286,
+      "input_tokens": 4343,
+      "output_tokens": 325,
       "mapeamento_falhou": false
     },
     {
@@ -1211,20 +1883,52 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.003",
+          "intensidade": "alta",
+          "razao": "O jogo exige que os alunos montem uma redação completa com introdução, dois desenvolvimentos e conclusão, reforçando a estrutura dissertativo-argumentativa."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "Durante o jogo, os grupos precisam garantir que a tese esteja clara na introdução, sendo uma das perguntas guiadas do professor."
+        },
+        {
+          "id": "C3.005",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+          "razao": "O jogo orienta que D1 e D2 tragam argumentos diferentes, promovendo a diversidade argumentativa."
+        },
+        {
+          "id": "C4.008",
+          "intensidade": "media",
+          "razao": "A montagem dos quatro blocos (introdução, D1, D2, conclusão) com cartas e transições reforça o uso de conectivos de transição estrutural."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "O jogo cobra que a proposta de intervenção tenha todos os 5 elementos, sendo critério explícito para completar a conclusão."
+        },
+        {
+          "id": "C2.001",
+          "intensidade": "media",
+          "razao": "O tema é definido (Educação Financeira) e o jogo exige pertinência ao tema em todas as escolhas de cartas e argumentos."
+        },
+        {
+          "id": "C3.006",
+          "intensidade": "media",
+          "razao": "O jogo demanda articulação entre tese, argumentos e conclusão, com perguntas do professor sobre o fio condutor do texto."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4593,
+      "custo_estimado_usd": 0.01166,
+      "input_tokens": 4454,
+      "output_tokens": 344,
       "mapeamento_falhou": false
     },
     {
@@ -1235,26 +1939,47 @@
       "tem_redato_avaliavel": false,
       "descritores_trabalhados": [
         {
-          "id": "C1.008",
+          "id": "C2.003",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Escolha vocabular' — termos: vocabulário"
+          "razao": "O jogo e a reescrita individual exigem que o aluno mantenha a estrutura dissertativo-argumentativa (introdução, desenvolvimento, conclusão) ao transformar o esqueleto em texto autoral."
         },
         {
-          "id": "C2.006",
+          "id": "C3.004",
+          "intensidade": "alta",
+          "razao": "A análise por IA e a reescrita focam em aprofundar argumentos, indo além da superfície, como explicitado no objetivo de dar profundidade ao texto."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "alta",
+          "razao": "A oficina destaca a necessidade de inserir conectivos variados e transições, já que o texto gerado pelo jogo carece desses elementos e a reescrita os exige."
+        },
+        {
+          "id": "C1.008",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertórios e agentes específicos. Mas o desafio principal não é mais a mecânica do jogo (vocês já sabem jogar). O desafio é a transição : pegar o que o jogo produziu e fazer soar como se tivesse sido escrito por uma pessoa, em vez de montado com cartas. 🎯 Objetivo da oficina Jogar segunda partida do Jogo de Redação com maior fluência e estratégia, analisar criticamente o texto gerado usando IA, identificar lacunas de coesão, vocabulário e profundidade no esqueleto, e reescrever individualmente transformando a base cooperativa em texto autoral completo de 30 linhas. 🔄 O diferencial pedagógico O aluno percebe que o jogo dá a ESTRUTURA e os ARGUMENTOS , mas a ESCRITA DE QUALIDADE depende da capacidade individual de articular esses elementos com coesão, vocabulário e estilo. O jogo ensina a pensar. A escrita é com cada um. CICLO VISUAL 🎲 1. Jogar Grupo constrói esqueleto no tabuleiro → 🤖 2. Analisar IA diagnostica por competência → ✍️ 3. Reescrever Aluno transforma em texto autoral 🟢 Fala sugerida \"O que aprenderam na Oficina 12? O que fariam diferente? Hoje vocês jogam de novo — com tema"
+          "razao": "O aluno é orientado a enriquecer o vocabulário e evitar repetições ao transformar o esqueleto em texto autoral, buscando precisão vocabular."
+        },
+        {
+          "id": "C5.006",
+          "intensidade": "media",
+          "razao": "A proposta de intervenção deve estar articulada ao problema discutido, sendo revisada e aprimorada na reescrita individual após análise do esqueleto."
+        },
+        {
+          "id": "C3.008",
+          "intensidade": "alta",
+          "razao": "A transição do esqueleto coletivo para a redação individual enfatiza a autoria, exigindo que o aluno dê voz própria ao texto e não apenas reproduza o que foi montado em grupo."
         }
       ],
       "competencias_principais": [
-        "C1",
-        "C2"
+        "C2",
+        "C3",
+        "C4"
       ],
-      "tipo_atividade": "avaliativa",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "jogo",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5581,
+      "custo_estimado_usd": 0.01247,
+      "input_tokens": 4467,
+      "output_tokens": 442,
       "mapeamento_falhou": false
     },
     {
@@ -1265,25 +1990,52 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.003",
           "intensidade": "alta",
-          "razao": "Heurística (NÃO-LLM): 8 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, Lei"
+          "razao": "A oficina exige produção de redação completa no formato ENEM, com estrutura dissertativo-argumentativa (introdução, desenvolvimento, conclusão) como critério central de avaliação."
         },
         {
-          "id": "C2.006",
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "O simulado demanda apresentação clara de tese sobre o tema proposto, sendo este um dos focos avaliativos do exercício."
+        },
+        {
+          "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertórios. Sem grupo para discutir. Sem IA para analisar depois. É só você, a proposta e o que aprendeu em 13 oficinas. Este é o primeiro dos dois simulados finais. O formato é o mais próximo possível do ENEM: tema inédito, textos motivadores, tempo limitado, produção individual, silêncio. A diferença é que aqui vocês ainda terão duas aulas (no ENEM será menos). Use bem esse tempo: leia com calma, planeje antes de escrever, revise antes de entregar. 🎯 Objetivo da oficina Produzir redação dissertativo-argumentativa individual em condições próximas ao ENEM, demonstrando autonomia na aplicação de estrutura, argumentação e proposta de intervenção. Gerenciar tempo de prova (leitura, planejamento, escrita, revisão). Aplicar checklist de revisão por competência. Evidenciar evolução em relação aos simulados anteriores (OF9, OF11). ⚡ O que muda em relação aos simulados anteriores Agora os alunos já passaram pelo Redação cooperativa e pela análise com IA. Devem demonstrar evolução em três frentes: estrutura (Intro + D1 + D2 + Conclusão automáticos), argumentação (repertório + análise, em vez de só afirmação) e proposta de intervenção (5 elementos completos). O Simulado 1 (OF9) testou a base. O Simulado 2 (OF11) introduziu IA. Este testa a autonomia . 🟢 Fala sugerida \"É simulado. Silêncio absoluto. Sem consulta. Vocês estão prontos. Usem tudo que aprenderam ao longo do ano. Leiam os textos com calma, planejem antes de escrever, revisem antes de entregar.\" ══════════ 2 · PALAVRAS DO DIA ══════════ Seção 2 Palavras do Dia Palavra Significado Exemplo de uso Simulado Exercício em condições similares ao ENEM: tempo limitado, tema"
+          "razao": "A sustentação da tese pelos argumentos é avaliada, pois o aluno deve defender seu posicionamento ao longo do texto."
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "O uso de repertório sociocultural é incentivado e avaliado, já que o tema e os textos motivadores exigem mobilização de referências externas."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A proposta de intervenção deve conter todos os 5 elementos canônicos, sendo critério explícito de avaliação e revisão."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "A variedade de conectivos é avaliada como parte da coesão textual, especialmente na revisão por checklist."
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "baixa",
+          "razao": "A adequação ao registro formal é cobrada, ainda que não seja o foco principal, pois a redação deve seguir a modalidade escrita formal."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4391,
+      "custo_estimado_usd": 0.011454,
+      "input_tokens": 4351,
+      "output_tokens": 344,
       "mapeamento_falhou": false
     },
     {
@@ -1294,20 +2046,52 @@
       "tem_redato_avaliavel": true,
       "descritores_trabalhados": [
         {
-          "id": "C2.005",
+          "id": "C2.001",
+          "intensidade": "alta",
+          "razao": "O simulado exige que o aluno aborde diretamente o tema proposto (preservação ambiental), sendo critério central da avaliação."
+        },
+        {
+          "id": "C2.003",
+          "intensidade": "alta",
+          "razao": "A produção de redação completa em condições de prova real demanda estrutura dissertativo-argumentativa formal, foco explícito do simulado."
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "A clareza e existência da tese são avaliadas na redação final, sendo critério explícito de correção e reflexão comparativa."
+        },
+        {
+          "id": "C3.002",
           "intensidade": "media",
-          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório"
+          "razao": "A oficina avalia se os argumentos apresentados sustentam a tese, especialmente na comparação entre redações do início e do fim do curso."
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "A produção sob condições de prova real exige uso variado de conectivos, critério observado na avaliação e devolutiva."
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "alta",
+          "razao": "A proposta de intervenção deve conter todos os 5 elementos (agente, ação, meio, finalidade, detalhamento), critério explícito de avaliação final."
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "media",
+          "razao": "A adequação ao registro formal é cobrada na redação final e destacada na devolutiva comparativa."
         }
       ],
       "competencias_principais": [
-        "C2"
+        "C2",
+        "C3",
+        "C5"
       ],
-      "tipo_atividade": "diagnostico",
-      "modelo_usado": "heuristico-v1",
-      "latencia_ms": 0,
-      "custo_estimado_usd": 0.0,
-      "input_tokens": 0,
-      "output_tokens": 0,
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 5096,
+      "custo_estimado_usd": 0.011416,
+      "input_tokens": 4344,
+      "output_tokens": 341,
       "mapeamento_falhou": false
     }
   ]
