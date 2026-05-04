@@ -2961,9 +2961,21 @@ class DiagnosticoDescritorEnriquecido(BaseModel):
     categoria_inep: str  # "Desvios gramaticais"
 
 
+class DiagnosticoHabilidadeBncc(BaseModel):
+    """Habilidade BNCC EM-LP trabalhada por um descritor (Fase 5A.2).
+    Vem do mapeamento_descritores_bncc.json (rascunho LLM em revisão)."""
+    codigo: str          # ex.: "EM13LP02"
+    intensidade: str     # "alta" | "media" | "baixa"
+    razao: str           # justificativa do mapeamento (LLM)
+    descricao: Optional[str] = None
+    """Descrição oficial da habilidade BNCC, do catálogo de
+    referência (`bncc_referencia.BNCC_LP_EM`). Frontend usa pra
+    tooltip quando professor passa mouse no código."""
+
+
 class DiagnosticoLacunaEnriquecida(BaseModel):
-    """Card de lacuna prioritária com 3 seções: o que é + evidência
-    + como trabalhar (fix Fase 3 #3 — antes só evidência)."""
+    """Card de lacuna prioritária com 4 seções: o que é + evidência
+    + como trabalhar + habilidades BNCC (fix Fase 3 #3 + Fase 5A.2)."""
     id: str
     nome: str           # do YAML
     competencia: str
@@ -2976,6 +2988,9 @@ class DiagnosticoLacunaEnriquecida(BaseModel):
     sugestao_pedagogica: str
     """1-2 frases acionáveis: como o professor trabalha essa lacuna
     com o aluno. Vem do dicionário `sugestoes_pedagogicas.py`."""
+    habilidades_bncc: List[DiagnosticoHabilidadeBncc] = []
+    """Habilidades BNCC EM-LP trabalhadas pela lacuna (Fase 5A.2,
+    rascunho em revisão). Vazia se pipeline ainda não rodou."""
 
 
 class DiagnosticoOficinaLivroSugerida(BaseModel):
@@ -3204,6 +3219,12 @@ def _build_diagnostico_recente(
     from redato_backend.diagnostico.sugestoes_pedagogicas import (
         get_definicao_curta, get_sugestao_pedagogica,
     )
+    from redato_backend.diagnostico.bncc import (
+        get_habilidades_bncc_por_descritor,
+    )
+    from redato_backend.diagnostico.bncc_referencia import (
+        get_bncc_descricao,
+    )
 
     # Query: último envio do aluno (qualquer atividade da turma) com
     # diagnostico populado. Filtra por turma_id via JOIN com Atividade
@@ -3293,6 +3314,20 @@ def _build_diagnostico_recente(
         definicao_curta = get_definicao_curta(
             did, yaml_d.definicao if yaml_d else "",
         )
+        # Fase 5A.2: enriquece com habilidades BNCC EM-LP. Vazia
+        # quando o pipeline LLM ainda não foi rodado pelo Daniel
+        # (placeholder JSON com status='nao_gerado_ainda').
+        habs_bncc_raw = get_habilidades_bncc_por_descritor(did)
+        habilidades_bncc = [
+            DiagnosticoHabilidadeBncc(
+                codigo=h["codigo"],
+                intensidade=h.get("intensidade", "media"),
+                razao=h.get("razao", ""),
+                descricao=get_bncc_descricao(h["codigo"]),
+            )
+            for h in habs_bncc_raw
+            if isinstance(h, dict) and h.get("codigo")
+        ]
         lacunas_enriquecidas.append(DiagnosticoLacunaEnriquecida(
             id=did,
             nome=d.nome,
@@ -3302,6 +3337,7 @@ def _build_diagnostico_recente(
             evidencias=d.evidencias,
             definicao_curta=definicao_curta,
             sugestao_pedagogica=get_sugestao_pedagogica(did),
+            habilidades_bncc=habilidades_bncc,
         ))
 
     # Sugestões de oficinas filtradas pela série da turma

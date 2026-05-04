@@ -72,14 +72,35 @@ e oficinas, mapeia cada uma → descritores que trabalha.
 Substitui o atual mapping competência→oficina (Fase 3) por
 descritor→oficina, ganhando granularidade.
 
-### ⏳ Fase 5A.2 — Mapeamento descritores → BNCC
+### 🟡 Fase 5A.2 — Mapeamento descritores → BNCC (pipeline pronto, geração pendente)
 
-Cruza os 40 descritores com habilidades BNCC do Ensino Médio
-(EM13LP01, EM13LP02, ...).
+Cruza os 40 descritores com 54 habilidades BNCC EM-LP
+(EM13LP01-EM13LP54).
 
-- Output: `docs/redato/v3/diagnostico/descritores_bncc.json`
-- Uso: justificativa pedagógica pra coordenação/escola
-- **Estimativa**: 30min Claude Code
+**Implementado** (2026-05-04):
+- Catálogo `bncc_referencia.py` com 54 habilidades organizadas
+  por eixo (Todas as práticas / Leitura / Produção de textos /
+  Análise linguística-semiótica / Oralidade)
+- `mapeador_bncc.py` — pipeline LLM com tool_use forçado (enum
+  schema-level com 54 códigos + validação dupla)
+- Script standalone `scripts/gerar_mapeamento_bncc.py`
+- Helper runtime `bncc.py` com 2 lookups: descritor → habilidades
+  e habilidade → descritores (inversa)
+- Schema endpoint `/perfil` ganha `habilidades_bncc` em cada
+  lacuna_enriquecida
+- Frontend `MapaCognitivo.tsx` ganha 4ª seção "📋 BNCC" compacta
+  (códigos + intensidade + tooltip com descrição oficial)
+
+**Pendente**:
+- Daniel rodar pipeline localmente com `OPENAI_API_KEY`
+  (~$0.40, ~3min)
+- Bundle JSON pro Docker (`cp` manual)
+- Commit + push pra ativar a 4ª seção em prod
+
+JSON committado como **placeholder** com `status="nao_gerado_ainda"`.
+UI degrada gracioso (4ª seção não aparece) até ser preenchido.
+
+Detalhes em [`HOWTO_mapeamento_bncc.md`](HOWTO_mapeamento_bncc.md).
 
 ### ⏳ Fase 5B — Geração dinâmica de exercícios
 

@@ -364,6 +364,43 @@ function LacunaCardEnriquecido({
         </p>
         <p className="text-sm leading-relaxed">{lac.sugestao_pedagogica}</p>
       </section>
+
+      {/* Seção 4 (Fase 5A.2): habilidades BNCC EM-LP. Renderiza só
+          quando pipeline foi rodado (lista não-vazia). UI compacta
+          em 1 linha, com tooltip pra descrição oficial via title. */}
+      {lac.habilidades_bncc && lac.habilidades_bncc.length > 0 && (
+        <section className="text-xs">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-ink-400 mb-1">
+            📋 BNCC
+            <span
+              className="ml-1.5 text-[9px] text-amber-700"
+              title="Sugestão automática em revisão pedagógica"
+            >
+              (em revisão)
+            </span>
+          </p>
+          <p className="leading-relaxed">
+            {lac.habilidades_bncc.map((h, i) => (
+              <span key={h.codigo}>
+                {i > 0 && ", "}
+                <span
+                  className="font-mono text-ink"
+                  title={
+                    h.descricao
+                      ? `${h.descricao}\n\nIntensidade: ${h.intensidade}\n${h.razao}`
+                      : `Intensidade: ${h.intensidade}\n${h.razao}`
+                  }
+                >
+                  {h.codigo}
+                </span>
+                <span className="text-ink-400 ml-0.5">
+                  ({h.intensidade})
+                </span>
+              </span>
+            ))}
+          </p>
+        </section>
+      )}
     </Card>
   );
 }

@@ -424,9 +424,20 @@ export interface DiagnosticoDescritor {
   categoria_inep: string;     // "Desvios gramaticais"
 }
 
-/** Card de lacuna prioritária com 3 seções (fix Fase 3 #3): o que
- *  é + evidência + como trabalhar. Pré-resolvido no backend pra
- *  frontend só renderizar. */
+/** Habilidade BNCC EM-LP trabalhada pelo descritor (Fase 5A.2).
+ *  Vem do mapeamento_descritores_bncc.json (rascunho LLM em revisão). */
+export interface DiagnosticoHabilidadeBncc {
+  codigo: string;        // ex.: "EM13LP02"
+  intensidade: string;   // "alta" | "media" | "baixa"
+  razao: string;
+  /** Descrição oficial da habilidade BNCC (catálogo de referência).
+   *  null quando código não está no catálogo conhecido. UI usa pra
+   *  tooltip quando professor passa o mouse no código. */
+  descricao: string | null;
+}
+
+/** Card de lacuna prioritária com 4 seções (Fase 3 + Fase 5A.2):
+ *  o que é + evidência + como trabalhar + habilidades BNCC. */
 export interface DiagnosticoLacunaEnriquecida {
   id: string;
   nome: string;
@@ -438,6 +449,9 @@ export interface DiagnosticoLacunaEnriquecida {
   definicao_curta: string;
   /** 1-2 frases acionáveis: como o professor trabalha a lacuna. */
   sugestao_pedagogica: string;
+  /** Habilidades BNCC EM-LP trabalhadas (Fase 5A.2). Vazia se
+   *  pipeline ainda não foi rodado. */
+  habilidades_bncc: DiagnosticoHabilidadeBncc[];
 }
 
 export interface DiagnosticoMeta {

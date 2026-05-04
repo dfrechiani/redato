@@ -74,6 +74,18 @@ from redato_backend.diagnostico.narrativa import (
     CardAcao,
     gerar_narrativa_turma,
 )
+from redato_backend.diagnostico.bncc_referencia import (
+    BNCC_LP_EM,
+    HabilidadeBNCC,
+    get_bncc_descricao,
+    is_codigo_valido,
+)
+from redato_backend.diagnostico.bncc import (
+    carregar_mapeamento as carregar_mapeamento_bncc,
+    get_habilidades_bncc_por_descritor,
+    get_descritores_por_habilidade_bncc,
+    status_mapeamento as status_mapeamento_bncc,
+)
 
 __all__ = [
     # Fase 1 — descritores
@@ -113,4 +125,13 @@ __all__ = [
     "NarrativaTurma",
     "CardAcao",
     "gerar_narrativa_turma",
+    # Fase 5A.2 — mapeamento descritores → BNCC
+    "BNCC_LP_EM",
+    "HabilidadeBNCC",
+    "get_bncc_descricao",
+    "is_codigo_valido",
+    "carregar_mapeamento_bncc",
+    "get_habilidades_bncc_por_descritor",
+    "get_descritores_por_habilidade_bncc",
+    "status_mapeamento_bncc",
 ]

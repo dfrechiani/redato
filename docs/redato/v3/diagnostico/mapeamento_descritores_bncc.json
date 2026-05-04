@@ -1,0 +1,17 @@
+{
+  "versao": "1.0",
+  "gerado_em": null,
+  "modelo_usado": null,
+  "status": "nao_gerado_ainda",
+  "descricao": "Placeholder do mapeamento descritores → BNCC EM-LP. Pipeline LLM (mapeador_bncc.py) está pronto mas precisa ser rodado pelo Daniel localmente com OPENAI_API_KEY. Comando: cd backend/notamil-backend && OPENAI_API_KEY=sk-... python -m redato_backend.diagnostico.scripts.gerar_mapeamento_bncc. Custo estimado ~$0.40, latência ~3min. Após rodar, copiar este arquivo pra redato_backend/diagnostico/mapeamento_descritores_bncc.json (bundle pro Docker) e committar com mensagem 'chore(diagnostico): gera mapeamento BNCC via LLM'.",
+  "estatisticas": {
+    "total_descritores": 0,
+    "mapeamentos_ok": 0,
+    "mapeamentos_falhos": 0,
+    "total_atribuicoes": 0,
+    "habilidades_unicas": 0,
+    "custo_total_usd": 0,
+    "latencia_total_min": 0
+  },
+  "mapeamentos": []
+}
