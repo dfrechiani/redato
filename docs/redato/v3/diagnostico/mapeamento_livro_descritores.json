@@ -1,0 +1,1314 @@
+{
+  "versao": "1.0",
+  "gerado_em": "2026-05-04T11:51:20.620818+00:00",
+  "gerador": "heuristico",
+  "modelo_usado": "heuristico-v1",
+  "status": "em_revisao",
+  "descricao": "Mapeamento BASELINE gerado por heurística (keyword match), SEM LLM. Cobre todas as oficinas mas perde nuance. Re-rodar com OPENAI_API_KEY pra upgradear pra LLM. Status 'em_revisao' até Daniel revisar e/ou substituir pelo output LLM.",
+  "estatisticas": {
+    "total_oficinas": 42,
+    "mapeamentos_ok": 42,
+    "mapeamentos_falhos": 0,
+    "total_descritores_atribuidos": 94,
+    "custo_total_usd": 0.0,
+    "latencia_total_min": 0.0,
+    "elapsed_global_min": 0.01
+  },
+  "oficinas": [
+    {
+      "codigo": "RJ1·OF01·MF",
+      "serie": "1S",
+      "oficina_numero": 1,
+      "titulo": "DESCRIÇÃO MISTERIOSA",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C5.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Finalidade' — termos: para que"
+        },
+        {
+          "id": "C1.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: pontuação"
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+        },
+        {
+          "id": "C4.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Clareza da referência (sem ambiguidade)' — termos: Ambiguidade"
+        }
+      ],
+      "competencias_principais": [
+        "C5",
+        "C1",
+        "C2"
+      ],
+      "tipo_atividade": "pratica",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF02·MF",
+      "serie": "1S",
+      "oficina_numero": 2,
+      "titulo": "PALAVRA CERTA",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: pontuação"
+        }
+      ],
+      "competencias_principais": [
+        "C1"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF03·MF",
+      "serie": "1S",
+      "oficina_numero": 3,
+      "titulo": "CAMPO MINADO",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: mecanismo"
+        }
+      ],
+      "competencias_principais": [
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF04·MF",
+      "serie": "1S",
+      "oficina_numero": 4,
+      "titulo": "COMBINANDO PALAVRAS",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.001",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Estrutura sintática' — termos: sujeito, Período, estrutura sintática"
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha de registro' — termos: Registro formal"
+        },
+        {
+          "id": "C4.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Conectivos de transição estrutural' — termos: Ademais"
+        },
+        {
+          "id": "C5.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Finalidade' — termos: a fim de"
+        }
+      ],
+      "competencias_principais": [
+        "C1",
+        "C4",
+        "C5"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF05·MF",
+      "serie": "1S",
+      "oficina_numero": 5,
+      "titulo": "PERITO TEXTUAL",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Variedade de conectivos' — termos: Além disso"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C4"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF06·MF",
+      "serie": "1S",
+      "oficina_numero": 6,
+      "titulo": "PERFIL BIOGRÁFICO",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório"
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha vocabular' — termos: vocabulário, palavra precisa"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C1"
+      ],
+      "tipo_atividade": "pratica",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF07·MF",
+      "serie": "1S",
+      "oficina_numero": 7,
+      "titulo": "HISTÓRIA DE VIDA",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.004",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 32 matches em keywords associados a 'Pontuação' — termos: vírgula, Pontuação, dois-pontos"
+        }
+      ],
+      "competencias_principais": [
+        "C1"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF08·MF",
+      "serie": "1S",
+      "oficina_numero": 8,
+      "titulo": "HISTÓRIA MAL CONTADA",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Variedade de conectivos' — termos: Variedade de conectivos, conectivo por outro da mesma categoria e verifica se o sentido se mantém. Depois: troca um conectivo de categoria"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C4"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF09·MF",
+      "serie": "1S",
+      "oficina_numero": 9,
+      "titulo": "CURRÍCULO PERFEITO",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+        },
+        {
+          "id": "C1.007",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha de registro' — termos: registro formal, informal"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C1"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF10·MF",
+      "serie": "1S",
+      "oficina_numero": 10,
+      "titulo": "JOGO DISSERTATIVO",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha vocabular' — termos: vocabulário"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C1"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF11·MF",
+      "serie": "1S",
+      "oficina_numero": 11,
+      "titulo": "CONECTIVOS ARGUMENTATIVOS",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C4.001",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Variedade de conectivos' — termos: Variedade de conectivos, além disso"
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: causal explica causa ou consequência; o temporal ordena no tempo. Trocar um pelo outro não muda só o registro: muda o argumento. A relação lógica que cada tipo cria ADVERSATIVO porém · contudo · mas A ←→ B opostos ADITIVO além disso · também · e A + B somam CAUSAL porque · portanto · logo A → B causa/consequência, mecanismo"
+        },
+        {
+          "id": "C4.002",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Adequação semântica do conectivo' — termos: relação lógica"
+        }
+      ],
+      "competencias_principais": [
+        "C4",
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF12·MF",
+      "serie": "1S",
+      "oficina_numero": 12,
+      "titulo": "LEILÃO DE SOLUÇÕES",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Escolha vocabular' — termos: Vocabulário"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C1"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF13·MF",
+      "serie": "1S",
+      "oficina_numero": 13,
+      "titulo": "CONSTRUINDO ARGUMENTOS",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 9 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, citação, dado"
+        },
+        {
+          "id": "C3.003",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Tópico frasal claro em cada desenvolvimento' — termos: Tópico Frasal"
+        },
+        {
+          "id": "C1.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pontuação' — termos: pontuação"
+        },
+        {
+          "id": "C1.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Concordância (verbal e nominal)' — termos: â"
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+        }
+      ],
+      "competencias_principais": [
+        "C3",
+        "C1",
+        "C2"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ1·OF14·MF",
+      "serie": "1S",
+      "oficina_numero": 14,
+      "titulo": "JOGO DE REDAÇÃO",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 12 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, autor, dado"
+        },
+        {
+          "id": "C2.003",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Estrutura dissertativo-argumentativa' — termos: ã"
+        },
+        {
+          "id": "C1.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pontuação' — termos: Pontuação"
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C1",
+        "C3"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF01·MF",
+      "serie": "2S",
+      "oficina_numero": 1,
+      "titulo": "Oficina 1",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C3"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF02·MF",
+      "serie": "2S",
+      "oficina_numero": 2,
+      "titulo": "Conexões Inesperadas",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 6 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF03·MF",
+      "serie": "2S",
+      "oficina_numero": 3,
+      "titulo": "Fábrica de Notícias",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor, dado"
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: mecanismo"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF04·MF",
+      "serie": "2S",
+      "oficina_numero": 4,
+      "titulo": "Fontes e Citações",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C3.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Autoria' — termos: autoria"
+        }
+      ],
+      "competencias_principais": [
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF05·MF",
+      "serie": "2S",
+      "oficina_numero": 5,
+      "titulo": "Fato ou Opinião?",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [],
+      "competencias_principais": [],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF06·MF",
+      "serie": "2S",
+      "oficina_numero": 6,
+      "titulo": "Da Notícia ao Artigo",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 14 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese, posicionamento, ponto de vista"
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: autor"
+        },
+        {
+          "id": "C2.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Predomínio do tipo dissertativo' — termos: impessoalidade"
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Sustentação da tese pelos argumentos' — termos: argumentos e propõe caminhos. Nesta oficina, cada aluno assumirá a voz de um dos personagens do projeto e escreverá um artigo de opinião coerente com o perfil mapeado na Wiki. 🎯 Objetivo da oficina Diferenciar notícia de artigo de opinião, dominar a estrutura do gênero argumentativo (tese, argumentos, conclusão) e produzir um artigo de opinião assumindo a perspectiva de um personagem, mantendo coerência com o perfil da Wiki. 🟢 Orientação ao professor Retome a Wiki da Oficina 5: \"Vocês mapearam a voz de 6 personagens. Hoje, vocês vão assumir uma dessas vozes e escrever um artigo de opinião. A turma vai tentar adivinhar quem vocês são.\" Certifique-se de que todos os alunos tenham a Wiki preenchida antes de iniciar. ══════════ 2 · PALAVRAS DO DIA ══════════ Seção 2 Palavras do Dia Palavra Significado Exemplo de uso Artigo de opinião Gênero textual argumentativo em que o autor defende publicamente um ponto de vista, sustentando-o com argumentos e evidências. Diferencia-se da notícia por ser assinado e assumir posicionamento. \"O artigo de opinião publicado no jornal defendia a ampliação do transporte público como solução para a mobilidade urbana.\" Tese Proposição central que o autor defende ao longo do texto. Funciona como o eixo organizador da argumentação: todos os argumentos devem sustentá-la. \"A tese"
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: mecanismo"
+        }
+      ],
+      "competencias_principais": [
+        "C3",
+        "C2"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF07·MF",
+      "serie": "2S",
+      "oficina_numero": 7,
+      "titulo": "Tese e Argumentos",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese"
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Sustentação da tese pelos argumentos' — termos: Argumentos # Tese"
+        }
+      ],
+      "competencias_principais": [
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF08·MF",
+      "serie": "2S",
+      "oficina_numero": 8,
+      "titulo": "Análise de Temas",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Existência e clareza da tese' — termos: Tese"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF09·MF",
+      "serie": "2S",
+      "oficina_numero": 9,
+      "titulo": "Expedição Argumentativa",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: Pontuação"
+        },
+        {
+          "id": "C3.002",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Sustentação da tese pelos argumentos' — termos: argumento: jogo cooperativo de exploração e construção COM JOGO FICHA TÉCNICA Ficha Técnica Série 2ª Série do Ensino Médio Bimestre 2º Bimestre Duração 2 aulas (90 minutos) — aprox. 30 min de jogo Tipo Jogo Cooperativo + Síntese"
+        }
+      ],
+      "competencias_principais": [
+        "C1",
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF10·MF",
+      "serie": "2S",
+      "oficina_numero": 10,
+      "titulo": "Leilão de Temas",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Pontuação' — termos: pontuação"
+        }
+      ],
+      "competencias_principais": [
+        "C1"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF11·MF",
+      "serie": "2S",
+      "oficina_numero": 11,
+      "titulo": "Pesquisa e Repertório",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 14 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, Citação, Dado"
+        },
+        {
+          "id": "C3.008",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 10 matches em keywords associados a 'Autoria' — termos: autoria"
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertório sociocultural COM JOGO FICHA TÉCNICA Ficha Técnica Série 2ª Série do Ensino Médio Bimestre 2º Bimestre Duração 2 aulas (90 minutos) + atividade para casa Tipo Pesquisa Orientada + Produção de Gráfico Posição Oficina 11 de 15 — Projeto Integrador, Etapa 4 Materiais Livro do aluno, acesso à internet ou materiais impressos, cartas PALAVRA-CHAVE restantes da Oficina 10 Retoma Oficina 10: Tema arrematado no Leilão Prepara Oficina 12: Proposta de Intervenção 📋 BNCC — Habilidades Habilidades mobilizadas EM13LP11 EM13LP29 EM13LP39 EM13LP11 Fazer curadoria de informações, selecionando fontes confiáveis. EM13LP29 Produzir textos argumentativos que sustentam posição sobre temas de interesse. EM13LP39 Analisar textos de gêneros jornalísticos, considerando a combinação de linguagens. Competências ENEM C2 C3 📋 Resumo Os grupos pesquisam fontes confiáveis sobre o tema"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF12·MF",
+      "serie": "2S",
+      "oficina_numero": 12,
+      "titulo": "Leilão de Soluções",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 8 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, autor, dado"
+        },
+        {
+          "id": "C5.007",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Respeito aos direitos humanos' — termos: direitos humanos"
+        },
+        {
+          "id": "C5.003",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Meio/modo' — termos: por meio de"
+        },
+        {
+          "id": "C5.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Finalidade' — termos: a fim de"
+        }
+      ],
+      "competencias_principais": [
+        "C5",
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ2·OF13·MF",
+      "serie": "2S",
+      "oficina_numero": 13,
+      "titulo": "Jogo de Redação Completo",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 11 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, autor, dado"
+        },
+        {
+          "id": "C3.001",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Existência e clareza da tese' — termos: tese"
+        },
+        {
+          "id": "C2.003",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Estrutura dissertativo-argumentativa' — termos: ã"
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertório e treinaram propostas de intervenção. Cada uma dessas habilidades era uma peça isolada. Hoje, todas as peças se juntam: o objetivo é montar uma dissertação completa, do primeiro ao último parágrafo, usando o sistema"
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Completude (5 elementos presentes)' — termos: Agente + Ação + Meio"
+        }
+      ],
+      "competencias_principais": [
+        "C2",
+        "C3",
+        "C5"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF01·MF",
+      "serie": "3S",
+      "oficina_numero": 1,
+      "titulo": "Oficina 1",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertório prévio da turma. Imprima ou projete a proposta escolhida. A Opção A usa o tema do ENEM 2024; a Opção B traz tema alternativo igualmente adequado para o diagnóstico. 🟢 Dica pedagógica — produção Mantenha silêncio e ambiente de prova. Se algum aluno terminar muito antes, pode revisar em silêncio. Não responda dúvidas sobre o tema"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF02·MF",
+      "serie": "3S",
+      "oficina_numero": 2,
+      "titulo": "Conectivos + Coesão",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 7 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, dado"
+        },
+        {
+          "id": "C4.001",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Variedade de conectivos' — termos: conectivo estabelece um tipo diferente de relação lógica. No jogo, essas relações ficam visíveis porque a história precisa fazer sentido. Na ficha (Lado B), você registrou quantas cartas de cada categoria, além disso"
+        },
+        {
+          "id": "C4.002",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Adequação semântica do conectivo' — termos: relação lógica"
+        },
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: causa ou consequência, mecanismo"
+        }
+      ],
+      "competencias_principais": [
+        "C4",
+        "C2",
+        "C3"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF03·MF",
+      "serie": "3S",
+      "oficina_numero": 3,
+      "titulo": "Dossiê: Repertório + Análise",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório, citação"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF04·MF",
+      "serie": "3S",
+      "oficina_numero": 4,
+      "titulo": "Dossiê: Tema + Problemática",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Profundidade do argumento' — termos: Causas, Sintomas, Consequências e Contextos organizados em árvore Retoma OF3: Seção 1 do Dossiê (definição, contexto, dados, afetados) Prepara OF5: Atores Envolvidos (quem causa, quem sofre, quem pode resolver) Competências ENEM C2 (compreensão do tema e repertório) · C3 (organização dos argumentos) 📋 BNCC — Habilidades Habilidades mobilizadas EM13LP01 EM13LP02 EM13LP04 EM13LP01 Relacionar o texto à organização discursiva e identificar posições refutadas ou sustentadas. EM13LP02 Estabelecer relações lógico-discursivas variadas em textos argumentativos. EM13LP04 Analisar logicamente os argumentos de um texto, identificando premissas e conclusões. Competências ENEM C1 C3 C4 C5 📦 Conceito central Esta oficina é a ponte entre entender o problema (OF3) e escrever a redação. Sem ela, o aluno escreve introduções desconectadas dos desenvolvimentos, confunde causas com consequências e repete informações sem progressão. A Árvore Argumentativa organiza todos os elementos do problema em uma estrutura que mapeia diretamente para a estrutura da redação ENEM: contexto → introdução, causas → desenvolvimentos, consequências → impacto, proposta → conclusão. Seção 1 Abertura A planta baixa da redação Na Oficina 3, seu grupo investigou um problema social e preencheu a Seção 1 do Dossiê (O QUÊ, ONDE, QUANTO, QUEM). Agora vem a pergunta mais importante: POR QUÊ esse problema existe? E o que acontece quando ele não é resolvido? Entender a diferença entre causa, sintoma, consequência"
+        }
+      ],
+      "competencias_principais": [
+        "C3"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF05·MF",
+      "serie": "3S",
+      "oficina_numero": 5,
+      "titulo": "Dossiê: Agentes + Proposta",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C3.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Profundidade do argumento' — termos: causas identificadas → quem ataca essas causas?) Prepara OF6: Avaliação Estratégica (atributos do problema + ficha Nemesis) Competência ENEM C5 (proposta de intervenção com agente definido) Seção do Dossiê Seção 3: Atores Envolvidos 📋 BNCC — Habilidades Habilidades mobilizadas EM13LP01 EM13LP02 EM13LP04 EM13LP25 EM13LP01 Relacionar o texto à organização discursiva e identificar posições sustentadas. EM13LP02 Estabelecer relações lógico-discursivas variadas em textos argumentativos. EM13LP04 Analisar logicamente os argumentos, identificando premissas e conclusões. EM13LP25 Participar de práticas de produção de textos em grupo, atuando de forma cooperativa. Competências ENEM C1 C3 C4 C5 📦 Conceito central O aluno já sabe O QUE causa o problema (OF4). Agora precisa descobrir QUEM está envolvido. Sem essa etapa, faz propostas de intervenção vagas (\"o governo deve resolver\"), não identifica quem tem PODER e DEVER de agir, e perde pontos na C5. Com o mapeamento dos atores e o debate, o aluno entenderá que cada problema tem múltiplos envolvidos e que escolher o AGENTE certo é a chave para uma proposta de intervenção nota 200. Seção 1 Abertura Quem são os atores do problema? Na Oficina 4, vocês organizaram as informações do tema em uma Árvore Argumentativa: descobriram O QUE causa o problema, o que é sintoma, o que é consequência"
+        }
+      ],
+      "competencias_principais": [
+        "C3"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF06·MF",
+      "serie": "3S",
+      "oficina_numero": 6,
+      "titulo": "Dossiê: Proposta Completa",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Dado, lei"
+        },
+        {
+          "id": "C5.003",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Meio/modo' — termos: por meio de"
+        },
+        {
+          "id": "C5.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Completude (5 elementos presentes)' — termos: AGENTE + AÇÃO + MEIO"
+        },
+        {
+          "id": "C5.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Finalidade' — termos: a fim de"
+        }
+      ],
+      "competencias_principais": [
+        "C5",
+        "C2"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF07·MF",
+      "serie": "3S",
+      "oficina_numero": 7,
+      "titulo": "Jogo do Corretor",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: dado"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "jogo",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF08·MF",
+      "serie": "3S",
+      "oficina_numero": 8,
+      "titulo": "Análise de Erros Comuns",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 4 matches em keywords associados a 'Concordância (verbal e nominal)' — termos: â"
+        },
+        {
+          "id": "C1.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Escolha vocabular' — termos: repetição"
+        },
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, citação"
+        },
+        {
+          "id": "C3.008",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Autoria' — termos: Senso comum"
+        },
+        {
+          "id": "C4.004",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Referenciação por pronomes e sinônimos' — termos: Referenciação"
+        }
+      ],
+      "competencias_principais": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF09·MF",
+      "serie": "3S",
+      "oficina_numero": 9,
+      "titulo": "Simulado 1",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, Lei"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF10·MF",
+      "serie": "3S",
+      "oficina_numero": 10,
+      "titulo": "Revisão Cooperativa",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF11·MF",
+      "serie": "3S",
+      "oficina_numero": 11,
+      "titulo": "Simulado 2 + IA",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF12·MF",
+      "serie": "3S",
+      "oficina_numero": 12,
+      "titulo": "Jogo de Redação Completo 1",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF13·MF",
+      "serie": "3S",
+      "oficina_numero": 13,
+      "titulo": "Jogo de Redação + Análise e Reescrita",
+      "tem_redato_avaliavel": false,
+      "descritores_trabalhados": [
+        {
+          "id": "C1.008",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 5 matches em keywords associados a 'Escolha vocabular' — termos: vocabulário"
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertórios e agentes específicos. Mas o desafio principal não é mais a mecânica do jogo (vocês já sabem jogar). O desafio é a transição : pegar o que o jogo produziu e fazer soar como se tivesse sido escrito por uma pessoa, em vez de montado com cartas. 🎯 Objetivo da oficina Jogar segunda partida do Jogo de Redação com maior fluência e estratégia, analisar criticamente o texto gerado usando IA, identificar lacunas de coesão, vocabulário e profundidade no esqueleto, e reescrever individualmente transformando a base cooperativa em texto autoral completo de 30 linhas. 🔄 O diferencial pedagógico O aluno percebe que o jogo dá a ESTRUTURA e os ARGUMENTOS , mas a ESCRITA DE QUALIDADE depende da capacidade individual de articular esses elementos com coesão, vocabulário e estilo. O jogo ensina a pensar. A escrita é com cada um. CICLO VISUAL 🎲 1. Jogar Grupo constrói esqueleto no tabuleiro → 🤖 2. Analisar IA diagnostica por competência → ✍️ 3. Reescrever Aluno transforma em texto autoral 🟢 Fala sugerida \"O que aprenderam na Oficina 12? O que fariam diferente? Hoje vocês jogam de novo — com tema"
+        }
+      ],
+      "competencias_principais": [
+        "C1",
+        "C2"
+      ],
+      "tipo_atividade": "avaliativa",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF14·MF",
+      "serie": "3S",
+      "oficina_numero": 14,
+      "titulo": "Simulado Final 1",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "alta",
+          "razao": "Heurística (NÃO-LLM): 8 matches em keywords associados a 'Presença de repertório sociocultural' — termos: repertório, Lei"
+        },
+        {
+          "id": "C2.006",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 2 matches em keywords associados a 'Pertinência do repertório ao tema' — termos: repertórios. Sem grupo para discutir. Sem IA para analisar depois. É só você, a proposta e o que aprendeu em 13 oficinas. Este é o primeiro dos dois simulados finais. O formato é o mais próximo possível do ENEM: tema inédito, textos motivadores, tempo limitado, produção individual, silêncio. A diferença é que aqui vocês ainda terão duas aulas (no ENEM será menos). Use bem esse tempo: leia com calma, planeje antes de escrever, revise antes de entregar. 🎯 Objetivo da oficina Produzir redação dissertativo-argumentativa individual em condições próximas ao ENEM, demonstrando autonomia na aplicação de estrutura, argumentação e proposta de intervenção. Gerenciar tempo de prova (leitura, planejamento, escrita, revisão). Aplicar checklist de revisão por competência. Evidenciar evolução em relação aos simulados anteriores (OF9, OF11). ⚡ O que muda em relação aos simulados anteriores Agora os alunos já passaram pelo Redação cooperativa e pela análise com IA. Devem demonstrar evolução em três frentes: estrutura (Intro + D1 + D2 + Conclusão automáticos), argumentação (repertório + análise, em vez de só afirmação) e proposta de intervenção (5 elementos completos). O Simulado 1 (OF9) testou a base. O Simulado 2 (OF11) introduziu IA. Este testa a autonomia . 🟢 Fala sugerida \"É simulado. Silêncio absoluto. Sem consulta. Vocês estão prontos. Usem tudo que aprenderam ao longo do ano. Leiam os textos com calma, planejem antes de escrever, revisem antes de entregar.\" ══════════ 2 · PALAVRAS DO DIA ══════════ Seção 2 Palavras do Dia Palavra Significado Exemplo de uso Simulado Exercício em condições similares ao ENEM: tempo limitado, tema"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    },
+    {
+      "codigo": "RJ3·OF15·MF",
+      "serie": "3S",
+      "oficina_numero": 15,
+      "titulo": "Simulado Final 2 + Fechamento",
+      "tem_redato_avaliavel": true,
+      "descritores_trabalhados": [
+        {
+          "id": "C2.005",
+          "intensidade": "media",
+          "razao": "Heurística (NÃO-LLM): 3 matches em keywords associados a 'Presença de repertório sociocultural' — termos: Repertório"
+        }
+      ],
+      "competencias_principais": [
+        "C2"
+      ],
+      "tipo_atividade": "diagnostico",
+      "modelo_usado": "heuristico-v1",
+      "latencia_ms": 0,
+      "custo_estimado_usd": 0.0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "mapeamento_falhou": false
+    }
+  ]
+}

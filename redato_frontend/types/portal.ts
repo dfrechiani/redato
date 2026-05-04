@@ -457,6 +457,30 @@ export interface DiagnosticoOficinaSugerida {
   razao: string;
 }
 
+/** Oficina do livro sugerida pra fechar lacuna específica
+ *  (Fase 5A.1 — rascunho LLM ou heurístico em revisão).
+ *  Diferente de DiagnosticoOficinaSugerida que vem do banco. */
+export interface DiagnosticoOficinaLivroSugerida {
+  codigo: string;
+  serie: string;
+  oficina_numero: number;
+  titulo: string;
+  /** "conceitual" | "pratica" | "avaliativa" | "jogo" | "diagnostico" | null */
+  tipo_atividade: string | null;
+  /** True se a oficina produz redação avaliável pelo bot. */
+  tem_redato_avaliavel: boolean;
+  /** "alta" | "media" | "baixa" — quão fortemente a oficina
+   *  trabalha o descritor. */
+  intensidade: string;
+  /** Justificativa do mapeamento (LLM ou regex match heurístico). */
+  razao: string;
+  /** ID do descritor que essa oficina ajuda a fechar. */
+  descritor_id: string;
+  competencias_principais: string[];
+  /** "em_revisao" | "revisado". UI mostra aviso quando "em_revisao". */
+  status_revisao: string;
+}
+
 export interface DiagnosticoVersaoProfessor {
   /** 40 entries — uma por descritor do YAML, enriquecidas com
    *  nome+competencia+categoria_inep pro heatmap mostrar nome legível. */
@@ -469,7 +493,15 @@ export interface DiagnosticoVersaoProfessor {
   lacunas_enriquecidas: DiagnosticoLacunaEnriquecida[];
   resumo_qualitativo: string;
   recomendacao_breve: string;
+  /** Sugestões da Fase 3 — vêm do BANCO (~23 oficinas Redato-avaliáveis). */
   oficinas_sugeridas: DiagnosticoOficinaSugerida[];
+  /** Sugestões da Fase 5A.1 — vêm do JSON do livro (~42 oficinas
+   *  pedagógicas, incluindo conceituais e jogos). Pode estar vazia
+   *  se o JSON ainda não foi gerado. */
+  oficinas_livro_sugeridas: DiagnosticoOficinaLivroSugerida[];
+  /** "em_revisao" | "revisado" | null. Quando "em_revisao", UI
+   *  mostra aviso "sugestão automática" nos cards de oficinas do livro. */
+  mapeamento_livros_status: string | null;
 }
 
 export interface DiagnosticoVersaoAluno {

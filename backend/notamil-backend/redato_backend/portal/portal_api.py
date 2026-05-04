@@ -2920,6 +2920,33 @@ class DiagnosticoLacunaEnriquecida(BaseModel):
     com o aluno. Vem do dicionário `sugestoes_pedagogicas.py`."""
 
 
+class DiagnosticoOficinaLivroSugerida(BaseModel):
+    """Oficina do livro sugerida pra fechar lacuna específica
+    (Fase 5A.1). Vem do mapeamento_livro_descritores.json — rascunho
+    LLM ainda em revisão pedagógica.
+
+    Diferente de DiagnosticoOficinaSugerida (Fase 3) que vem do banco
+    e cobre só oficinas avaliáveis pelo Redato. Esta cobre TODAS as
+    oficinas pedagógicas do livro (~42 oficinas), incluindo
+    conceituais, jogos, diagnósticos.
+    """
+    codigo: str
+    serie: str
+    oficina_numero: int
+    titulo: str
+    tipo_atividade: Optional[str]
+    """'conceitual' | 'pratica' | 'avaliativa' | 'jogo' | 'diagnostico' | None."""
+    tem_redato_avaliavel: bool
+    """True se a oficina produz redação avaliável pelo bot."""
+    intensidade: str       # 'alta' | 'media' | 'baixa'
+    razao: str             # justificativa do mapeamento (vinda do LLM)
+    descritor_id: str      # qual lacuna ela ajuda a resolver
+    competencias_principais: List[str]
+    status_revisao: str
+    """'em_revisao' | 'revisado'. UI mostra aviso 'sugestão automática
+    em revisão' quando status='em_revisao'."""
+
+
 class DiagnosticoVersaoProfessor(BaseModel):
     """Payload completo do diagnóstico pro professor — heatmap +
     lacunas + resumo + sugestões."""
@@ -2936,6 +2963,14 @@ class DiagnosticoVersaoProfessor(BaseModel):
     resumo_qualitativo: str
     recomendacao_breve: str
     oficinas_sugeridas: List[DiagnosticoOficinaSugerida]
+    """Sugestão Fase 3 — vem do BANCO (~23 oficinas avaliáveis)."""
+    oficinas_livro_sugeridas: List[DiagnosticoOficinaLivroSugerida] = []
+    """Sugestão Fase 5A.1 — vem do JSON do livro (~42 oficinas
+    pedagógicas, incluindo conceituais e jogos). Pode estar vazia
+    se o JSON ainda não foi gerado pelo script de batch."""
+    mapeamento_livros_status: Optional[str] = None
+    """'em_revisao' | 'revisado' | None. Quando 'em_revisao', UI
+    mostra aviso 'sugestão automática' nos cards de oficinas_livro_sugeridas."""
 
 
 class DiagnosticoVersaoAluno(BaseModel):
@@ -3218,6 +3253,23 @@ def _build_diagnostico_recente(
         db_session=session,
     )
 
+    # Fase 5A.1: sugestões DO LIVRO (rascunho LLM, em revisão).
+    # Diferente de `oficinas_sugeridas` (vem do banco, só Redato-
+    # avaliáveis), essas vêm do mapeamento_livro_descritores.json
+    # e cobrem TODAS as oficinas pedagógicas do livro. Pode estar
+    # vazia se o script de batch ainda não rodou.
+    from redato_backend.diagnostico.oficinas_livro import (
+        sugerir_oficinas_livro,
+        sugestoes_to_dicts as sugestoes_livro_dicts,
+        status_mapeamento,
+    )
+    oficinas_livro_obj = sugerir_oficinas_livro(
+        lacunas_prioritarias=list(lacunas),
+        serie_aluno=turma.serie,
+    )
+    map_status = status_mapeamento()
+    map_status_str = map_status.get("status") if map_status.get("disponivel") else None
+
     professor_payload = DiagnosticoVersaoProfessor(
         descritores=descritores_enriquecidos,
         lacunas_prioritarias=list(lacunas),
@@ -3227,6 +3279,11 @@ def _build_diagnostico_recente(
         oficinas_sugeridas=[
             DiagnosticoOficinaSugerida(**s) for s in sugestoes_to_dicts(sugestoes)
         ],
+        oficinas_livro_sugeridas=[
+            DiagnosticoOficinaLivroSugerida(**s)
+            for s in sugestoes_livro_dicts(oficinas_livro_obj)
+        ],
+        mapeamento_livros_status=map_status_str,
     )
 
     # Versão aluno — simplificada (3-5 metas)

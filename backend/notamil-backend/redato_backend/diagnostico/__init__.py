@@ -62,6 +62,13 @@ from redato_backend.diagnostico.agregacao import (
     THRESHOLD_COBERTURA_AVISO,
     MAX_TOP_LACUNAS,
 )
+from redato_backend.diagnostico.oficinas_livro import (
+    OficinaLivroSugerida,
+    sugerir_oficinas_livro,
+    sugestoes_to_dicts as sugestoes_livro_to_dicts,
+    status_mapeamento as status_mapeamento_livros,
+    carregar_mapeamento,
+)
 
 __all__ = [
     # Fase 1 — descritores
@@ -91,4 +98,10 @@ __all__ = [
     "THRESHOLD_HEATMAP_VERMELHO",
     "THRESHOLD_COBERTURA_AVISO",
     "MAX_TOP_LACUNAS",
+    # Fase 5A.1 — mapeamento livro → descritores (rascunho LLM)
+    "OficinaLivroSugerida",
+    "sugerir_oficinas_livro",
+    "sugestoes_livro_to_dicts",
+    "status_mapeamento_livros",
+    "carregar_mapeamento",
 ]

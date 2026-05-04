@@ -30,6 +30,7 @@ import type {
   DiagnosticoConfianca,
   DiagnosticoDescritor,
   DiagnosticoLacunaEnriquecida,
+  DiagnosticoOficinaLivroSugerida,
   DiagnosticoRecente,
   DiagnosticoStatus,
 } from "@/types/portal";
@@ -454,15 +455,16 @@ export function MapaCognitivo({ turmaId, diagnostico }: Props) {
         </Card>
       </div>
 
-      {/* Sub-bloco 4 — Oficinas sugeridas */}
+      {/* Sub-bloco 4 — Atividades sugeridas (banco) */}
       {professor.oficinas_sugeridas.length > 0 && (
         <div>
           <h3 className="font-display text-base mb-2">
-            Oficinas sugeridas
+            <span aria-label="Avaliáveis pelo Redato" title="Avaliáveis pelo Redato">✅</span>{" "}
+            Atividades no Redato
           </h3>
           <p className="text-xs text-ink-400 mb-3">
-            Atividades da série do aluno que trabalham as competências em
-            lacuna. Clique em &ldquo;Criar atividade&rdquo; pra abrir o
+            Missões já cadastradas no Redato (aluno envia foto via WhatsApp,
+            bot corrige). Clique em &ldquo;Criar atividade&rdquo; pra abrir o
             modal de ativação na turma com a missão pré-selecionada.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -492,6 +494,98 @@ export function MapaCognitivo({ turmaId, diagnostico }: Props) {
           </div>
         </div>
       )}
+
+      {/* Sub-bloco 5 — Oficinas do livro (Fase 5A.1, em revisão) */}
+      <OficinasLivroBlock
+        oficinas={professor.oficinas_livro_sugeridas}
+        statusRevisao={professor.mapeamento_livros_status}
+      />
     </section>
+  );
+}
+
+const TIPO_LABEL: Record<string, string> = {
+  conceitual: "📚 Conceitual",
+  pratica: "✏️ Prática",
+  avaliativa: "🎯 Avaliativa",
+  jogo: "🎲 Jogo",
+  diagnostico: "🩺 Diagnóstico",
+};
+
+const INTENSIDADE_ESTRELAS: Record<string, string> = {
+  alta: "★★★",
+  media: "★★",
+  baixa: "★",
+};
+
+function OficinasLivroBlock({
+  oficinas,
+  statusRevisao,
+}: {
+  oficinas: DiagnosticoOficinaLivroSugerida[];
+  statusRevisao: string | null;
+}) {
+  if (!oficinas || oficinas.length === 0) {
+    return null;
+  }
+  const showAviso = statusRevisao === "em_revisao";
+
+  return (
+    <div>
+      <h3 className="font-display text-base mb-2">
+        <span aria-label="Oficinas do livro" title="Oficinas do livro">📖</span>{" "}
+        Oficinas no livro
+      </h3>
+      <p className="text-xs text-ink-400 mb-2">
+        Oficinas do livro do professor que trabalham as competências em
+        lacuna — incluindo atividades conceituais, jogos e exercícios
+        não avaliados pelo Redato. Use no planejamento da próxima aula.
+      </p>
+      {showAviso && (
+        <div className="mb-3 inline-flex items-center gap-2 text-[11px] bg-amber-50 border border-amber-200 rounded px-2 py-1 text-amber-900">
+          <span aria-hidden="true">⚠️</span>
+          <span>
+            Sugestões automáticas em revisão pedagógica — confirme antes
+            de aplicar
+          </span>
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {oficinas.map((o) => {
+          const tipoLabel = o.tipo_atividade
+            ? TIPO_LABEL[o.tipo_atividade] ?? `📖 ${o.tipo_atividade}`
+            : "📖 Oficina";
+          const estrelas = INTENSIDADE_ESTRELAS[o.intensidade] ?? "★";
+          return (
+            <Card
+              key={`${o.codigo}-${o.descritor_id}`}
+              className="p-4 flex flex-col gap-2"
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-mono text-[11px] text-ink-400">
+                  {o.codigo}
+                </span>
+                <Badge variant="neutral">{tipoLabel}</Badge>
+              </div>
+              <p className="font-medium text-sm">{o.titulo}</p>
+              <p className="text-xs text-ink-400">
+                <span className="text-amber-600" title={`Intensidade: ${o.intensidade}`}>
+                  {estrelas}
+                </span>{" "}
+                <span className="font-mono">{o.descritor_id}</span>
+                {o.tem_redato_avaliavel && (
+                  <span className="ml-2 text-emerald-700" title="Avaliável pelo Redato">
+                    ✅ Redato
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-ink-400 italic line-clamp-3">
+                {o.razao}
+              </p>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 # Diagnóstico cognitivo de redação ENEM
 
-**Atualizado:** 2026-05-04 · Fase 4 (agregação por turma)
+**Atualizado:** 2026-05-04 · Fase 5A.1 (mapeamento livros — rascunho)
 
 ## Contexto e objetivo
 
@@ -158,7 +158,7 @@ do professor — o `categoria_inep` mantém a rastreabilidade.
 | **2** Inferência LLM | ✅ 2026-05-03 | Pipeline GPT-4.1 + endpoint `POST /portal/envios/{id}/diagnosticar` + storage em `envios.diagnostico` JSONB |
 | **3** Visualização individual | ✅ 2026-05-03 | Aluno: 3-5 metas via WhatsApp. Professor: heatmap 5 colunas + lacunas com 3 seções + sugestões de oficinas. Detalhes em [`HOWTO_visualizacao.md`](HOWTO_visualizacao.md). |
 | **4** Agregação por turma | ✅ 2026-05-04 | Endpoint `GET /portal/turmas/{id}/diagnostico-agregado` + bloco "Diagnóstico da turma" no Dashboard. Heatmap coletivo (% alunos com lacuna por descritor), top lacunas com oficinas sugeridas, resumo executivo template. Detalhes em [`HOWTO_diagnostico_turma.md`](HOWTO_diagnostico_turma.md). |
-| **5A.1** Mapeamento livros → descritores | ⏳ próxima | LLM parseia 3 HTMLs (`LIVRO_ATO_1S/2S/3S_PROF`), extrai oficinas + exercícios, mapeia cada seção → descritores que trabalha. Output: `mapeamento_livro_descritores.json`. UI mostra "sugestão automática, em revisão" até Daniel revisar. Estimativa 1.5h. |
+| **5A.1** Mapeamento livros → descritores | 🟡 2026-05-04 (rascunho heurístico) | Parser dos 3 HTMLs + mapeador (LLM ou heurístico) → JSON com 42 oficinas mapeadas. Endpoint `/perfil` ganha `oficinas_livro_sugeridas` filtradas por série + intensidade. Frontend mostra sub-bloco "Oficinas no livro" com aviso "em revisão". **Status atual**: rascunho gerado por **heurística keyword-match** (modo fallback, sem custo LLM). Daniel deve rodar com `OPENAI_API_KEY` pra upgradear pra GPT-4.1 quando puder. Detalhes em [`HOWTO_mapeamento_livros.md`](HOWTO_mapeamento_livros.md). |
 | **5A.2** Mapeamento descritores → BNCC | ⏳ pendente | Cruza 40 descritores com habilidades BNCC (EM13LP01, EM13LP02...). Output: `descritores_bncc.json`. Justificativa pedagógica pra coordenação. Estimativa 30min. |
 | **5B** Geração dinâmica de exercícios | ⏳ adiada | LLM gera exercício novo baseado na lacuna específica do aluno. Espera Fase 5A rodar e gerar dados de uso. |
 | **6** Knowledge Tracing | ⏳ adiada | Métrica longitudinal: aluno fechou lacuna X após N redações? Visão de progresso ao longo do ano. Espera dados acumulados de prod. |
