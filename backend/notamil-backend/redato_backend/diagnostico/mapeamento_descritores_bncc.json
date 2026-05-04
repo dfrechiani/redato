@@ -1,17 +1,1124 @@
 {
   "versao": "1.0",
-  "gerado_em": null,
-  "modelo_usado": null,
-  "status": "nao_gerado_ainda",
-  "descricao": "Placeholder do mapeamento descritores → BNCC EM-LP. Pipeline LLM (mapeador_bncc.py) está pronto mas precisa ser rodado pelo Daniel localmente com OPENAI_API_KEY. Comando: cd backend/notamil-backend && OPENAI_API_KEY=sk-... python -m redato_backend.diagnostico.scripts.gerar_mapeamento_bncc. Custo estimado ~$0.40, latência ~3min. Após rodar, copiar este arquivo pra redato_backend/diagnostico/mapeamento_descritores_bncc.json (bundle pro Docker) e committar com mensagem 'chore(diagnostico): gera mapeamento BNCC via LLM'.",
+  "gerado_em": "2026-05-04T17:37:20.087015+00:00",
+  "modelo_usado": "gpt-4.1-2025-04-14",
+  "status": "em_revisao",
+  "descricao": "Mapeamento descritor → habilidades BNCC EM-LP gerado por LLM (GPT-4.1). AVISO: rascunho não revisado por especialista — Daniel revisa em sessão futura (Fase 5A.2.review).",
   "estatisticas": {
-    "total_descritores": 0,
-    "mapeamentos_ok": 0,
+    "total_descritores": 40,
+    "mapeamentos_ok": 40,
     "mapeamentos_falhos": 0,
-    "total_atribuicoes": 0,
-    "habilidades_unicas": 0,
-    "custo_total_usd": 0,
-    "latencia_total_min": 0
+    "total_atribuicoes": 101,
+    "habilidades_unicas": 17,
+    "custo_total_usd": 0.311,
+    "latencia_total_min": 1.77,
+    "elapsed_global_min": 1.77
   },
-  "mapeamentos": []
+  "mapeamentos": [
+    {
+      "descritor_id": "C1.001",
+      "descritor_nome": "Estrutura sintática",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige a produção de períodos completos, com sujeito, verbo e complementos, o que corresponde diretamente à análise e uso adequado de escolhas linguísticas na construção textual."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de períodos sintaticamente completos faz parte do processo de planejar, revisar e editar textos, garantindo sua adequação formal."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 4069,
+      "custo_estimado_usd": 0.007486,
+      "input_tokens": 3327,
+      "output_tokens": 104,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.002",
+      "descritor_nome": "Acentuação gráfica",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige a aplicação correta das regras de acentuação gráfica, que é um aspecto central das escolhas linguísticas analisadas por esta habilidade, pois impacta diretamente a construção textual e os efeitos de sentido."
+        },
+        {
+          "codigo": "EM13LP35",
+          "intensidade": "media",
+          "razao": "A revisão e edição de textos, previstas nesta habilidade, incluem a correção ortográfica e de acentuação, sendo a aplicação das regras de acentuação parte do processo de revisão textual."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 6166,
+      "custo_estimado_usd": 0.00767,
+      "input_tokens": 3339,
+      "output_tokens": 124,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.003",
+      "descritor_nome": "Ortografia de palavras frequentes",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige o domínio da grafia correta de palavras, o que corresponde diretamente à análise dos efeitos de sentido provocados pelas escolhas ortográficas na construção textual."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A revisão e edição de textos, previstas nesta habilidade, envolvem a correção ortográfica, especialmente de palavras frequentes e confusões clássicas."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2424,
+      "custo_estimado_usd": 0.007542,
+      "input_tokens": 3347,
+      "output_tokens": 106,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.004",
+      "descritor_nome": "Pontuação",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso correto de sinais de pontuação, que são escolhas linguísticas fundamentais para a construção do sentido textual, foco central da habilidade."
+        },
+        {
+          "codigo": "EM13LP35",
+          "intensidade": "media",
+          "razao": "A habilidade envolve revisar e editar textos, o que inclui a correção de pontuação como parte do processo de aprimoramento textual."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "baixa",
+          "razao": "O planejamento, produção e revisão de textos pressupõem o domínio de normas gramaticais, incluindo a pontuação, ainda que de modo mais amplo."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2976,
+      "custo_estimado_usd": 0.007846,
+      "input_tokens": 3331,
+      "output_tokens": 148,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.005",
+      "descritor_nome": "Concordância (verbal e nominal)",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige o domínio das regras de concordância verbal e nominal, que são escolhas linguísticas fundamentais para a construção textual e afetam diretamente os efeitos de sentido do texto."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A revisão e edição de textos, previstas nesta habilidade, envolvem a identificação e correção de desvios gramaticais como os de concordância, garantindo a adequação linguística do texto."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2289,
+      "custo_estimado_usd": 0.007608,
+      "input_tokens": 3336,
+      "output_tokens": 117,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.006",
+      "descritor_nome": "Regência (verbal e nominal)",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso correto das preposições em regência verbal e nominal, o que impacta diretamente os efeitos de sentido provocados pelas escolhas linguísticas na construção textual."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A revisão e edição de textos, considerando adequação às condições de produção, inclui a correção de desvios gramaticais como regência verbal e nominal."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1984,
+      "custo_estimado_usd": 0.007532,
+      "input_tokens": 3322,
+      "output_tokens": 111,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.007",
+      "descritor_nome": "Escolha de registro",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "O descritor exige a adequação do texto à modalidade escrita formal, o que é central para a habilidade de planejar, produzir, revisar e editar textos considerando sua adequação às condições de produção."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "A análise e escolha do registro formal envolve compreender os efeitos de sentido provocados pelas escolhas linguísticas, como evitar marcas de oralidade e gírias."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "baixa",
+          "razao": "A escolha do registro adequado está relacionada à identificação de recursos linguísticos e ao estilo do gênero, ainda que de modo tangencial."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3112,
+      "custo_estimado_usd": 0.007924,
+      "input_tokens": 3334,
+      "output_tokens": 157,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C1.008",
+      "descritor_nome": "Escolha vocabular",
+      "descritor_competencia": "C1",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso preciso e adequado do vocabulário, evitando sentidos errados e inadequações, o que corresponde diretamente à análise dos efeitos de sentido provocados pelas escolhas linguísticas na construção textual."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A escolha vocabular adequada é parte do processo de revisão e edição de textos, visando à adequação do texto às condições de produção, conforme previsto nesta habilidade."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "baixa",
+          "razao": "A seleção de vocabulário adequado contribui para a construção composicional e o estilo do gênero, ainda que de forma tangencial."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2419,
+      "custo_estimado_usd": 0.007934,
+      "input_tokens": 3323,
+      "output_tokens": 161,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.001",
+      "descritor_nome": "Pertinência ao tema proposto",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "A pertinência ao tema proposto exige que o aluno produza texto adequado às condições de produção, o que é central em EM13LP15."
+        },
+        {
+          "codigo": "EM13LP01",
+          "intensidade": "media",
+          "razao": "Relacionar o texto ao contexto de produção é necessário para abordar corretamente o tema proposto, evitando tangenciamentos."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2450,
+      "custo_estimado_usd": 0.007386,
+      "input_tokens": 3313,
+      "output_tokens": 95,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.002",
+      "descritor_nome": "Recorte temático específico",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "A definição de um recorte temático específico é central para o planejamento e produção de textos adequados ao contexto de produção, conforme demanda a habilidade."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "Estabelecer relações entre as partes do texto e a construção composicional do gênero argumentativo exige delimitar o tema, o que está diretamente relacionado ao recorte temático."
+        },
+        {
+          "codigo": "EM13LP28",
+          "intensidade": "media",
+          "razao": "Organizar situações de estudo e definir objetivos envolve selecionar e delimitar o aspecto do tema a ser abordado, o que corresponde ao recorte temático na produção textual."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2435,
+      "custo_estimado_usd": 0.007884,
+      "input_tokens": 3310,
+      "output_tokens": 158,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.003",
+      "descritor_nome": "Estrutura dissertativo-argumentativa",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o aluno mantenha a estrutura composicional do gênero dissertativo-argumentativo, evitando confusão com outros gêneros, o que corresponde diretamente à análise da construção composicional e do estilo do gênero."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de textos adequados à situação de produção, incluindo planejamento e revisão, é parcialmente exercitada ao exigir que o aluno mantenha a estrutura adequada do texto dissertativo-argumentativo."
+        },
+        {
+          "codigo": "EM13LP29",
+          "intensidade": "baixa",
+          "razao": "O domínio das técnicas discursivas do gênero argumentativo é tangencialmente trabalhado ao se exigir a estrutura correta, embora o foco principal não seja a argumentação em si, mas a forma."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3323,
+      "custo_estimado_usd": 0.00809,
+      "input_tokens": 3309,
+      "output_tokens": 184,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.004",
+      "descritor_nome": "Predomínio do tipo dissertativo",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige o predomínio do tipo dissertativo, o que demanda reconhecer e aplicar a construção composicional e o estilo do gênero, identificando recursos linguísticos próprios da dissertação."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de texto dissertativo pressupõe planejar, produzir e revisar textos considerando a adequação ao gênero e às condições de produção, o que está diretamente relacionado ao descritor."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1909,
+      "custo_estimado_usd": 0.007586,
+      "input_tokens": 3317,
+      "output_tokens": 119,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.005",
+      "descritor_nome": "Presença de repertório sociocultural",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP12",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso de informações, fatos e dados referenciados, o que corresponde diretamente à habilidade de selecionar e utilizar informações de fontes confiáveis para aprofundar argumentos em textos."
+        },
+        {
+          "codigo": "EM13LP04",
+          "intensidade": "media",
+          "razao": "A utilização de repertório sociocultural para sustentar argumentos envolve estabelecer relações interdiscursivas e intertextuais para qualificar e referendar posicionamentos."
+        },
+        {
+          "codigo": "EM13LP32",
+          "intensidade": "media",
+          "razao": "Selecionar informações, dados e argumentos em diferentes fontes, avaliando sua qualidade, é parte do processo de construção de repertório sociocultural para produção textual."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2905,
+      "custo_estimado_usd": 0.007898,
+      "input_tokens": 3305,
+      "output_tokens": 161,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.006",
+      "descritor_nome": "Pertinência do repertório ao tema",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP04",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o repertório seja pertinente ao tema e integrado ao argumento, o que corresponde diretamente à habilidade de estabelecer relações de interdiscursividade e intertextualidade para sustentar e qualificar posicionamentos."
+        },
+        {
+          "codigo": "EM13LP12",
+          "intensidade": "media",
+          "razao": "Selecionar informações e argumentos em fontes confiáveis e utilizá-los de forma referenciada é parte do uso pertinente de repertório, ainda que o foco do descritor seja mais na pertinência do que na referência."
+        },
+        {
+          "codigo": "EM13LP03",
+          "intensidade": "media",
+          "razao": "O descritor envolve analisar relações de intertextualidade e interdiscursividade, pois o repertório deve dialogar com o tema e não ser apenas decorativo ou desconectado."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2863,
+      "custo_estimado_usd": 0.008102,
+      "input_tokens": 3311,
+      "output_tokens": 185,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.007",
+      "descritor_nome": "Repertório produtivo (uso, não menção)",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP04",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o aluno utilize repertório para sustentar e qualificar argumentos, indo além da simples menção, o que corresponde diretamente ao uso de interdiscursividade e intertextualidade para explicitar e referendar argumentos."
+        },
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "media",
+          "razao": "Ao exigir que o repertório seja usado como ferramenta argumentativa, o descritor envolve a análise e construção de movimentos argumentativos, como sustentação e extração de consequências."
+        },
+        {
+          "codigo": "EM13LP12",
+          "intensidade": "baixa",
+          "razao": "O uso produtivo do repertório pressupõe a seleção e utilização de informações e argumentos de fontes confiáveis para aprofundar o texto, ainda que de modo menos central."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3226,
+      "custo_estimado_usd": 0.008082,
+      "input_tokens": 3329,
+      "output_tokens": 178,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C2.008",
+      "descritor_nome": "Repertório legítimo (não 'de bolso')",
+      "descritor_competencia": "C2",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP12",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso de repertório nomeável e referenciado, o que corresponde diretamente à habilidade de selecionar informações e argumentos em fontes confiáveis e utilizá-los de forma referenciada."
+        },
+        {
+          "codigo": "EM13LP32",
+          "intensidade": "media",
+          "razao": "A habilidade de selecionar informações, dados e argumentos em diversos tipos de fontes, avaliando sua qualidade, é exercitada ao evitar repertório genérico e buscar fontes legítimas."
+        },
+        {
+          "codigo": "EM13LP04",
+          "intensidade": "baixa",
+          "razao": "O uso de repertório legítimo contribui para explicitar, sustentar e qualificar posicionamentos e argumentos, ainda que de modo tangencial."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2454,
+      "custo_estimado_usd": 0.008036,
+      "input_tokens": 3362,
+      "output_tokens": 164,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.001",
+      "descritor_nome": "Existência e clareza da tese",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "A apresentação clara de tese e posicionamento é central para a produção de textos argumentativos, que devem ser planejados, produzidos e avaliados conforme as condições de produção do texto."
+        },
+        {
+          "codigo": "EM13LP07",
+          "intensidade": "media",
+          "razao": "O descritor exige que o aluno marque explicitamente sua posição frente ao tema, o que corresponde à análise e expressão da posição do enunciador em textos de diferentes gêneros."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "baixa",
+          "razao": "A clareza da tese envolve a relação entre as partes do texto e a construção composicional do gênero dissertativo-argumentativo."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2486,
+      "custo_estimado_usd": 0.007916,
+      "input_tokens": 3318,
+      "output_tokens": 160,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.002",
+      "descritor_nome": "Sustentação da tese pelos argumentos",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "alta",
+          "razao": "A habilidade exige analisar a sustentação da tese por argumentos, que é o foco central do descritor, ao avaliar se os argumentos desenvolvidos realmente defendem a tese apresentada."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "O descritor demanda estabelecer relações entre as partes do texto (tese e argumentos), considerando a construção composicional do gênero dissertativo-argumentativo."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "baixa",
+          "razao": "A produção, revisão e avaliação de textos adequados ao gênero envolve, ainda que de modo tangencial, garantir a articulação entre tese e argumentos."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2588,
+      "custo_estimado_usd": 0.007902,
+      "input_tokens": 3327,
+      "output_tokens": 156,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.003",
+      "descritor_nome": "Tópico frasal claro em cada desenvolvimento",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige que cada parágrafo de desenvolvimento tenha um tópico frasal claro, o que demanda domínio da construção composicional e do estilo do gênero argumentativo, conforme previsto nesta habilidade."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de parágrafos com tópicos frasais claros faz parte do processo de planejar, produzir, revisar e avaliar textos escritos, considerando sua adequação às condições de produção."
+        },
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "baixa",
+          "razao": "A clareza do tópico frasal contribui para a organização dos movimentos argumentativos (sustentação, refutação), embora não seja o foco central da habilidade."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2356,
+      "custo_estimado_usd": 0.00802,
+      "input_tokens": 3326,
+      "output_tokens": 171,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.004",
+      "descritor_nome": "Profundidade do argumento",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o aluno desenvolva argumentos explicando causas, consequências ou mecanismos, o que corresponde diretamente à análise dos movimentos argumentativos em textos argumentativos."
+        },
+        {
+          "codigo": "EM13LP12",
+          "intensidade": "media",
+          "razao": "Aprofundar o argumento requer selecionar e utilizar informações e dados de forma referenciada para dar profundidade ao texto, conforme previsto nesta habilidade."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "baixa",
+          "razao": "A articulação do 'porquê' e 'como funciona' envolve estabelecer relações entre partes do texto, ainda que de modo tangencial ao foco principal do descritor."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2386,
+      "custo_estimado_usd": 0.007884,
+      "input_tokens": 3318,
+      "output_tokens": 156,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.005",
+      "descritor_nome": "Diversidade de argumentos",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o estudante desenvolva argumentos distintos e consistentes, o que está diretamente relacionado à análise dos movimentos argumentativos em textos argumentativos."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "A diversidade de argumentos implica estabelecer relações entre as partes do texto, considerando a construção composicional e o estilo do gênero dissertativo-argumentativo."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "baixa",
+          "razao": "A produção de argumentos diversos envolve o planejamento e avaliação do texto, considerando sua adequação às condições de produção."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3005,
+      "custo_estimado_usd": 0.007808,
+      "input_tokens": 3332,
+      "output_tokens": 143,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.006",
+      "descritor_nome": "Articulação tese-argumentos-conclusão",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige a articulação entre tese, argumentos e conclusão, que depende do domínio da construção composicional e do estilo do gênero dissertativo-argumentativo, foco central da habilidade."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de um texto com fio condutor, articulando tese, argumentos e conclusão, envolve planejamento, revisão e avaliação textual, aspectos contemplados nesta habilidade."
+        },
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "baixa",
+          "razao": "A análise dos movimentos argumentativos (sustentação, refutação, negociação) está relacionada à necessidade de que argumentos sustentem a tese e sejam retomados na conclusão, ainda que de modo tangencial."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3313,
+      "custo_estimado_usd": 0.00804,
+      "input_tokens": 3324,
+      "output_tokens": 174,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.007",
+      "descritor_nome": "Defesa de ponto de vista (não só descrição)",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "alta",
+          "razao": "A defesa de ponto de vista é o núcleo da habilidade, pois exige que o aluno sustente, refute ou negocie argumentos, avaliando valores envolvidos no texto argumentativo."
+        },
+        {
+          "codigo": "EM13LP07",
+          "intensidade": "media",
+          "razao": "O descritor demanda que o aluno marque sua posição no texto, o que envolve o uso de recursos linguísticos para expressar o posicionamento do enunciador."
+        },
+        {
+          "codigo": "EM13LP46",
+          "intensidade": "baixa",
+          "razao": "Ao defender um ponto de vista, o aluno se posiciona frente a diferentes perspectivas, ainda que o foco principal não seja o compartilhamento de sentidos."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3248,
+      "custo_estimado_usd": 0.007942,
+      "input_tokens": 3335,
+      "output_tokens": 159,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C3.008",
+      "descritor_nome": "Autoria",
+      "descritor_competencia": "C3",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP07",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o aluno expresse voz própria, sintetize, contraste e faça inferências, o que corresponde diretamente à habilidade de analisar marcas que expressam a posição do enunciador."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de texto autoral, com leitura própria e sem frases prontas, envolve o planejamento, produção e revisão de textos adequados ao contexto de produção."
+        },
+        {
+          "codigo": "EM13LP46",
+          "intensidade": "media",
+          "razao": "O descritor demanda posicionamento próprio frente ao tema, o que se relaciona à habilidade de compartilhar sentidos construídos na leitura e posicionar-se frente a diferentes pontos de vista."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2358,
+      "custo_estimado_usd": 0.007968,
+      "input_tokens": 3316,
+      "output_tokens": 167,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.001",
+      "descritor_nome": "Variedade de conectivos",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso variado de conectivos para articular partes do texto, o que está diretamente relacionado à habilidade de estabelecer relações entre as partes do texto considerando recursos linguísticos."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "A análise e escolha de diferentes conectivos impactam os efeitos de sentido do texto, aspecto contemplado por essa habilidade."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1958,
+      "custo_estimado_usd": 0.007484,
+      "input_tokens": 3326,
+      "output_tokens": 104,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.002",
+      "descritor_nome": "Adequação semântica do conectivo",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "A escolha adequada de conectivos para expressar relações lógicas corretas entre orações é central para estabelecer relações entre as partes do texto, conforme previsto nesta habilidade."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "O descritor envolve analisar os efeitos de sentido provocados pela escolha de conectivos, que são recursos linguísticos fundamentais na construção textual."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2098,
+      "custo_estimado_usd": 0.007478,
+      "input_tokens": 3331,
+      "output_tokens": 102,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.003",
+      "descritor_nome": "Conectivos entre parágrafos",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso de conectivos para articular parágrafos, o que envolve diretamente a habilidade de estabelecer relações entre as partes do texto, considerando a construção composicional e os recursos linguísticos do gênero."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "A análise e uso de conectivos entre parágrafos impactam os efeitos de sentido do texto, aspecto contemplado por esta habilidade, ainda que de modo secundário."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "baixa",
+          "razao": "A revisão e edição de textos para garantir articulação entre parágrafos pode ser parte do processo de produção textual, mas não é o foco central do descritor."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2828,
+      "custo_estimado_usd": 0.008024,
+      "input_tokens": 3328,
+      "output_tokens": 171,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.004",
+      "descritor_nome": "Referenciação por pronomes e sinônimos",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "A referenciação por pronomes e sinônimos é um recurso linguístico fundamental para estabelecer relações entre as partes do texto, evitando repetições e promovendo coesão textual, aspecto central desta habilidade."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "O uso de pronomes e sinônimos impacta diretamente os efeitos de sentido e a clareza do texto, sendo analisado como uma escolha linguística relevante para a construção textual."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1963,
+      "custo_estimado_usd": 0.007648,
+      "input_tokens": 3332,
+      "output_tokens": 123,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.005",
+      "descritor_nome": "Clareza da referência (sem ambiguidade)",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "A clareza da referência e a ausência de ambiguidade na retomada de elementos textuais são centrais para a habilidade de estabelecer relações entre as partes do texto, considerando recursos linguísticos como pronomes e expressões referenciais."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "O descritor envolve analisar os efeitos de sentido provocados por escolhas linguísticas, como o uso de pronomes e expressões referenciais, que impactam diretamente a compreensão textual."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1966,
+      "custo_estimado_usd": 0.007662,
+      "input_tokens": 3323,
+      "output_tokens": 127,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.006",
+      "descritor_nome": "Progressão temática",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "A progressão temática exige que cada parágrafo traga informação nova, o que demanda estabelecer relações entre as partes do texto e compreender a construção composicional do gênero."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "Planejar, revisar e avaliar textos envolve garantir que a redação avance, evitando repetições e promovendo progressão temática."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1916,
+      "custo_estimado_usd": 0.007428,
+      "input_tokens": 3310,
+      "output_tokens": 101,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.007",
+      "descritor_nome": "Articulação intraparágrafo (entre orações)",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige a articulação lógica entre orações dentro do parágrafo, o que demanda o uso consciente de recursos linguísticos para estabelecer relações entre as partes do texto, foco central da habilidade."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "A escolha e o uso de conectivos para articular orações afetam diretamente os efeitos de sentido do texto, aspecto contemplado por essa habilidade."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1701,
+      "custo_estimado_usd": 0.007558,
+      "input_tokens": 3331,
+      "output_tokens": 112,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C4.008",
+      "descritor_nome": "Conectivos de transição estrutural",
+      "descritor_competencia": "C4",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige o uso de conectivos para marcar transições estruturais entre blocos do texto, o que envolve identificar e empregar recursos linguísticos que operam na construção composicional do gênero dissertativo-argumentativo."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A produção de textos adequados às condições de produção inclui planejar e revisar a estrutura textual, o que envolve o uso de conectivos para garantir a articulação entre as partes do texto."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3211,
+      "custo_estimado_usd": 0.007738,
+      "input_tokens": 3361,
+      "output_tokens": 127,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.001",
+      "descritor_nome": "Agente",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "A nomeação específica do agente executor em propostas de intervenção é central para a adequação do texto às condições de produção, elemento fundamental desta habilidade."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "A identificação clara do agente envolve a relação entre as partes do texto e a construção composicional do gênero argumentativo, especialmente na proposta de intervenção."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2056,
+      "custo_estimado_usd": 0.007438,
+      "input_tokens": 3319,
+      "output_tokens": 100,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.002",
+      "descritor_nome": "Ação",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o estudante produza ações claras e específicas, o que demanda planejamento, produção e revisão textual adequados ao gênero dissertativo-argumentativo, foco central da habilidade."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "A definição de ações claras envolve a escolha de recursos linguísticos precisos e adequados à construção composicional do texto, aspecto contemplado por essa habilidade."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2027,
+      "custo_estimado_usd": 0.007518,
+      "input_tokens": 3311,
+      "output_tokens": 112,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.003",
+      "descritor_nome": "Meio/modo",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o estudante detalhe o modo de execução da proposta, o que envolve planejar e produzir textos adequados ao gênero dissertativo-argumentativo, considerando a necessidade de explicitar o operacional da ação."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "A explicitação do 'meio/modo' demanda atenção à construção composicional do texto e ao uso de recursos linguísticos próprios do gênero, como conectores ('por meio de', 'através de')."
+        },
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "baixa",
+          "razao": "A definição clara do modo de ação contribui para a sustentação argumentativa, ainda que de forma tangencial, ao detalhar como a proposta será efetivada."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3335,
+      "custo_estimado_usd": 0.008072,
+      "input_tokens": 3308,
+      "output_tokens": 182,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.004",
+      "descritor_nome": "Finalidade",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "A explicitação da finalidade da proposta está diretamente ligada ao planejamento e produção de textos adequados às condições de produção, objetivo central desta habilidade."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "A definição clara do propósito envolve reconhecer e empregar recursos composicionais do gênero, como marcadores de finalidade, parte desta habilidade."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 1622,
+      "custo_estimado_usd": 0.007398,
+      "input_tokens": 3311,
+      "output_tokens": 97,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.005",
+      "descritor_nome": "Detalhamento (pelo menos 1 elemento)",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "O descritor exige detalhamento de elementos da proposta de intervenção, o que demanda planejamento, revisão e avaliação do texto para garantir que os elementos estejam desenvolvidos e não apenas listados, central para EM13LP15."
+        },
+        {
+          "codigo": "EM13LP38",
+          "intensidade": "media",
+          "razao": "Detalhar elementos (explicar, exemplificar, expandir) envolve escolhas linguísticas que afetam o sentido e a clareza do texto, aspecto contemplado em EM13LP38."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2437,
+      "custo_estimado_usd": 0.007744,
+      "input_tokens": 3376,
+      "output_tokens": 124,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.006",
+      "descritor_nome": "Articulação ao tema/problema",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "alta",
+          "razao": "O descritor exige que a proposta de intervenção esteja articulada aos desenvolvimentos argumentativos do texto, o que demanda estabelecer relações entre as partes do texto e respeitar a construção composicional do gênero dissertativo-argumentativo."
+        },
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "media",
+          "razao": "A articulação entre proposta e discussão do problema envolve o planejamento, produção e revisão do texto, considerando sua adequação às condições de produção e à progressão temática."
+        },
+        {
+          "codigo": "EM13LP05",
+          "intensidade": "baixa",
+          "razao": "Ao exigir que a proposta retome causas e afetados discutidos, o descritor tangencia a análise dos movimentos argumentativos, especialmente a sustentação e a negociação de soluções."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2851,
+      "custo_estimado_usd": 0.008098,
+      "input_tokens": 3345,
+      "output_tokens": 176,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.007",
+      "descritor_nome": "Respeito aos direitos humanos",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP45",
+          "intensidade": "alta",
+          "razao": "O descritor exige que a proposta de intervenção respeite direitos humanos, o que está diretamente relacionado à análise, discussão e produção de textos que tratem dos direitos humanos e da resolução de conflitos."
+        },
+        {
+          "codigo": "EM13LP43",
+          "intensidade": "media",
+          "razao": "A atuação ética e crítica na produção de textos, evitando discursos discriminatórios ou violentos, é parte do que o descritor demanda ao eliminar propostas que violem direitos humanos."
+        },
+        {
+          "codigo": "EM13LP39",
+          "intensidade": "baixa",
+          "razao": "O reconhecimento de posicionamentos ideológicos e políticos nos textos, inclusive para evitar propostas excludentes ou violentas, é tangencialmente trabalhado pelo descritor."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 3699,
+      "custo_estimado_usd": 0.007984,
+      "input_tokens": 3324,
+      "output_tokens": 167,
+      "mapeamento_falhou": false
+    },
+    {
+      "descritor_id": "C5.008",
+      "descritor_nome": "Completude (5 elementos presentes)",
+      "descritor_competencia": "C5",
+      "habilidades_bncc": [
+        {
+          "codigo": "EM13LP15",
+          "intensidade": "alta",
+          "razao": "O descritor exige que o texto produzido atenda à completude estrutural do gênero, o que envolve planejamento, produção, revisão e avaliação do texto conforme as condições de produção."
+        },
+        {
+          "codigo": "EM13LP02",
+          "intensidade": "media",
+          "razao": "A identificação e presença dos 5 elementos canônicos requer atenção à construção composicional do gênero, articulando as partes do texto de modo coeso e adequado."
+        }
+      ],
+      "area": "Linguagens, Códigos e suas Tecnologias",
+      "componente": "Língua Portuguesa",
+      "modelo_usado": "gpt-4.1-2025-04-14",
+      "latencia_ms": 2033,
+      "custo_estimado_usd": 0.0076,
+      "input_tokens": 3360,
+      "output_tokens": 110,
+      "mapeamento_falhou": false
+    }
+  ]
 }
