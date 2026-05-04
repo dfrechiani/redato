@@ -2434,6 +2434,137 @@ def dashboard_turma(
 
 
 # ──────────────────────────────────────────────────────────────────────
+# GET /portal/turmas/{turma_id}/diagnostico-agregado (Fase 4)
+# ──────────────────────────────────────────────────────────────────────
+#
+# Visão coletiva da turma: pega o ÚLTIMO diagnóstico de cada aluno
+# ativo, agrega contagens por descritor + competência, identifica top
+# lacunas e gera resumo executivo (template).
+#
+# Visibilidade: professor da turma OU coordenador da escola (mesma
+# de detalhe_turma e perfil_aluno). Aluno NÃO tem acesso — não há
+# rota aluno-side.
+
+class DiagnosticoTurmaResumoTurma(BaseModel):
+    id: str
+    codigo: str
+    serie: str
+    total_alunos: int
+    alunos_com_diagnostico: int
+    alunos_sem_diagnostico: int
+
+
+class DiagnosticoTurmaPorDescritor(BaseModel):
+    """Entry agregado de 1 dos 40 descritores. Heatmap usa
+    `percent_lacuna` pra cor; cards de top usam todos os campos."""
+    id: str
+    competencia: str
+    nome: str
+    categoria_inep: str
+    alunos_com_lacuna: int
+    alunos_com_incerto: int
+    alunos_com_dominio: int
+    percent_lacuna: float
+    percent_dominio: float
+    definicao_curta: str
+    sugestao_pedagogica: str
+
+
+class DiagnosticoTurmaPorCompetencia(BaseModel):
+    """Médias e descritores em alerta (>50% lacuna) por competência."""
+    competencia: str
+    percent_dominio_medio: float
+    percent_lacuna_medio: float
+    descritores_em_alerta: List[str]
+
+
+class DiagnosticoTurmaTopLacuna(BaseModel):
+    """Card do sub-bloco "Top 5 lacunas coletivas" — já enriquecido
+    com sugestões de oficinas filtradas pela série."""
+    id: str
+    competencia: str
+    nome: str
+    percent_lacuna: float
+    qtd_alunos: int
+    sugestao_pedagogica: str
+    definicao_curta: str
+    oficinas_sugeridas: List[Dict[str, Any]]
+
+
+class DiagnosticoAgregadoResponse(BaseModel):
+    turma: DiagnosticoTurmaResumoTurma
+    atualizado_em: Optional[str]
+    """ISO timestamp do diagnóstico mais recente da turma. None se
+    nenhum aluno tem diagnóstico ainda."""
+    agregado_por_descritor: List[DiagnosticoTurmaPorDescritor]
+    """40 entries — heatmap renderiza pelos 40 mesmo se contagem=0
+    (UI precisa do grid completo)."""
+    agregado_por_competencia: List[DiagnosticoTurmaPorCompetencia]
+    """5 entries (C1-C5)."""
+    top_lacunas: List[DiagnosticoTurmaTopLacuna]
+    """0-10 lacunas com ≥30% alunos. Vazia quando nenhum descritor
+    passa do threshold (turma sem concentração crítica)."""
+    resumo_executivo: str
+    """3-5 frases template-based. UI mostra como callout. Estado
+    vazio: 'Aguardando primeira redação corrigida da turma.'"""
+
+
+@router.get(
+    "/turmas/{turma_id}/diagnostico-agregado",
+    response_model=DiagnosticoAgregadoResponse,
+)
+def diagnostico_agregado_turma(
+    turma_id: uuid.UUID,
+    auth: AuthenticatedUser = Depends(get_current_user),
+) -> DiagnosticoAgregadoResponse:
+    """Diagnóstico cognitivo agregado da turma (Fase 4).
+
+    Permissão: `_check_view_turma` (prof responsável OU coordenador).
+
+    Erros:
+    - 404 se turma não existe
+    - 403 se usuário não tem permissão de view
+
+    Estado vazio:
+    - Turma sem alunos ativos: agregados vazios + resumo "Aguardando..."
+    - Turma com alunos mas zero diagnosticados: idem (n_alunos > 0
+      mas alunos_com_diagnostico = 0)
+    """
+    from redato_backend.diagnostico.agregacao import (
+        agregar_diagnosticos_turma,
+    )
+
+    with Session(get_engine()) as session:
+        turma = _get_turma_or_404(session, turma_id)
+        _check_view_turma(auth, turma)
+
+        agregado = agregar_diagnosticos_turma(
+            turma_id=turma.id,
+            turma_codigo=turma.codigo,
+            turma_serie=turma.serie,
+            db_session=session,
+        )
+
+    return DiagnosticoAgregadoResponse(
+        turma=DiagnosticoTurmaResumoTurma(**agregado["turma"]),
+        atualizado_em=agregado["atualizado_em"],
+        agregado_por_descritor=[
+            DiagnosticoTurmaPorDescritor(**d)
+            for d in agregado["agregado_por_descritor"]
+        ],
+        agregado_por_competencia=[
+            DiagnosticoTurmaPorCompetencia(**c)
+            for c in agregado["agregado_por_competencia"]
+        ],
+        top_lacunas=[
+            DiagnosticoTurmaTopLacuna(**l)
+            for l in agregado["top_lacunas"]
+        ],
+        resumo_executivo=agregado["resumo_executivo"],
+    )
+
+
+# ──────────────────────────────────────────────────────────────────────
 # GET /portal/escolas/{escola_id}/dashboard
 # ──────────────────────────────────────────────────────────────────────
 

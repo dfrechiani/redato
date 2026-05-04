@@ -83,6 +83,7 @@ def root() -> dict:
             "portal_evolucao_aluno": "GET /portal/turmas/{turma_id}/alunos/{aluno_turma_id}/evolucao",
             "portal_perfil_aluno": "GET /portal/turmas/{turma_id}/alunos/{aluno_turma_id}/perfil",
             "portal_envio_diagnosticar": "POST /portal/envios/{envio_id}/diagnosticar",
+            "portal_diagnostico_agregado": "GET /portal/turmas/{turma_id}/diagnostico-agregado",
             # M8 PDF + admin triggers + health full
             "portal_pdf_turma": "POST /portal/pdfs/dashboard-turma/{turma_id}",
             "portal_pdf_escola": "POST /portal/pdfs/dashboard-escola/{escola_id}",

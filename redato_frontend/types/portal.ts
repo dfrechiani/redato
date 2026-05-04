@@ -490,6 +490,85 @@ export interface DiagnosticoRecente {
 }
 
 // ──────────────────────────────────────────────────────────────────────
+// Fase 4 — Agregação por turma (diagnóstico cognitivo coletivo)
+// Espelha schemas em
+// `redato_backend/portal/portal_api.py::DiagnosticoAgregadoResponse`.
+// ──────────────────────────────────────────────────────────────────────
+
+export interface DiagnosticoTurmaResumoTurma {
+  id: string;
+  codigo: string;
+  serie: string;
+  total_alunos: number;
+  /** Alunos com pelo menos 1 envio diagnosticado. */
+  alunos_com_diagnostico: number;
+  /** Alunos sem nenhum diagnóstico — não contam no agregado. */
+  alunos_sem_diagnostico: number;
+}
+
+export interface DiagnosticoTurmaPorDescritor {
+  id: string;
+  competencia: string;        // "C1".."C5"
+  nome: string;
+  categoria_inep: string;
+  alunos_com_lacuna: number;
+  alunos_com_incerto: number;
+  alunos_com_dominio: number;
+  /** % alunos com lacuna nesse descritor (0-100). Usado pra cor do
+   *  heatmap: <30% verde, 30-50% amarelo, >50% vermelho. */
+  percent_lacuna: number;
+  percent_dominio: number;
+  definicao_curta: string;
+  sugestao_pedagogica: string;
+}
+
+export interface DiagnosticoTurmaPorCompetencia {
+  competencia: string;        // "C1".."C5"
+  percent_dominio_medio: number;
+  percent_lacuna_medio: number;
+  /** IDs de descritores com >=50% alunos em lacuna. */
+  descritores_em_alerta: string[];
+}
+
+export interface DiagnosticoTurmaTopLacunaOficina {
+  codigo: string;
+  titulo: string;
+  modo_correcao: string;
+  oficina_numero: number;
+  razao: string;
+}
+
+export interface DiagnosticoTurmaTopLacuna {
+  id: string;
+  competencia: string;
+  nome: string;
+  /** % alunos com lacuna nesse descritor. */
+  percent_lacuna: number;
+  /** Quantidade de alunos com lacuna. */
+  qtd_alunos: number;
+  sugestao_pedagogica: string;
+  definicao_curta: string;
+  /** Oficinas da série da turma que trabalham essa competência. */
+  oficinas_sugeridas: DiagnosticoTurmaTopLacunaOficina[];
+}
+
+export interface DiagnosticoAgregado {
+  turma: DiagnosticoTurmaResumoTurma;
+  /** ISO UTC do diagnóstico mais recente da turma. `null` se nenhum
+   *  aluno tem diagnóstico ainda. */
+  atualizado_em: string | null;
+  /** 40 entries — heatmap renderiza pelos 40 mesmo com contagem=0. */
+  agregado_por_descritor: DiagnosticoTurmaPorDescritor[];
+  /** 5 entries (C1-C5). */
+  agregado_por_competencia: DiagnosticoTurmaPorCompetencia[];
+  /** 0-10 lacunas com >=30% alunos. Vazia quando nenhum descritor
+   *  passa do threshold. */
+  top_lacunas: DiagnosticoTurmaTopLacuna[];
+  /** 3-5 frases template-based. UI mostra como callout. */
+  resumo_executivo: string;
+}
+
+// ──────────────────────────────────────────────────────────────────────
 // M8 — PDF
 // ──────────────────────────────────────────────────────────────────────
 

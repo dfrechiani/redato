@@ -13,6 +13,7 @@ import type {
   AlunoPerfil,
   AtividadeDetail,
   AtividadeListItem,
+  DiagnosticoAgregado,
   CriarAtividadeRequest,
   CriarAtividadeResponse,
   EnvioFeedback,
@@ -265,6 +266,18 @@ export async function perfilAluno(
 ): Promise<AlunoPerfil> {
   return fetchJson<AlunoPerfil>(
     `/api/portal/turmas/${turmaId}/alunos/${alunoTurmaId}/perfil`,
+  );
+}
+
+// Fase 4 — Diagnóstico cognitivo agregado da turma.
+// Renderizado no Dashboard da turma (DashboardTurma → DiagnosticoTurma).
+// Lê o último diagnóstico de cada aluno ativo e agrega por descritor +
+// competência + top lacunas + resumo executivo.
+export async function diagnosticoAgregadoTurma(
+  turmaId: string,
+): Promise<DiagnosticoAgregado> {
+  return fetchJson<DiagnosticoAgregado>(
+    `/api/portal/turmas/${turmaId}/diagnostico-agregado`,
   );
 }
 

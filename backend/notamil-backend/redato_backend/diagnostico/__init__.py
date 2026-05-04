@@ -53,6 +53,15 @@ from redato_backend.diagnostico.sugestoes_pedagogicas import (
     get_sugestao_pedagogica,
     get_definicao_curta,
 )
+from redato_backend.diagnostico.agregacao import (
+    agregar_diagnosticos_turma,
+    calcular_top_lacunas,
+    THRESHOLD_TOP_LACUNAS_PERCENT,
+    THRESHOLD_HEATMAP_AMARELO,
+    THRESHOLD_HEATMAP_VERMELHO,
+    THRESHOLD_COBERTURA_AVISO,
+    MAX_TOP_LACUNAS,
+)
 
 __all__ = [
     # Fase 1 — descritores
@@ -74,4 +83,12 @@ __all__ = [
     # Fix Fase 3 — sugestões pedagógicas (cards de lacuna)
     "get_sugestao_pedagogica",
     "get_definicao_curta",
+    # Fase 4 — agregação por turma
+    "agregar_diagnosticos_turma",
+    "calcular_top_lacunas",
+    "THRESHOLD_TOP_LACUNAS_PERCENT",
+    "THRESHOLD_HEATMAP_AMARELO",
+    "THRESHOLD_HEATMAP_VERMELHO",
+    "THRESHOLD_COBERTURA_AVISO",
+    "MAX_TOP_LACUNAS",
 ]

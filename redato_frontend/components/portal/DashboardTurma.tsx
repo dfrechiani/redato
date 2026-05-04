@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { AlunosEmRiscoCard } from "@/components/portal/AlunosEmRiscoCard";
+import { DiagnosticoTurma } from "@/components/portal/DiagnosticoTurma";
 import { DistribuicaoNotasChart } from "@/components/portal/DistribuicaoNotasChart";
 import { EmptyDashboardCard } from "@/components/portal/EmptyDashboardCard";
 import { EvolucaoChart } from "@/components/portal/EvolucaoChart";
@@ -227,8 +228,22 @@ export function DashboardTurma({ turmaId }: Props) {
               )}
             </Card>
           </div>
+
+          {/* Fase 4 (2026-05-03): Diagnóstico cognitivo agregado da
+              turma. Renderizado mesmo se semEnvios=false aqui pq o
+              componente trata estado vazio internamente (mostra
+              callout "Nenhum diagnóstico ainda" quando 0 alunos
+              diagnosticados). */}
+          <DiagnosticoTurma turmaId={turmaId} />
         </>
       )}
+
+      {/* Quando semEnvios=true (sem nenhum envio), DashboardTurma já
+          mostra EmptyDashboardCard. DiagnosticoTurma também aparece
+          aqui pra cobrir o caso "professor curioso quer ver o bloco
+          mesmo sem envio" — exibe estado vazio com mensagem
+          encorajadora. */}
+      {semEnvios && <DiagnosticoTurma turmaId={turmaId} />}
     </div>
   );
 }
