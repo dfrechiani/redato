@@ -1,6 +1,6 @@
 # HOWTO — Diagnóstico cognitivo agregado da turma (Fase 4 + UX D)
 
-**Atualizado:** 2026-05-04 (fix UX proposta D — storytelling)
+**Atualizado:** 2026-05-04 (refactor: hierarquia visual do dashboard)
 
 ## O que é
 
@@ -22,6 +22,46 @@ Visibilidade:
 - **Coordenador da escola**: vê tudo (mesma permissão Fase 3)
 - **Outros professores**: 403
 - **Aluno**: não tem surface (não há rota aluno-side pra esse bloco)
+
+## Hierarquia visual do Dashboard (refactor 2026-05-04)
+
+> Refactor consolidou a "proposta D" (storytelling) reorganizando os
+> blocos do Dashboard de turma inteiro. Diagnóstico cognitivo virou o
+> bloco central; "Top detectores" foi removido (redundante).
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║ Stats topo: X envios · Y ativas · Z encerradas               ║
+║              [Filtros: Todos/Foco/Completo · PDF · Histórico]║
+╠══════════════════════════════════════════════════════════════╣
+║ DIAGNÓSTICO DA TURMA (storytelling)                          ║
+║   Narrativa principal + cards "Trabalhar agora" / "Esta      ║
+║   semana" / "Este mês" + accordion heatmap                   ║
+╠══════════════════════════════════════════════════════════════╣
+║ ALUNOS EM RISCO (visível, acionável)                         ║
+╠══════════════════════════════════════════════════════════════╣
+║ ▼ Distribuição de notas        (accordion fechado)           ║
+║ ▼ Evolução da turma            (accordion fechado)           ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+**Removido**: bloco "Top detectores" (Tese genérica, etc.). Era
+redundante com o diagnóstico cognitivo de 40 descritores que já
+identifica padrões pedagógicos com mais granularidade. Backend
+mantém o campo `top_detectores` no payload pra compat com PDF
+generator + escola dashboard, só não é mais renderizado aqui.
+
+**Princípios da hierarquia**:
+
+- **Stats topo** = contexto rápido em 1 linha. Sem card, sem label
+  "RESUMO". Compete por atenção é zero.
+- **Diagnóstico** = bloco mais valioso, posição central. Storytelling
+  + cards de ação concentram o que precisa ser feito.
+- **Alunos em risco** = único bloco que exige clique imediato pra
+  individualizar (nome do aluno → drill perfil). Mantém visível.
+- **Distribuição/Evolução** = consultivos. Professor consulta quando
+  quer ver "como tá a turma em foco vs completo" ou "média subindo
+  ou caindo". Não competem com o diagnóstico — accordion.
 
 ## Como acessar
 

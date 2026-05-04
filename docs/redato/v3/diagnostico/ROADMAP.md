@@ -33,6 +33,32 @@ Endpoint `GET /portal/turmas/{id}/diagnostico-agregado` + bloco
 top lacunas com oficinas, resumo executivo template. Sem agregação
 cross-turma. Commit pendente (2026-05-04).
 
+### ✅ fix UX — Storytelling acionável (proposta D, 2026-05-04)
+
+Refactor visual do dashboard reportado por Daniel (Fase 4 era pesada,
+information overload). Mudanças:
+- Diagnóstico passa a ser **storytelling**: narrativa curta + 3
+  categorias temporais (Trabalhar agora / Esta semana / Este mês)
+- Heatmap detalhado dos 40 descritores → accordion fechado
+- Cards de ação com borda colorida pela urgência
+
+Commit `21e4f64`.
+
+### ✅ refactor UX — Hierarquia do Dashboard (2026-05-04)
+
+Reorganização do Dashboard de turma INTEIRO (não só do bloco de
+diagnóstico). Mudanças:
+- "Top detectores" REMOVIDO do Dashboard (redundante com
+  diagnóstico cognitivo de 40 descritores). Backend manteve campo
+  `top_detectores` na resposta pra compat com PDF + escola.
+- Stats topo virou 1 linha enxuta (sem card, sem label "RESUMO")
+- "Distribuição de notas" e "Evolução da turma" → accordions
+  fechados por default
+- "Alunos em risco" mantém visível (acionável)
+
+Hierarquia final: stats → diagnóstico (central) → alunos em risco →
+accordions consultivos.
+
 ### ⏳ Fase 5A.1 — Mapeamento livros → 40 descritores
 
 LLM parseia os 3 HTMLs (`LIVRO_ATO_1S/2S/3S_PROF`), extrai seções

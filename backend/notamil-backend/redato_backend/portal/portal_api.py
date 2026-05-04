@@ -2362,6 +2362,15 @@ class TurmaDashboardResponse(BaseModel):
     atividades_ativas: int
     atividades_encerradas: int
     distribuicao_notas: Dict[str, Dict[str, int]]
+    # KEPT FOR COMPAT (refactor 2026-05-04): top_detectores não é mais
+    # renderizado no Dashboard de turma (frontend) — substituído pelo
+    # diagnóstico cognitivo de 40 descritores (Fase 4 + proposta D).
+    # Permanece no payload pra retro-compat com:
+    #   - PDF generator (`pdf_generator._bloco_top_detectores` em
+    #     dashboard-turma + dashboard-escola)
+    #   - Escola dashboard (`/portal/escolas/{id}/dashboard` ainda
+    #     mostra TopDetector lá; refactor da escola fica fora do
+    #     escopo desse pacote)
     top_detectores: List[TopDetector]
     outros_detectores: int
     alunos_em_risco: List[AlunoEmRisco]
