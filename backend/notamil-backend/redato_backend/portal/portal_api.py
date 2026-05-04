@@ -2491,6 +2491,31 @@ class DiagnosticoTurmaTopLacuna(BaseModel):
     oficinas_sugeridas: List[Dict[str, Any]]
 
 
+class DiagnosticoCardAcao(BaseModel):
+    """Card de ação acionável (fix UX Fase 4 — proposta D, 2026-05-04).
+    Renderizado em uma das 3 categorias: agora / semana / mês."""
+    titulo: str
+    descricao: str
+    urgencia: str           # "alta" | "media" | "baixa"
+    lacunas_atendidas: List[str]
+    oficina_sugerida: Optional[Dict[str, str]] = None
+    """Sugestão de oficina (codigo, titulo, modo_correcao). Populado
+    SÓ pra urgencia='alta' — outros cards são consultivos sem CTA."""
+
+
+class DiagnosticoNarrativaTurma(BaseModel):
+    """Narrativa storytelling do dashboard (proposta D, fix UX Fase 4).
+
+    Substitui o `resumo_executivo` corrido como bloco principal —
+    agora frase narrativa curta + 3 listas de cards organizadas por
+    urgência temporal (agora / semana / mês).
+    """
+    narrativa_principal: str
+    acoes_agora: List[DiagnosticoCardAcao]
+    acoes_semana: List[DiagnosticoCardAcao]
+    acoes_mes: List[DiagnosticoCardAcao]
+
+
 class DiagnosticoAgregadoResponse(BaseModel):
     turma: DiagnosticoTurmaResumoTurma
     atualizado_em: Optional[str]
@@ -2505,8 +2530,13 @@ class DiagnosticoAgregadoResponse(BaseModel):
     """0-10 lacunas com ≥30% alunos. Vazia quando nenhum descritor
     passa do threshold (turma sem concentração crítica)."""
     resumo_executivo: str
-    """3-5 frases template-based. UI mostra como callout. Estado
-    vazio: 'Aguardando primeira redação corrigida da turma.'"""
+    """LEGACY (Fase 4 original): 3-5 frases template corrido. Mantido
+    pra compat — frontends antigos ainda leem daqui. Frontend novo
+    (proposta D) usa `narrativa.narrativa_principal` no lugar."""
+    narrativa: DiagnosticoNarrativaTurma
+    """Storytelling acionável (proposta D, fix UX Fase 4 2026-05-04).
+    Frontend renderiza como bloco principal; o heatmap completo
+    fica em accordion expansível."""
 
 
 @router.get(
@@ -2533,6 +2563,7 @@ def diagnostico_agregado_turma(
     from redato_backend.diagnostico.agregacao import (
         agregar_diagnosticos_turma,
     )
+    from redato_backend.diagnostico.narrativa import gerar_narrativa_turma
 
     with Session(get_engine()) as session:
         turma = _get_turma_or_404(session, turma_id)
@@ -2544,6 +2575,23 @@ def diagnostico_agregado_turma(
             turma_serie=turma.serie,
             db_session=session,
         )
+
+    # Fix UX Fase 4 (proposta D, 2026-05-04): gera narrativa
+    # storytelling + cards de ação. Usa o agregado já pronto —
+    # template estático, sem chamada externa.
+    narrativa = gerar_narrativa_turma(agregado)
+    narrativa_payload = DiagnosticoNarrativaTurma(
+        narrativa_principal=narrativa.narrativa_principal,
+        acoes_agora=[
+            DiagnosticoCardAcao(**c.to_dict()) for c in narrativa.acoes_agora
+        ],
+        acoes_semana=[
+            DiagnosticoCardAcao(**c.to_dict()) for c in narrativa.acoes_semana
+        ],
+        acoes_mes=[
+            DiagnosticoCardAcao(**c.to_dict()) for c in narrativa.acoes_mes
+        ],
+    )
 
     return DiagnosticoAgregadoResponse(
         turma=DiagnosticoTurmaResumoTurma(**agregado["turma"]),
@@ -2561,6 +2609,7 @@ def diagnostico_agregado_turma(
             for l in agregado["top_lacunas"]
         ],
         resumo_executivo=agregado["resumo_executivo"],
+        narrativa=narrativa_payload,
     )
 
 

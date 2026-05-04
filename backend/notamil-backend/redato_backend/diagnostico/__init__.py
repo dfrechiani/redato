@@ -69,6 +69,11 @@ from redato_backend.diagnostico.oficinas_livro import (
     status_mapeamento as status_mapeamento_livros,
     carregar_mapeamento,
 )
+from redato_backend.diagnostico.narrativa import (
+    NarrativaTurma,
+    CardAcao,
+    gerar_narrativa_turma,
+)
 
 __all__ = [
     # Fase 1 — descritores
@@ -104,4 +109,8 @@ __all__ = [
     "sugestoes_livro_to_dicts",
     "status_mapeamento_livros",
     "carregar_mapeamento",
+    # Fix UX Fase 4 (proposta D) — storytelling + ações
+    "NarrativaTurma",
+    "CardAcao",
+    "gerar_narrativa_turma",
 ]

@@ -64,7 +64,25 @@ substituir agente genérico").
 **Adiada** até Fase 5A rodar e gerar dados de uso real (saber qual
 oficina cobriu qual descritor, se o aluno melhorou depois).
 
-### ⏳ Fase 6 — Knowledge Tracing (longitudinal)
+### ⏳ Fase 6 — Narrativa via LLM (sub-tarefa do roadmap)
+
+Hoje (proposta D, 2026-05-04) a narrativa do dashboard de turma é
+**template estático** (`narrativa.py`). Funciona, mas frases ficam
+mecânicas — sempre o mesmo padrão "Dos N alunos da turma X, M têm
+dificuldade em…". 
+
+LLM dinâmico personalizaria por turma:
+- Mencionar histórico ("essa turma melhorou C3 desde a OF14")
+- Tom adaptado ao perfil ("turma tem boa base em C1 mas C5 ainda
+  patina")
+- Cards de ação com sugestões mais específicas (não só "use OF12")
+
+**Bloqueio**: ROI duvidoso enquanto não validamos com cursinhos
+parceiros se as narrativas template já cumprem a função. Custo:
+~$0.05/turma/dia × N turmas ativas. Espera Fase 7 (validação humana)
+pra ter sinal de qualidade.
+
+### ⏳ Fase 7 — Knowledge Tracing (longitudinal)
 
 Métrica: aluno fechou lacuna X após N redações? Visão de progresso
 ao longo do ano com curva por descritor.
@@ -73,7 +91,7 @@ ao longo do ano com curva por descritor.
 3-5 envios por aluno em janelas separadas pra gerar curva). Hoje
 volume de prod é muito baixo pra Knowledge Tracing dar sinal útil.
 
-### ⏳ Fase 7 — Validação humana
+### ⏳ Fase 8 — Validação humana
 
 Métricas de precisão (concordância com avaliador humano) + ajustes
 de prompt baseados em divergências sistemáticas.

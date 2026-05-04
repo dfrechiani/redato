@@ -161,8 +161,10 @@ do professor — o `categoria_inep` mantém a rastreabilidade.
 | **5A.1** Mapeamento livros → descritores | 🟡 2026-05-04 (rascunho heurístico) | Parser dos 3 HTMLs + mapeador (LLM ou heurístico) → JSON com 42 oficinas mapeadas. Endpoint `/perfil` ganha `oficinas_livro_sugeridas` filtradas por série + intensidade. Frontend mostra sub-bloco "Oficinas no livro" com aviso "em revisão". **Status atual**: rascunho gerado por **heurística keyword-match** (modo fallback, sem custo LLM). Daniel deve rodar com `OPENAI_API_KEY` pra upgradear pra GPT-4.1 quando puder. Detalhes em [`HOWTO_mapeamento_livros.md`](HOWTO_mapeamento_livros.md). |
 | **5A.2** Mapeamento descritores → BNCC | ⏳ pendente | Cruza 40 descritores com habilidades BNCC (EM13LP01, EM13LP02...). Output: `descritores_bncc.json`. Justificativa pedagógica pra coordenação. Estimativa 30min. |
 | **5B** Geração dinâmica de exercícios | ⏳ adiada | LLM gera exercício novo baseado na lacuna específica do aluno. Espera Fase 5A rodar e gerar dados de uso. |
-| **6** Knowledge Tracing | ⏳ adiada | Métrica longitudinal: aluno fechou lacuna X após N redações? Visão de progresso ao longo do ano. Espera dados acumulados de prod. |
-| **7** Validação humana | ⏳ pendente | Métricas de precisão (concordância com avaliador humano) + ajustes de prompt. Bloqueada por falta de dataset de validação. |
+| **6** Narrativa via LLM | ⏳ adiada | Substitui o template estático do dashboard de turma (proposta D, 2026-05-04) por narrativa personalizada por turma + cards de ação contextualizados. Bloqueada por ROI duvidoso até validação humana. |
+| **7** Knowledge Tracing | ⏳ adiada | Métrica longitudinal: aluno fechou lacuna X após N redações? Visão de progresso ao longo do ano. Espera dados acumulados de prod. |
+| **8** Validação humana | ⏳ pendente | Métricas de precisão (concordância com avaliador humano) + ajustes de prompt. Bloqueada por falta de dataset de validação. |
+| 🔧 fix UX | ✅ 2026-05-04 | **Proposta D — storytelling acionável**. Dashboard de turma reformatado: narrativa principal + 3 categorias temporais de cards (Trabalhar agora / Esta semana / Este mês) + heatmap em accordion fechado por default. Detalhes em [`HOWTO_diagnostico_turma.md`](HOWTO_diagnostico_turma.md). |
 
 ## Validação
 

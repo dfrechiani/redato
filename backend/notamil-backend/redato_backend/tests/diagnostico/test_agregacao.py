@@ -356,13 +356,16 @@ def test_endpoint_agregado_aluno_sem_diagnostico_nao_conta():
 # ──────────────────────────────────────────────────────────────────────
 
 def test_diagnostico_agregado_response_aceita_payload():
-    """DiagnosticoAgregadoResponse aceita estrutura completa."""
+    """DiagnosticoAgregadoResponse aceita estrutura completa.
+    Atualizado em 2026-05-04 (proposta D): payload exige campo
+    `narrativa` adicional pra storytelling acionável."""
     from redato_backend.portal.portal_api import (
         DiagnosticoAgregadoResponse,
         DiagnosticoTurmaResumoTurma,
         DiagnosticoTurmaPorDescritor,
         DiagnosticoTurmaPorCompetencia,
         DiagnosticoTurmaTopLacuna,
+        DiagnosticoNarrativaTurma,
     )
     r = DiagnosticoAgregadoResponse(
         turma=DiagnosticoTurmaResumoTurma(
@@ -397,6 +400,13 @@ def test_diagnostico_agregado_response_aceita_payload():
             ),
         ],
         resumo_executivo="A turma 1A...",
+        narrativa=DiagnosticoNarrativaTurma(
+            narrativa_principal="Dos 18 alunos da turma 1A...",
+            acoes_agora=[],
+            acoes_semana=[],
+            acoes_mes=[],
+        ),
     )
     assert r.turma.alunos_com_diagnostico == 18
     assert r.top_lacunas[0].percent_lacuna == 66.7
+    assert r.narrativa.narrativa_principal.startswith("Dos")

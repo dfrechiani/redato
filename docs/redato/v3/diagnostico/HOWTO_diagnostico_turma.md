@@ -1,6 +1,6 @@
-# HOWTO — Diagnóstico cognitivo agregado da turma (Fase 4)
+# HOWTO — Diagnóstico cognitivo agregado da turma (Fase 4 + UX D)
 
-**Atualizado:** 2026-05-04
+**Atualizado:** 2026-05-04 (fix UX proposta D — storytelling)
 
 ## O que é
 
@@ -31,7 +31,41 @@ Visibilidade:
 4. Bloco "Diagnóstico cognitivo da turma" aparece abaixo do
    evolução-da-turma chart
 
-## Layout (4 sub-blocos)
+## Layout (proposta D, 2026-05-04 — atualizado)
+
+> **Fix UX**: Daniel reportou que o layout original (4 sub-blocos
+> com heatmap dos 40 descritores em destaque) era pesado visualmente
+> — information overload, professor não sabia o que fazer primeiro.
+> Reorganizado em **storytelling acionável**: narrativa curta + 3
+> categorias temporais de ações. Heatmap detalhado vai pra
+> accordion expansível (não some, só fica em segundo plano).
+
+Layout atual (top-down):
+
+1. **Header compacto**: título + cobertura + barrinha + aviso opcional
+2. **Narrativa principal** ("🎯 O que sua turma precisa agora"):
+   1 frase curta com top lacuna + percentual + esclarecimento
+3. **3 categorias temporais de cards de ação**:
+   - 🔴 **TRABALHAR AGORA** — descritores ≥50% lacuna (max 2 cards
+     com botão "Criar atividade" se houver oficina catalogada)
+   - 🟡 **ESTA SEMANA** — descritores 30-49% lacuna (max 3 cards
+     consultivos sem CTA forte)
+   - 🟢 **ESTE MÊS** — competências com ≥2 descritores em alerta
+     (max 2 cards de monitoramento)
+4. **▼ Ver mapa completo dos 40 descritores** — accordion fechado
+   por default, expande pro layout antigo (heatmap 5 colunas + top
+   lacunas detalhadas)
+
+Cada card de ação tem borda colorida pela urgência (vermelho/amarelo/
+verde) e fundo sutil correspondente — sinaliza temporalidade sem
+precisar reler.
+
+### (legacy) Layout original — sub-blocos da Fase 4 inicial
+
+Os 4 sub-blocos originais (Visão geral, Resumo executivo, Heatmap,
+Top lacunas) ficam disponíveis no accordion. Endpoint preserva o
+campo `resumo_executivo` pra retro-compat — qualquer cliente antigo
+não regride.
 
 ### Sub-bloco 1 — Visão geral
 
@@ -169,6 +203,20 @@ intervenção).
 4. **Valida em 1-2 semanas**: depois que turma fizer a nova
    atividade e diagnóstico rodar, volta no Dashboard. % alunos
    com lacuna naqueles descritores deve ter caído.
+
+## Como interpretar urgência (proposta D)
+
+- **🔴 Trabalhar agora**: lacunas em ≥50% dos alunos diagnosticados.
+  Mini-aula coletiva ANTES da próxima atividade — senão a turma
+  inteira repete o mesmo erro. Card traz oficina sugerida + botão
+  "Criar atividade" pra ativar imediatamente.
+- **🟡 Esta semana**: 30-49% lacuna. Não é catastrófico mas merece
+  revisão dirigida em algum momento da semana — pode ser exercício
+  rápido, exemplo no quadro, comentário recorrente em devolutivas.
+  Sem CTA forte de oficina (pra não saturar com criação de atividades).
+- **🟢 Este mês**: competência inteira com ≥2 descritores críticos.
+  Visão de longo prazo — reavaliar após 2-3 redações. Foco em
+  monitorar evolução, não em ação imediata.
 
 ## Limitações conhecidas
 

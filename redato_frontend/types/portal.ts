@@ -584,6 +584,28 @@ export interface DiagnosticoTurmaTopLacuna {
   oficinas_sugeridas: DiagnosticoTurmaTopLacunaOficina[];
 }
 
+/** Card de ação acionável (fix UX Fase 4 — proposta D, 2026-05-04).
+ *  Renderizado em uma das 3 categorias temporais. */
+export interface DiagnosticoCardAcao {
+  titulo: string;
+  descricao: string;
+  /** "alta" | "media" | "baixa". Frontend usa pra cor da borda do card. */
+  urgencia: string;
+  lacunas_atendidas: string[];
+  /** {codigo, titulo, modo_correcao}. Populado SÓ pra urgencia="alta"
+   *  — outros cards são consultivos sem CTA forte. */
+  oficina_sugerida: { codigo: string; titulo: string; modo_correcao: string } | null;
+}
+
+export interface DiagnosticoNarrativaTurma {
+  /** 1 frase descrevendo lacuna principal da turma. Estado vazio
+   *  (cobertura <30%): mensagem pedindo mais envios. */
+  narrativa_principal: string;
+  acoes_agora: DiagnosticoCardAcao[];
+  acoes_semana: DiagnosticoCardAcao[];
+  acoes_mes: DiagnosticoCardAcao[];
+}
+
 export interface DiagnosticoAgregado {
   turma: DiagnosticoTurmaResumoTurma;
   /** ISO UTC do diagnóstico mais recente da turma. `null` se nenhum
@@ -596,8 +618,13 @@ export interface DiagnosticoAgregado {
   /** 0-10 lacunas com >=30% alunos. Vazia quando nenhum descritor
    *  passa do threshold. */
   top_lacunas: DiagnosticoTurmaTopLacuna[];
-  /** 3-5 frases template-based. UI mostra como callout. */
+  /** LEGACY (Fase 4 original): 3-5 frases template corrido. UI nova
+   *  (proposta D) usa `narrativa.narrativa_principal` como bloco
+   *  principal e mantém `resumo_executivo` só pra retro-compat. */
   resumo_executivo: string;
+  /** Storytelling acionável (proposta D, fix UX Fase 4 2026-05-04).
+   *  Bloco principal da UI — substitui o `resumo_executivo` corrido. */
+  narrativa: DiagnosticoNarrativaTurma;
 }
 
 // ──────────────────────────────────────────────────────────────────────
