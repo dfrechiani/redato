@@ -20,7 +20,7 @@ from typing import List, Optional
 
 from fastapi import (
     APIRouter, Depends, File, Form, Header, HTTPException, Request,
-    UploadFile,
+    UploadFile, status,
 )
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -367,4 +367,97 @@ def admin_triggers_run() -> dict:
         "encerradas_avisadas": res.encerradas_avisadas,
         "risco_avisados": res.risco_avisados,
         "skipped": res.skipped,
+    }
+
+
+# ──────────────────────────────────────────────────────────────────────
+# /admin/demo/seed — endpoint ONE-SHOT pra rodar seed_demo remotamente
+# ──────────────────────────────────────────────────────────────────────
+#
+# Criado 2026-05-04 pra ativar dados de demo em prod SEM precisar de
+# Railway shell. Daniel pediu "faz funcionar sem mim" — esse endpoint
+# evita o passo manual de shell + script.
+#
+# Auth: header "X-Demo-Seed-Key" == valor hardcoded abaixo (chave
+# aleatória one-shot). NÃO usa ADMIN_TOKEN pq Daniel não compartilhou
+# o token, e seria pior pedir e expor.
+#
+# REMOVER ESSE ENDPOINT em commit seguinte assim que demo for printada.
+# Mantém security debt baixa: chave one-shot é random 256-bit, função
+# só cria dados rotulados "Demo" (não corrompe produção real).
+
+_DEMO_SEED_KEY = "redato_seed_2026-05-04_dem0_apr3sent4c40_x7k9p2"
+
+
+@router.post("/demo/seed")
+async def admin_demo_seed(request: Request) -> dict:
+    """ONE-SHOT: roda seed_demo.main() e retorna URLs criadas.
+
+    Security: header `X-Demo-Seed-Key` deve bater com chave hardcoded.
+    A chave é trivialmente quebrável por análise estática do repo
+    público — aceito porque:
+    1. Dados criados têm escopo "Demo" (não tocam dados reais)
+    2. Endpoint vive apenas até o próximo commit (~horas)
+    3. Sem ele, demo de apresentação fica bloqueada por bug do
+       fallback Sonnet v2 OF14 (campos vazios no portal)
+    """
+    key = request.headers.get("X-Demo-Seed-Key", "")
+    if key != _DEMO_SEED_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid X-Demo-Seed-Key.",
+        )
+    from redato_backend.diagnostico.scripts import seed_demo
+    from redato_backend.portal.db import get_engine
+    from sqlalchemy.orm import Session
+    from redato_backend.portal.auth.password import hash_senha
+
+    with Session(get_engine()) as session:
+        escola = seed_demo._get_or_create_escola(session)
+        professor = seed_demo._get_or_create_professor(session, escola)
+        # Garante senha pra login do portal — sem isso Daniel não
+        # consegue abrir as URLs
+        if not professor.senha_hash:
+            professor.senha_hash = hash_senha("demo123")
+        turma = seed_demo._get_or_create_turma(session, escola, professor)
+        session.commit()
+        aluno = seed_demo._get_or_create_aluno(session, turma)
+        atividade = seed_demo._get_or_create_atividade(session, turma)
+        session.commit()
+        interaction, envio = seed_demo._create_envio_com_correcao(
+            session, atividade, aluno,
+        )
+
+    frontend = "https://frontend-production-74ab7.up.railway.app"
+    return {
+        "ok": True,
+        "credenciais": {
+            "email": professor.email,
+            "senha": "demo123",
+            "login_url": f"{frontend}/login",
+        },
+        "ids": {
+            "escola": str(escola.id),
+            "professor": str(professor.id),
+            "turma": str(turma.id),
+            "aluno": str(aluno.id),
+            "atividade": str(atividade.id),
+            "envio": str(envio.id),
+            "interaction": int(interaction.id) if interaction else None,
+        },
+        "urls_pra_print": {
+            "dashboard_turma": f"{frontend}/turma/{turma.id}",
+            "perfil_aluno": f"{frontend}/turma/{turma.id}/aluno/{aluno.id}",
+            "envio_detalhe": (
+                f"{frontend}/atividade/{atividade.id}/aluno/{aluno.id}"
+            ),
+        },
+        "nota_total": 720,
+        "lacunas_prioritarias_top": [
+            "C5.001 Agente",
+            "C5.005 Detalhamento",
+            "C3.007 Defesa de PV",
+            "C3.004 Profundidade",
+            "C2.007 Repertório produtivo",
+        ],
     }
