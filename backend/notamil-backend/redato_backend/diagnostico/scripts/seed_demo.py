@@ -459,9 +459,11 @@ def _get_or_create_escola(session) -> Any:
     if escola:
         return escola
     escola = Escola(
+        codigo="DEMO-ESC",
         nome=DEMO_ESCOLA_NOME,
-        cidade="São Paulo",
+        municipio="São Paulo",
         estado="SP",
+        ativa=True,
     )
     session.add(escola)
     session.flush()
@@ -566,6 +568,7 @@ def _get_or_create_atividade(session, turma) -> Any:
         missao_id=missao.id,
         data_inicio=agora - timedelta(days=1),
         data_fim=agora + timedelta(days=30),
+        criada_por_professor_id=turma.professor_id,
     )
     session.add(atividade)
     session.flush()
