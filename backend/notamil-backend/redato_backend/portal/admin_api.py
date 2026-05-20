@@ -407,26 +407,35 @@ async def admin_demo_seed(request: Request) -> dict:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid X-Demo-Seed-Key.",
         )
-    from redato_backend.diagnostico.scripts import seed_demo
-    from redato_backend.portal.db import get_engine
-    from sqlalchemy.orm import Session
-    from redato_backend.portal.auth.password import hash_senha
+    import traceback
+    try:
+        from redato_backend.diagnostico.scripts import seed_demo
+        from redato_backend.portal.db import get_engine
+        from sqlalchemy.orm import Session
+        from redato_backend.portal.auth.password import hash_senha
 
-    with Session(get_engine()) as session:
-        escola = seed_demo._get_or_create_escola(session)
-        professor = seed_demo._get_or_create_professor(session, escola)
-        # Garante senha pra login do portal — sem isso Daniel não
-        # consegue abrir as URLs
-        if not professor.senha_hash:
-            professor.senha_hash = hash_senha("demo123")
-        turma = seed_demo._get_or_create_turma(session, escola, professor)
-        session.commit()
-        aluno = seed_demo._get_or_create_aluno(session, turma)
-        atividade = seed_demo._get_or_create_atividade(session, turma)
-        session.commit()
-        interaction, envio = seed_demo._create_envio_com_correcao(
-            session, atividade, aluno,
-        )
+        with Session(get_engine()) as session:
+            escola = seed_demo._get_or_create_escola(session)
+            professor = seed_demo._get_or_create_professor(session, escola)
+            # Garante senha pra login do portal — sem isso Daniel não
+            # consegue abrir as URLs
+            if not professor.senha_hash:
+                professor.senha_hash = hash_senha("demo123")
+            turma = seed_demo._get_or_create_turma(session, escola, professor)
+            session.commit()
+            aluno = seed_demo._get_or_create_aluno(session, turma)
+            atividade = seed_demo._get_or_create_atividade(session, turma)
+            session.commit()
+            interaction, envio = seed_demo._create_envio_com_correcao(
+                session, atividade, aluno,
+            )
+    except Exception as exc:  # pragma: no cover - debug one-shot
+        return {
+            "ok": False,
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+            "traceback": traceback.format_exc().splitlines()[-40:],
+        }
 
     frontend = "https://frontend-production-74ab7.up.railway.app"
     return {
