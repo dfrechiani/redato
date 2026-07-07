@@ -89,6 +89,15 @@ app.include_router(jogo_router)
 from redato_backend.whatsapp.webhook import router as twilio_router  # noqa: E402
 app.include_router(twilio_router)
 
+# B2C — Correção {Parceiro} (SPEC_B2C_REDATO.md). Routers montados sempre
+# (endpoints existem), mas todo o comportamento fica atrás da flag
+# REDATO_B2C_ENABLED: com a flag off, o webhook responde no-op e o desvio
+# no bot nem é consultado. Sem flag → fluxo escola (B2G) intocado.
+from redato_backend.billing.webhook import router as billing_router  # noqa: E402
+from redato_backend.b2c.admin_api import router as b2c_admin_router  # noqa: E402
+app.include_router(billing_router)
+app.include_router(b2c_admin_router)
+
 
 @app.get("/")
 def root() -> dict:
