@@ -259,3 +259,30 @@ def test_is_valid_missao_rejeita_formatos_errados():
     assert _is_valid_missao("rj1·of10·mf") is False   # lowercase
     assert _is_valid_missao("") is False
     assert _is_valid_missao(None) is False  # type: ignore[arg-type]
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Regressão B2C (SPEC_B2C_REDATO.md §7 critérios 1 e 8): o desvio B2C
+# não pode afetar o roteamento do fluxo escola (B2G).
+# ──────────────────────────────────────────────────────────────────────
+
+def test_b2c_desvio_off_e_noop(monkeypatch):
+    """Com REDATO_B2C_ENABLED off, o desvio B2C retorna None sem tocar
+    repo/DB — o bot segue pro fluxo escola exatamente como antes."""
+    monkeypatch.delenv("REDATO_B2C_ENABLED", raising=False)
+    from redato_backend.b2c.router import maybe_route_b2c
+    from redato_backend.whatsapp.bot import InboundMessage
+    assert maybe_route_b2c(InboundMessage(phone="+5561999999999", text="10")) is None
+
+
+def test_handle_inbound_hook_b2c_na_ordem_certa():
+    """O hook B2C entra DEPOIS do lookup de professor e ANTES do
+    get_aluno do fluxo escola — garante que B2G nunca é sequestrado."""
+    import inspect
+    from redato_backend.whatsapp import bot
+    src = inspect.getsource(bot.handle_inbound)
+    assert "maybe_route_b2c" in src
+    i_prof = src.index("find_professor_por_telefone")
+    i_b2c = src.index("maybe_route_b2c")
+    i_aluno = src.index("P.get_aluno(msg.phone)")
+    assert i_prof < i_b2c < i_aluno
