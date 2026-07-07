@@ -27,8 +27,17 @@ TWILIO_CONTENT_SID_M9=<HX...>
 ```
 
 ## 2. Migration
-- `alembic upgrade head` no Postgres do Railway (revision `l0a1b2c3d4e5`, head único).
-- **Antes**, num Postgres descartável local, validar o ciclo: `upgrade head` → `downgrade -1` → `upgrade head`. Confirmar como o Railway aplica migrations hoje (release command? manual?) e registrar aqui.
+**Mecanismo do Railway (confirmado — §13.8):** migrations rodam **SEMPRE manualmente via Railway Shell**, NUNCA no boot. Motivo documentado em `docs/redato/v3/DEPLOY_RAILWAY.md` (§"Sequência de migration manual"): o serviço sobe com 2 dynos em rolling restart e ambos tentariam `alembic upgrade head` → lock no Postgres. Não existe release command; `startCommand` (railway.toml) é só o uvicorn. **Não setar `ALEMBIC_AUTO_UPGRADE`.**
+
+Sequência (uma vez por deploy de schema):
+```
+railway shell --service redato-backend        # ou UI → backend → Open Shell
+alembic -c redato_backend/portal/alembic.ini current      # deve mostrar k0a1b2c3d4e5
+alembic -c redato_backend/portal/alembic.ini upgrade head # aplica l0a1b2c3d4e5
+alembic -c redato_backend/portal/alembic.ini current      # confirma l0a1b2c3d4e5 (head)
+```
+
+**Ciclo validado localmente (feito):** contra um Postgres efêmero real (via `pgserver`), a cadeia inteira rodou `upgrade head → downgrade -1 (l→k) → upgrade head (k→l)` sem erro; as 6 tabelas B2C (parceiros_b2c, alunos_b2c, assinaturas_b2c, envios_b2c, eventos_billing, notificacoes_degradadas) e as colunas novas (`envios_b2c.tema/status` etc.) presentes ao fim. A migration `l0a1b2c3d4e5` (head único) é reversível nos dois sentidos. Rerodar antes do deploy: `python /tmp/migration_cycle_test.py` (ou equivalente com `pgserver`).
 
 ## 3. Seed do parceiro
 - `python scripts/seed_parceiro.py` → parceiro DEMO (idempotente). Parceiros reais só depois do piloto validado.
@@ -58,5 +67,5 @@ ANTHROPIC_API_KEY=sk-... python scripts/validar_tema_c2.py
 - Motor de correção único e público: `redato_backend/grading/grade_essay_completo`. B2C usa `force_claude=True` — o FT (OF14) não foi treinado pra usar tema e é evitado por pino explícito.
 - Tema é injetado no campo `theme` do grader (`TEMA: {theme}` no prompt) — o mesmo campo do B2G.
 - Pendência de tema vive em `envios_b2c.status='aguardando_tema'` (não no estado do aluno) → degustação e assinante podem ambos ter pendência sem perder o paywall. Fair use e correção grátis contam SÓ envio `corrigido`.
-- Janela de 24h: mensagens de negócio (M5/M8/M9) via `b2c/notify.enviar_negocio` → freeform dentro da janela, Content template fora. Sem template aprovado → freeform degradado + warning (submeter templates).
+- Janela de 24h: mensagens de negócio (M5/M8/M9) via `b2c/notify.enviar_negocio` → freeform dentro da janela, Content template fora. Sem template aprovado → **freeform degradado** (provavelmente NÃO entregue) → registrado em `notificacoes_degradadas` e visível como `operacao.envios_degradados` no `/admin/b2c/metricas`; o retorno do daily-tick lista quais M9 saíram degradadas (`degradado: true`) + `degradados: N`. A régua avança mesmo assim (reflete o pagamento, não a entrega). **Enquanto `envios_degradados > 0`, há aluno sendo cobrado/avisado sem receber — submeter os templates é o fix.**
 - Eventos Asaas desconhecidos → `eventos_billing.processado=false` + contador `eventos_pendentes` nas métricas. Divergência de split → `status='atencao_split'` (não quebra o fluxo).

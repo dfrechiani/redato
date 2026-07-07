@@ -1263,3 +1263,32 @@ class EventoBilling(Base):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<EventoBilling tipo={self.tipo} key={self.dedupe_key}>"
+
+
+class NotificacaoDegradada(Base):
+    """ADENDO §D9 (mitigação): registro de mensagem de negócio que caiu
+    no envio degradado — fora da janela de 24h E sem Content SID aprovado.
+    Freeform fora da janela NÃO entrega no WhatsApp, mas o app "acha" que
+    enviou. Warning em log ninguém lê; aqui vira número visível por
+    parceiro (métrica `envios_degradados`) e por execução do daily-tick."""
+    __tablename__ = "notificacoes_degradadas"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    parceiro_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("parceiros_b2c.id"),
+        nullable=False, index=True,
+    )
+    aluno_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("alunos_b2c.id"), nullable=True,
+    )
+    template_key: Mapped[str] = mapped_column(String(16), nullable=False)
+    telefone_e164: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False, index=True,
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (f"<NotificacaoDegradada {self.template_key} "
+                f"parceiro={self.parceiro_id}>")

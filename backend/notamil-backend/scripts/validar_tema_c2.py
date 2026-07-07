@@ -29,6 +29,24 @@ if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
 
+def _carregar_env() -> None:
+    """Carrega ANTHROPIC_API_KEY do backend/.env (gitignored) se não
+    estiver já no ambiente. Nunca commitar a chave; o .env fica fora do
+    git (ver .gitignore)."""
+    env_path = BACKEND / ".env"
+    if os.environ.get("ANTHROPIC_API_KEY") or not env_path.exists():
+        return
+    for line in env_path.read_text().splitlines():
+        line = line.strip()
+        if line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_carregar_env()
+
+
 # (redação, tema_aderente, tema_off_topic)
 PARES = [
     (

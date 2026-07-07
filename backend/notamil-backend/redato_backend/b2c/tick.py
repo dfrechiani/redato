@@ -67,18 +67,26 @@ def rodar_tick(
             repo.atualizar_aluno(a["telefone"], estado="inadimplente")
             resultados.append({"sub_id": a["sub_id"], "acao": "bloqueado"})
         elif dias >= 3 and estagio < 2:
-            # D+3 → M9 (respeitando a janela 24h — §D9).
+            # D+3 → M9 (respeitando a janela 24h — §D9). A régua AVANÇA
+            # mesmo se o envio degradar (ela reflete o pagamento, não a
+            # entrega da mensagem).
             repo.avancar_regua(a["sub_id"], 2)
             aluno = repo.get_aluno_por_id(a["aluno_id"])
             ultima_inbound = aluno.ultima_inbound_at if aluno else None
-            notify.notificar_negocio(
+            path = notify.notificar_negocio(
                 a["telefone"],
                 M.assinar(M.M9_OVERDUE_D3.format(nome=nome, link_fatura=link),
                           branding),
                 template_key="M9", template_vars=[nome, "", link],
                 ultima_inbound_at=ultima_inbound, override=notificar,
             )
-            resultados.append({"sub_id": a["sub_id"], "acao": "M9"})
+            degradado = path == "freeform_fallback"
+            if degradado:
+                repo.registrar_notificacao_degradada(
+                    a["parceiro_id"], "M9", aluno_id=a["aluno_id"],
+                    telefone=a["telefone"])
+            resultados.append({"sub_id": a["sub_id"], "acao": "M9",
+                               "degradado": degradado})
 
     return resultados
 
@@ -93,4 +101,10 @@ def daily_tick(
     if not expected or b2c_tick_token != expected:
         raise HTTPException(status_code=401, detail="Invalid tick token")
     resultados = rodar_tick()
-    return {"status": "ok", "promovidos": len(resultados), "detalhe": resultados}
+    degradados = [r for r in resultados if r.get("degradado")]
+    return {
+        "status": "ok",
+        "promovidos": len(resultados),
+        "degradados": len(degradados),
+        "detalhe": resultados,
+    }

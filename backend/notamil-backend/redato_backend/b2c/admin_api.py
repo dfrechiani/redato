@@ -87,6 +87,9 @@ def metricas(
         "correcoes_por_assinante_p95": _percentil(por_assinante, 95),
         "fotos_bloqueadas": repo.contar_fotos_bloqueadas(p.id),
         "eventos_pendentes": repo.contar_eventos_pendentes(p.id),
+        # §D9: mensagens de negócio que caíram no envio degradado (fora da
+        # janela 24h, sem template aprovado) — provavelmente NÃO entregues.
+        "envios_degradados": repo.contar_notificacoes_degradadas(p.id),
     }
 
     mrr_centavos = funil["assinantes_ativos"] * p.preco_centavos

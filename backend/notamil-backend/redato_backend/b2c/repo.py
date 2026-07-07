@@ -19,7 +19,8 @@ from sqlalchemy import func, select
 
 from redato_backend.portal.db import get_session
 from redato_backend.portal.models import (
-    AlunoB2C, AssinaturaB2C, EnvioB2C, EventoBilling, ParceiroB2C,
+    AlunoB2C, AssinaturaB2C, EnvioB2C, EventoBilling,
+    NotificacaoDegradada, ParceiroB2C,
 )
 
 
@@ -640,6 +641,29 @@ def contar_eventos_pendentes(parceiro_id: str) -> int:
             .where(
                 AlunoB2C.parceiro_id == parceiro_id,
                 EventoBilling.processado.is_(False),
+            )
+        ).scalar_one()
+        return int(n or 0)
+
+
+def registrar_notificacao_degradada(
+    parceiro_id: str, template_key: str, *,
+    aluno_id: Optional[str] = None, telefone: Optional[str] = None,
+) -> None:
+    """Registra mensagem de negócio que caiu no envio degradado (§D9) —
+    fora da janela 24h e sem Content SID. Vira número visível."""
+    with get_session() as s:
+        s.add(NotificacaoDegradada(
+            parceiro_id=parceiro_id, aluno_id=aluno_id,
+            template_key=template_key, telefone_e164=telefone,
+        ))
+
+
+def contar_notificacoes_degradadas(parceiro_id: str) -> int:
+    with get_session() as s:
+        n = s.execute(
+            select(func.count()).select_from(NotificacaoDegradada).where(
+                NotificacaoDegradada.parceiro_id == parceiro_id,
             )
         ).scalar_one()
         return int(n or 0)

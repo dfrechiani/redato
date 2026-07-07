@@ -26,6 +26,7 @@ class FakeStore:
         self.sub_index: Dict[str, str] = {}            # sub_id -> aluno_id
         self.envios: List[Dict[str, Any]] = []
         self.eventos: Dict[str, Dict[str, Any]] = {}   # dedupe_key -> evento
+        self.degradadas: List[Dict[str, Any]] = []
         self._ids = itertools.count(1)
 
     def _nid(self, prefix: str) -> str:
@@ -221,6 +222,16 @@ class FakeStore:
         return sum(1 for ev in self.eventos.values()
                    if ev.get("aluno_id") in alunos_ids and not ev.get("processado"))
 
+    def registrar_notificacao_degradada(self, parceiro_id, template_key, *,
+                                        aluno_id=None, telefone=None) -> None:
+        self.degradadas.append({
+            "parceiro_id": parceiro_id, "template_key": template_key,
+            "aluno_id": aluno_id, "telefone": telefone,
+        })
+
+    def contar_notificacoes_degradadas(self, parceiro_id) -> int:
+        return sum(1 for d in self.degradadas if d["parceiro_id"] == parceiro_id)
+
     def correcoes_por_assinante_ativo(self, parceiro_id) -> List[int]:
         ativos = {a.id for a in self.alunos.values()
                   if a.parceiro_id == parceiro_id
@@ -330,6 +341,7 @@ _REPO_FNS = [
     "marcar_evento_processado", "contar_alunos_por_estado", "metricas_envios",
     "contar_fotos_bloqueadas", "contar_eventos_pendentes",
     "correcoes_por_assinante_ativo",
+    "registrar_notificacao_degradada", "contar_notificacoes_degradadas",
 ]
 
 

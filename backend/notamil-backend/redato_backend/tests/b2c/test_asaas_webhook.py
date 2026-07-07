@@ -140,6 +140,38 @@ def test_evento_desconhecido_fica_pendente(store):
     assert store.contar_eventos_pendentes(p.id) == 1
 
 
+def test_tick_registra_envio_degradado_visivel(store, monkeypatch):
+    """§D9 mitigação: M9 fora da janela sem Content SID → freeform
+    degradado. A régua AVANÇA, mas o degradado vira número (contador +
+    aparece no retorno do tick)."""
+    from datetime import datetime, timedelta, timezone
+    from redato_backend.b2c import notify
+    from redato_backend.b2c.tick import rodar_tick
+
+    monkeypatch.delenv("TWILIO_CONTENT_SID_M9", raising=False)
+    tentou = []
+    monkeypatch.setattr(notify.TwilioSender, "freeform",
+                        lambda self, ph, tx: tentou.append((ph, tx)))
+
+    p = store.add_parceiro(preco_centavos=3990, wallet_id_asaas="w", share_pct=30)
+    velho = datetime(2026, 1, 1, tzinfo=timezone.utc)  # fora da janela 24h
+    a = store.add_aluno("+5511777", p.id, estado="ativo", nome="Ana",
+                        ultima_inbound_at=velho)
+    store.upsert_assinatura(a.id, valor_centavos=3990,
+                            asaas_subscription_id="sub_x", status="pendente")
+    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o1"),
+                      notificar=lambda *_: None)
+    od = store.get_assinatura_por_aluno(a.id).overdue_desde
+
+    # tick D+3 SEM override → notify real → freeform degradado.
+    resultados = rodar_tick(agora=od + timedelta(days=3))
+    m9 = [r for r in resultados if r["acao"] == "M9"]
+    assert m9 and m9[0]["degradado"] is True             # aparece no retorno
+    assert store.contar_notificacoes_degradadas(p.id) == 1  # contador
+    assert store.get_assinatura_por_aluno(a.id).regua_estagio == 2  # régua avançou
+    assert tentou                                        # tentou freeform (não entrega)
+
+
 def test_split_divergencia_marca_atencao(store):
     p, a = _seed_assinante(store, estado="ativo")
     processar_webhook(

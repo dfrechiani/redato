@@ -122,27 +122,39 @@ def handle_asaas_event(
         repo.zerar_regua(sub_id)
         repo.atualizar_status_assinatura(sub_id, "ativa")
         repo.atualizar_aluno(aluno.telefone_e164, estado="ativo")
-        notify.notificar_negocio(
+        path = notify.notificar_negocio(
             aluno.telefone_e164,
             M.assinar(M.M5_LIBERADO.format(nome=nome), branding),
             template_key="M5", template_vars=[nome, nome_publico, link],
             ultima_inbound_at=aluno.ultima_inbound_at, override=notificar,
         )
-        return {"handled": True, "acao": "ativado", "estado": "ativo"}
+        degradado = path == "freeform_fallback"
+        if degradado:
+            repo.registrar_notificacao_degradada(
+                aluno.parceiro_id, "M5", aluno_id=aluno.id,
+                telefone=aluno.telefone_e164)
+        return {"handled": True, "acao": "ativado", "estado": "ativo",
+                "degradado": degradado}
 
     if event in _OVERDUE:
         # D0: só M8 + inicia a régua. A escalada M9 (D+3) e o bloqueio
         # (D+5) são do daily-tick (§D8) — o webhook OVERDUE não repete.
         from datetime import datetime, timezone
         repo.iniciar_overdue(sub_id, datetime.now(timezone.utc))
-        notify.notificar_negocio(
+        path = notify.notificar_negocio(
             aluno.telefone_e164,
             M.assinar(M.M8_OVERDUE_D0.format(
                 nome=nome, nome_publico=nome_publico, link_fatura=link), branding),
             template_key="M8", template_vars=[nome, nome_publico, link],
             ultima_inbound_at=aluno.ultima_inbound_at, override=notificar,
         )
-        return {"handled": True, "acao": "overdue_d0", "estado": aluno.estado}
+        degradado = path == "freeform_fallback"
+        if degradado:
+            repo.registrar_notificacao_degradada(
+                aluno.parceiro_id, "M8", aluno_id=aluno.id,
+                telefone=aluno.telefone_e164)
+        return {"handled": True, "acao": "overdue_d0", "estado": aluno.estado,
+                "degradado": degradado}
 
     if event in _SPLIT_ATENCAO:
         # §D13: não quebra o fluxo; marca atenção e segue.

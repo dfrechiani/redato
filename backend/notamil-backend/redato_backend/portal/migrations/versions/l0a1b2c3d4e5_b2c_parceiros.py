@@ -185,8 +185,26 @@ def upgrade() -> None:
     op.create_index("ix_eventos_billing_dedupe_key", "eventos_billing",
                     ["dedupe_key"], unique=True)
 
+    op.create_table(
+        "notificacoes_degradadas",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
+        sa.Column("parceiro_id", postgresql.UUID(as_uuid=True),
+                  sa.ForeignKey("parceiros_b2c.id"), nullable=False),
+        sa.Column("aluno_id", postgresql.UUID(as_uuid=True),
+                  sa.ForeignKey("alunos_b2c.id"), nullable=True),
+        sa.Column("template_key", sa.String(16), nullable=False),
+        sa.Column("telefone_e164", sa.String(20), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
+                  server_default=sa.func.now()),
+    )
+    op.create_index("ix_notificacoes_degradadas_parceiro_id",
+                    "notificacoes_degradadas", ["parceiro_id"])
+    op.create_index("ix_notificacoes_degradadas_created_at",
+                    "notificacoes_degradadas", ["created_at"])
+
 
 def downgrade() -> None:
+    op.drop_table("notificacoes_degradadas")
     op.drop_table("eventos_billing")
     op.drop_table("envios_b2c")
     op.drop_table("assinaturas_b2c")
