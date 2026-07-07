@@ -95,8 +95,10 @@ app.include_router(twilio_router)
 # no bot nem é consultado. Sem flag → fluxo escola (B2G) intocado.
 from redato_backend.billing.webhook import router as billing_router  # noqa: E402
 from redato_backend.b2c.admin_api import router as b2c_admin_router  # noqa: E402
+from redato_backend.b2c.tick import router as b2c_tick_router  # noqa: E402
 app.include_router(billing_router)
 app.include_router(b2c_admin_router)
+app.include_router(b2c_tick_router)
 
 
 @app.get("/")

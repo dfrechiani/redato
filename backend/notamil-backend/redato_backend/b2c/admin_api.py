@@ -48,6 +48,16 @@ def computar_funil(estados: Dict[str, int]) -> Dict[str, int]:
     }
 
 
+def _percentil(valores: list, p: float) -> int:
+    """Percentil simples (nearest-rank). `p` em 0..100."""
+    if not valores:
+        return 0
+    ordenados = sorted(valores)
+    k = max(0, min(len(ordenados) - 1,
+                   int(round((p / 100) * (len(ordenados) - 1)))))
+    return int(ordenados[k])
+
+
 # ──────────────────────────────────────────────────────────────────────
 # GET /admin/b2c/metricas
 # ──────────────────────────────────────────────────────────────────────
@@ -65,20 +75,38 @@ def metricas(
     funil = computar_funil(estados)
     envios = repo.metricas_envios(p.id)
 
+    # Operação (§D11): custo médio por correção + P50/P95 por assinante.
+    total_corr = envios["total_correcoes"]
+    custo_total = envios["custo_estimado_centavos"]
+    custo_medio = int(custo_total / total_corr) if total_corr else 0
+    por_assinante = repo.correcoes_por_assinante_ativo(p.id)
+    operacao = {
+        **envios,
+        "custo_medio_centavos": custo_medio,
+        "correcoes_por_assinante_p50": _percentil(por_assinante, 50),
+        "correcoes_por_assinante_p95": _percentil(por_assinante, 95),
+        "fotos_bloqueadas": repo.contar_fotos_bloqueadas(p.id),
+        "eventos_pendentes": repo.contar_eventos_pendentes(p.id),
+    }
+
     mrr_centavos = funil["assinantes_ativos"] * p.preco_centavos
     parte_parceiro_centavos = (
         int(mrr_centavos * (p.share_pct or 0) / 100)
         if p.share_pct is not None else 0
     )
+    # Margem estimada = MRR − parte do parceiro − custo estimado do período.
+    margem_centavos = mrr_centavos - parte_parceiro_centavos - custo_total
     return {
         "parceiro": {"slug": p.slug, "nome_publico": p.nome_publico},
         "funil": funil,
-        "operacao": envios,
+        "operacao": operacao,
         "financeiro": {
             "preco_centavos": p.preco_centavos,
             "mrr_centavos": mrr_centavos,
             "share_pct": float(p.share_pct) if p.share_pct is not None else None,
             "parte_parceiro_centavos": parte_parceiro_centavos,
+            "custo_estimado_centavos": custo_total,
+            "margem_estimada_centavos": margem_centavos,
         },
     }
 

@@ -25,7 +25,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 
-from redato_backend.b2c import config, repo
+from redato_backend.b2c import config, notify, repo
 from redato_backend.b2c import messages as M
 
 
@@ -83,12 +83,18 @@ def _notificar_twilio(phone: str, textos: List[str]) -> None:
 _PAGO = {"PAYMENT_CONFIRMED", "PAYMENT_RECEIVED", "PAYMENT_RECEIVED_IN_CASH"}
 _OVERDUE = {"PAYMENT_OVERDUE"}
 _CANCELADO = {"SUBSCRIPTION_DELETED", "PAYMENT_DELETED", "SUBSCRIPTION_INACTIVATED"}
+# ADENDO §D13: Asaas BLOQUEIA a assinatura quando o split diverge. Não
+# quebramos o fluxo — marcamos status de atenção e deixamos nas métricas.
+_SPLIT_ATENCAO = {
+    "PAYMENT_SPLIT_DIVERGENCE_BLOCK", "PAYMENT_SPLIT_CANCELLED",
+    "SUBSCRIPTION_SPLIT_DIVERGENCE_BLOCK",
+}
 
 
 def handle_asaas_event(
     payload: Dict[str, Any],
     *,
-    notificar: Callable[[str, List[str]], None] = _notificar_twilio,
+    notificar: Optional[Callable[[str, List[str]], None]] = None,
 ) -> Dict[str, Any]:
     """Aplica um evento já validado + de-duplicado. Retorna um resumo do
     que aconteceu (útil pro endpoint e pros testes)."""
@@ -112,27 +118,36 @@ def handle_asaas_event(
     link = _invoice_url(payload, sub_id)
 
     if event in _PAGO:
+        # Pagamento em qualquer ponto → zera a régua e reativa (§D8).
+        repo.zerar_regua(sub_id)
         repo.atualizar_status_assinatura(sub_id, "ativa")
         repo.atualizar_aluno(aluno.telefone_e164, estado="ativo")
-        notificar(aluno.telefone_e164, [M.assinar(M.M5_LIBERADO.format(nome=nome), branding)])
+        notify.notificar_negocio(
+            aluno.telefone_e164,
+            M.assinar(M.M5_LIBERADO.format(nome=nome), branding),
+            template_key="M5", template_vars=[nome, nome_publico, link],
+            ultima_inbound_at=aluno.ultima_inbound_at, override=notificar,
+        )
         return {"handled": True, "acao": "ativado", "estado": "ativo"}
 
     if event in _OVERDUE:
-        repo.atualizar_status_assinatura(sub_id, "atrasada")
-        seq = repo.contar_eventos_tipo(aluno.id, "PAYMENT_OVERDUE")
-        if seq <= 1:
-            texto = M.M8_OVERDUE_D0.format(nome=nome, nome_publico=nome_publico, link_fatura=link)
-            estado = None
-        elif seq == 2:
-            texto = M.M9_OVERDUE_D3.format(nome=nome, link_fatura=link)
-            estado = None
-        else:
-            texto = M.M10_BLOQUEADO.format(link_fatura=link)
-            estado = "inadimplente"
-        if estado:
-            repo.atualizar_aluno(aluno.telefone_e164, estado=estado)
-        notificar(aluno.telefone_e164, [M.assinar(texto, branding)])
-        return {"handled": True, "acao": "overdue", "seq": seq, "estado": estado or aluno.estado}
+        # D0: só M8 + inicia a régua. A escalada M9 (D+3) e o bloqueio
+        # (D+5) são do daily-tick (§D8) — o webhook OVERDUE não repete.
+        from datetime import datetime, timezone
+        repo.iniciar_overdue(sub_id, datetime.now(timezone.utc))
+        notify.notificar_negocio(
+            aluno.telefone_e164,
+            M.assinar(M.M8_OVERDUE_D0.format(
+                nome=nome, nome_publico=nome_publico, link_fatura=link), branding),
+            template_key="M8", template_vars=[nome, nome_publico, link],
+            ultima_inbound_at=aluno.ultima_inbound_at, override=notificar,
+        )
+        return {"handled": True, "acao": "overdue_d0", "estado": aluno.estado}
+
+    if event in _SPLIT_ATENCAO:
+        # §D13: não quebra o fluxo; marca atenção e segue.
+        repo.atualizar_status_assinatura(sub_id, "atencao_split")
+        return {"handled": True, "acao": "atencao_split"}
 
     if event in _CANCELADO:
         repo.atualizar_status_assinatura(sub_id, "cancelada")
@@ -145,7 +160,7 @@ def handle_asaas_event(
 def processar_webhook(
     payload: Dict[str, Any],
     *,
-    notificar: Callable[[str, List[str]], None] = _notificar_twilio,
+    notificar: Optional[Callable[[str, List[str]], None]] = None,
 ) -> Dict[str, Any]:
     """Idempotência + processamento. Reusado pelo endpoint e pelos testes.
 
@@ -168,7 +183,11 @@ def processar_webhook(
         return {"status": "duplicate", "dedupe_key": dedupe}
 
     resultado = handle_asaas_event(payload, notificar=notificar)
-    repo.marcar_evento_processado(dedupe)
+    # §D13: só marca processado se foi de fato tratado. Evento desconhecido
+    # (ou assinatura não encontrada) fica processado=false e aparece em
+    # `eventos_pendentes` nas métricas — nada é descartado em silêncio.
+    if resultado.get("handled"):
+        repo.marcar_evento_processado(dedupe)
     return {"status": "ok", "dedupe_key": dedupe, "resultado": resultado}
 
 
