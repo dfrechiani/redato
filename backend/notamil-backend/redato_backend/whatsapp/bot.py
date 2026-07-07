@@ -449,6 +449,21 @@ def handle_inbound(msg: InboundMessage) -> List[OutboundMessage]:
     if professor is not None:
         return _handle_professor_inbound(msg, professor)
 
+    # B2C (Correção {Parceiro}, SPEC_B2C_REDATO.md): desvio único e
+    # guardado por flag. Import lazy pra não acoplar o bot ao módulo B2C
+    # (e pra manter o custo zero quando a flag está off). `maybe_route_b2c`
+    # devolve None quando a mensagem NÃO é B2C — aí o fluxo escola segue
+    # exatamente como antes (regressão zero).
+    try:
+        from redato_backend.b2c.config import b2c_enabled
+        if b2c_enabled():
+            from redato_backend.b2c.router import maybe_route_b2c
+            b2c_replies = maybe_route_b2c(msg)
+            if b2c_replies is not None:
+                return b2c_replies
+    except Exception:  # noqa: BLE001
+        logger.exception("B2C: desvio falhou — seguindo fluxo escola (fail-safe)")
+
     aluno = P.get_aluno(msg.phone)
 
     # Caso 1: usuário novo
