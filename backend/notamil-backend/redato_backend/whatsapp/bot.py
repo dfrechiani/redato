@@ -1320,8 +1320,10 @@ def _process_photo(
 
     # Pipeline Redato
     if mode == MissionMode.COMPLETO_INTEGRAL:
-        # OF14 usa _claude_grade_essay direto (passa pelo pipeline v2).
-        from redato_backend.dev_offline import _claude_grade_essay
+        # OF14 usa o grader completo (pipeline v2). D12: importado do
+        # módulo público `grading` — MESMO ponto que o B2C usa (não mais
+        # o privado `dev_offline._claude_grade_essay`).
+        from redato_backend.grading import grade_essay_completo
         data = {
             "request_id": f"wpp_{phone}_{int(time.time())}",
             "user_id": phone,
@@ -1330,7 +1332,11 @@ def _process_photo(
             "content": ocr.text,
         }
         try:
-            tool_args = _claude_grade_essay(data)
+            tool_args = grade_essay_completo(
+                texto=ocr.text, tema=data["theme"],
+                activity_id=missao_canon,
+                request_id=data["request_id"], user_id=phone,
+            )
         except Exception as exc:
             # Stack trace COMPLETO — antes só print() em dev_offline
             # silenciava em prod async. Agora `_claude_grade_essay` levanta

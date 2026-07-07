@@ -86,19 +86,22 @@ Grader = Callable[[str], Dict[str, Any]]
 Transcritor = Callable[[Any], Any]
 
 
-def _default_grader(texto: str) -> Dict[str, Any]:
-    """Chama o grader ENEM completo. Import lazy (mesmo padrão do bot no
-    ramo OF14) pra não puxar dependências pesadas na import time."""
+def _default_grader(texto: str, tema: Optional[str] = None) -> Dict[str, Any]:
+    """Chama o grader ENEM completo pelo módulo público `grading` — MESMO
+    ponto que o bot (B2G) usa (D12). Import lazy (mesmo padrão do bot no
+    ramo OF14) pra não puxar dependências pesadas na import time.
+
+    `activity_id=None` roteia pro caminho ENEM completo (5 competências).
+    """
     import time
-    from redato_backend.dev_offline import _claude_grade_essay
-    data = {
-        "request_id": f"b2c_{int(time.time())}",
-        "user_id": "b2c",
-        "activity_id": None,          # → caminho ENEM completo (5 comp.)
-        "theme": "Tema livre (redação enviada via WhatsApp)",
-        "content": texto,
-    }
-    return _claude_grade_essay(data)
+    from redato_backend.grading import grade_essay_completo
+    return grade_essay_completo(
+        texto,
+        tema=tema or "Tema livre (redação enviada via WhatsApp)",
+        activity_id=None,
+        request_id=f"b2c_{int(time.time())}",
+        user_id="b2c",
+    )
 
 
 def transcrever(image_path: Any) -> Any:
