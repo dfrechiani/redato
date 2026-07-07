@@ -16,6 +16,12 @@ from __future__ import annotations
 import os
 
 
+# ADENDO §D14: versão do texto de consentimento vigente. Gravada em
+# alunos_b2c.consent_version no aceite — prova qual texto o aluno leu.
+# Trocar quando o texto da política/consentimento mudar.
+CONSENT_VERSION = "2026-07-v1"
+
+
 def _flag(name: str, default: bool = False) -> bool:
     raw = os.getenv(name)
     if raw is None:

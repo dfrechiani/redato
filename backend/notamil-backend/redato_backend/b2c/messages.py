@@ -34,7 +34,8 @@ M1_BOAS_VINDAS = (
 
 M2_CONVITE_GRATIS = (
     "Prazer, {nome}! 🎁 Sua primeira correção é por nossa conta. "
-    "Fotografa sua redação (folha inteira, boa luz) e manda aqui."
+    "Fotografa sua redação (folha inteira, boa luz) e manda aqui "
+    "*com o tema na legenda da foto*."
 )
 
 M_PEDE_CPF = (
@@ -48,6 +49,7 @@ M_CPF_INVALIDO = (
 )
 
 M3_ENTREGA_DEGUSTACAO = (
+    "📝 Tema: {tema}\n"
     "✅ Correção pronta! Nota: *{nota_total}/1000* — C1 {c1} · C2 {c2} · "
     "C3 {c3} · C4 {c4} · C5 {c5}. 💪 Destaque: {ponto_forte}. 🎯 Para "
     "subir: {foco_melhoria}. Essa foi sua correção gratuita da "
@@ -70,11 +72,16 @@ M5_LIBERADO = (
     "de novo. É assim que se chega no 900+."
 )
 
-M6_ENTREGA_ASSINANTE = (
+# M6 (rev.): abre com o tema; bloco de evolução é CONDICIONAL (só com
+# ≥2 corrigidos no histórico — §9.2). O router compõe base + (evolução) +
+# fecho.
+M6_BASE = (
+    "📝 Tema: {tema}\n"
     "✅ *{nota_total}/1000* — C1 {c1} · C2 {c2} · C3 {c3} · C4 {c4} · "
-    "C5 {c5}. 💪 {ponto_forte}. 🎯 {foco_melhoria}. 📈 Sua evolução: "
-    "{ultimas_notas}. Manda a próxima quando quiser!"
+    "C5 {c5}. 💪 {ponto_forte}. 🎯 {foco_melhoria}."
 )
+M6_EVOLUCAO_LINE = " 📈 Sua evolução: {ultimas_notas}."
+M6_FECHO = " Manda a próxima quando quiser!"
 
 M7_FAIR_USE = (
     "Você treinou MUITO hoje ({n} redações!) 🔥 Pra correção manter a "
@@ -96,9 +103,12 @@ M9_OVERDUE_D3 = (
     "ritmo (e o histórico da sua evolução): {link_fatura}"
 )
 
+# M10 (rev. §D10): copy honesta — sem prometer fila de correção. Regularizou,
+# reenvia a foto, corrige na hora.
 M10_BLOQUEADO = (
-    "Recebi sua redação e guardei aqui! 📥 Ela será corrigida assim que "
-    "sua assinatura for regularizada: {link_fatura}"
+    "Recebi sua redação! 📥 Pra eu corrigir, regulariza sua assinatura "
+    "aqui: {link_fatura}. Assim que ativar, me manda a foto de novo que a "
+    "correção sai na hora."
 )
 
 M11_CANCELAR = (
@@ -117,14 +127,35 @@ M12_EVOLUCAO = (
 )
 
 M13_AJUDA = (
-    "Comandos: manda uma FOTO da redação pra corrigir · 'evolução' pra "
-    "ver seu histórico · 'tema' pra receber uma proposta de treino · "
-    "'cancelar' pra encerrar."
+    "Comandos: manda uma FOTO da redação *com o tema na legenda* pra "
+    "corrigir · 'evolução' pra ver seu histórico · 'tema' pra receber uma "
+    "proposta de treino · 'cancelar' pra encerrar."
 )
 
 M14_TEMA = (
-    "🎯 Tema de treino: '{tema}'. 30 linhas, caneta preta, foto ao "
-    "terminar. Bora!"
+    "🎯 Tema de treino: '{tema}'. 30 linhas, caneta preta, e me manda a "
+    "foto *com o tema na legenda* ao terminar. Bora!"
+)
+
+# ── Resolução do tema (D7 §1) ──────────────────────────────────────────
+
+M16_PEDE_TEMA = (
+    "Recebi sua redação! ✍️ Sobre qual tema você escreveu? Me manda o "
+    "enunciado que a correção sai em seguida."
+)
+
+M16A_ATALHO_SORTEADO = (
+    "Recebi sua redação! Foi sobre o tema que te mandei — "
+    "'{ultimo_tema}'? Responde SIM ou me manda o enunciado certo."
+)
+
+M16B_CONFIRMA_LEGENDA = (
+    "Recebi! Só confirmando: o tema é '{caption}'? Responde SIM ou me "
+    "manda o enunciado completo."
+)
+
+M17_ANTI_LOOP = (
+    "Me manda o enunciado completo do tema, vai ser rapidinho 🙂"
 )
 
 M15_FALLBACK = (

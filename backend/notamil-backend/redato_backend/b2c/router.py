@@ -1,26 +1,20 @@
-"""Desvio B2C do bot WhatsApp — FSM por telefone (SPEC_B2C_REDATO.md §4).
+"""Desvio B2C do bot WhatsApp — FSM por telefone (SPEC §4 + ADENDO §1).
 
 `maybe_route_b2c(msg)` é chamado no topo de `bot.handle_inbound`, logo
 após o lookup de professor e ANTES de qualquer coisa do fluxo escola.
-Retorna:
-- `None`  → a mensagem NÃO é B2C; o fluxo escola (B2G) segue intocado.
-- `list` → a mensagem é B2C; o bot devolve estas respostas.
+Retorna `None` (mensagem NÃO é B2C → fluxo escola intocado) ou uma lista
+de respostas.
 
-Regra de captura (regressão zero pro B2G):
-1. flag REDATO_B2C_ENABLED off → retorna None sempre.
-2. telefone já é AlunoB2C → segue a FSM dele.
-3. telefone desconhecido ao B2C: só captura se também é desconhecido ao
-   B2G (sem vínculo de turma E sem estado no SQLite do bot) E a mensagem
-   traz um código de parceiro válido. Caso contrário devolve None.
-
-Assim, aluno de escola (mesmo em onboarding) nunca é sequestrado pelo
-B2C, e com a flag off o bloco inteiro é pulado.
+Fluxo do tema (ADENDO §D7): toda correção é contra um tema. A pendência
+"aguardando tema" vive num ENVIO (`envios_b2c.status='aguardando_tema'`),
+não no estado do aluno — assim degustação e assinante podem ambos ter
+uma pendência sem perder o estado principal (paywall vs não).
 """
 from __future__ import annotations
 
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from redato_backend.b2c import config, correction
@@ -39,18 +33,20 @@ _RE_EVOLUCAO = re.compile(r"^\s*(evolu[çc][ãa]o|hist[óo]rico)\s*$", re.IGNORE
 _RE_AJUDA = re.compile(r"^\s*(ajuda|help|comandos)\s*$", re.IGNORECASE)
 _RE_TEMA = re.compile(r"^\s*(tema|proposta)\s*$", re.IGNORECASE)
 _RE_CANCELAR = re.compile(r"^\s*(cancelar|cancelamento)\s*$", re.IGNORECASE)
-_RE_SIM = re.compile(r"^\s*(sim|confirmo|confirmar)\s*$", re.IGNORECASE)
+_RE_SIM = re.compile(r"^\s*(sim|confirmo|confirmar|isso|isso mesmo)\s*$", re.IGNORECASE)
 
-# Palavras de saudação a ignorar ao procurar o código do parceiro no
-# texto do deep link ("QUERO LUMA", "quero a LUMA", ...).
 _FILLER = {"QUERO", "QUER", "OI", "OLA", "OLÁ", "A", "O", "DA", "DO", "PROF"}
 
-# Texto digitado com pelo menos este tamanho é tratado como redação
-# (F4: assinante pode mandar texto em vez de foto).
+# Texto digitado com pelo menos este tamanho é tratado como redação.
 _MIN_CHARS_REDACAO = 200
+# Legenda com pelo menos isto é aceita como tema direto (§1.1).
+_MIN_CHARS_TEMA = 15
+# Atalho do tema sorteado (M16a) vale por esta janela.
+_TEMA_ATALHO_HORAS = 48
+# Sentinela guardada em envios_b2c.tema pra marcar "M16 pediu tema e a 1ª
+# resposta veio curta" — a 2ª resposta curta é aceita como tema (§1.2).
+_M17_SENTINEL = "\x00m17"
 
-# Banco simples de temas de treino (F8 "tema"). Reutilizável; sem
-# dependência externa no MVP.
 _TEMAS = [
     "Os desafios da democratização do acesso à leitura no Brasil",
     "Caminhos para combater a desinformação nas redes sociais",
@@ -58,6 +54,10 @@ _TEMAS = [
     "A valorização das comunidades tradicionais e seus saberes",
     "Educação financeira como política pública no Brasil",
 ]
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 def _out(text: str, branding: Optional[dict] = None):
@@ -75,12 +75,17 @@ def _fmt_evolucao(notas: List[int]) -> str:
     return " → ".join(str(n) for n in notas)
 
 
+def _is_comando(text: str) -> bool:
+    t = (text or "").strip()
+    return bool(_RE_AJUDA.match(t) or _RE_EVOLUCAO.match(t)
+                or _RE_TEMA.match(t) or _RE_CANCELAR.match(t))
+
+
 # ──────────────────────────────────────────────────────────────────────
 # CPF (validação real — só usada quando B2C_EXIGE_CPF=1)
 # ──────────────────────────────────────────────────────────────────────
 
 def _cpf_valido(cpf: str) -> Optional[str]:
-    """Retorna o CPF só-dígitos se válido (DV correto), senão None."""
     d = re.sub(r"\D", "", cpf or "")
     if len(d) != 11 or d == d[0] * 11:
         return None
@@ -94,12 +99,10 @@ def _cpf_valido(cpf: str) -> Optional[str]:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Extração do código de parceiro
+# Extração do código de parceiro / checagem B2G
 # ──────────────────────────────────────────────────────────────────────
 
 def _extrair_parceiro(text: Optional[str]):
-    """Procura no texto um token que case com o codigo_entrada de algum
-    parceiro ativo. Retorna ParceiroDTO ou None."""
     if not text:
         return None
     tokens = [t for t in re.split(r"[^0-9A-Za-zÀ-ÿ]+", text.upper()) if len(t) >= 2]
@@ -122,8 +125,6 @@ def _tem_vinculo_b2g(phone: str) -> bool:
 
 
 def _tem_estado_b2g(phone: str) -> bool:
-    """Telefone já tem estado no SQLite do bot (onboarding de escola em
-    curso). Se sim, NÃO capturamos pro B2C."""
     try:
         from redato_backend.whatsapp import persistence as P
         return P.get_aluno(phone) is not None
@@ -143,15 +144,18 @@ def maybe_route_b2c(msg) -> Optional[List]:
     phone = msg.phone
     aluno = repo.get_aluno_por_telefone(phone)
     if aluno is not None:
+        # ADENDO §D9: bump da janela de 24h a cada mensagem recebida.
+        repo.atualizar_aluno(phone, ultima_inbound_at=_now())
+        aluno = repo.get_aluno_por_telefone(phone) or aluno
         return _dispatch(msg, aluno)
 
-    # Desconhecido ao B2C. Só captura se também for desconhecido ao B2G.
     if _tem_vinculo_b2g(phone) or _tem_estado_b2g(phone):
         return None
 
     parceiro = _extrair_parceiro(msg.text)
     if parceiro is not None:
         repo.criar_aluno(phone, parceiro.id, estado="aguardando_nome")
+        repo.atualizar_aluno(phone, ultima_inbound_at=_now())
         return [_out(
             M.M1_BOAS_VINDAS.format(
                 nome_publico=parceiro.nome_publico,
@@ -161,9 +165,6 @@ def maybe_route_b2c(msg) -> Optional[List]:
             parceiro.branding,
         )]
 
-    # Sem código. Só respondemos M0 numa linha dedicada B2C
-    # (B2C_LINHA_DEDICADA=1). Numa linha COMPARTILHADA com a escola,
-    # devolvemos None pra não atropelar o onboarding B2G.
     if config._flag("B2C_LINHA_DEDICADA", default=False):
         return [_out(M.M0_SEM_CODIGO)]
     return None
@@ -193,9 +194,7 @@ def _dispatch(msg, aluno) -> List:
     if estado in ("inadimplente", "bloqueado"):
         return _handle_inadimplente(msg, aluno, parceiro)
     if estado == "cancelado":
-        # Reengajamento simples: trata como quem vai (re)assinar.
         return _handle_aguardando_pagamento(msg, aluno, parceiro)
-    # 'novo' ou estado inesperado — reenvia boas-vindas pedindo nome.
     return [_out(
         M.M1_BOAS_VINDAS.format(
             nome_publico=parceiro.nome_publico if parceiro else "Redato",
@@ -213,10 +212,11 @@ def _handle_nome(msg, aluno, parceiro) -> List:
             "Como você se chama? Me manda seu primeiro nome.",
             parceiro.branding if parceiro else None,
         )]
-    # Continuar após o aviso de LGPD = aceite (gravamos o consentimento).
+    # Continuar após o aviso de LGPD = aceite (grava consentimento +
+    # versão do texto — §D14).
     repo.atualizar_aluno(
         msg.phone, nome=nome, estado="degustacao",
-        consent_lgpd_at=datetime.now(timezone.utc),
+        consent_lgpd_at=_now(), consent_version=config.CONSENT_VERSION,
     )
     return [_out(
         M.M2_CONVITE_GRATIS.format(nome=nome.split()[0]),
@@ -224,63 +224,249 @@ def _handle_nome(msg, aluno, parceiro) -> List:
     )]
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Degustação e assinante ativo — ambos passam pelo fluxo do tema
+# ──────────────────────────────────────────────────────────────────────
+
 def _handle_degustacao(msg, aluno, parceiro) -> List:
-    res, err, texto = _corrigir_entrada(msg)
-    if err:
-        return [_out(err, parceiro.branding if parceiro else None)]
-    if res is None:
-        return [_out(
-            M.M2_CONVITE_GRATIS.format(nome=(aluno.nome or "").split(" ")[0] or "aluno(a)"),
-            parceiro.branding if parceiro else None,
-        )]
-
     branding = parceiro.branding if parceiro else None
-    repo.registrar_envio(
-        aluno.id, aluno.parceiro_id,
-        texto_ocr=texto, texto_final=texto,
-        nota_total=res.nota_total, notas_competencias=res.notas,
-        gratis=True, tempo_processamento_ms=None,
-    )
-    aluno = repo.incrementar_gratis(msg.phone) or aluno
+    pend = repo.get_envio_pendente(aluno.id)
 
-    replies = [_out(
-        M.M3_ENTREGA_DEGUSTACAO.format(
-            nota_total=res.nota_total, **res.notas,
-            ponto_forte=res.ponto_forte, foco_melhoria=res.foco_melhoria,
-            nome_publico=parceiro.nome_publico if parceiro else "Redato",
-        ),
+    # Comando durante pendência → executa e mantém a pendência.
+    if pend and msg.text and not msg.image_path and _is_comando(msg.text):
+        return _handle_comando(msg, aluno, parceiro)
+
+    # Resolução do tema pendente (texto que não é comando).
+    if pend and msg.text and not msg.image_path:
+        return _resolver_pendente(msg, aluno, parceiro, pend, is_degustacao=True)
+
+    # Foto nova (substitui pendência anterior, se houver).
+    if msg.image_path:
+        return _fluxo_foto(msg, aluno, parceiro, gratis=True, is_degustacao=True)
+
+    # Redação digitada sem tema → pede tema (M16).
+    if msg.text and len(msg.text.strip()) >= _MIN_CHARS_REDACAO:
+        return _fluxo_texto_redacao(msg, aluno, parceiro, gratis=True,
+                                    is_degustacao=True)
+
+    return [_out(
+        M.M2_CONVITE_GRATIS.format(nome=_primeiro(aluno)),
         branding,
     )]
 
-    # Esgotou a degustação → paywall (F2).
-    if aluno.correcoes_gratis_usadas >= config.free_corrections():
-        replies.extend(_ir_para_paywall(msg, aluno, parceiro))
-    return replies
 
+def _handle_ativo(msg, aluno, parceiro) -> List:
+    branding = parceiro.branding if parceiro else None
+    text = (msg.text or "").strip()
+    pend = repo.get_envio_pendente(aluno.id)
+
+    # Comandos (F8) — antes de tratar como redação/tema; mantêm pendência.
+    if text and not msg.image_path and _is_comando(text):
+        return _handle_comando(msg, aluno, parceiro)
+
+    # Resolução do tema pendente.
+    if pend and text and not msg.image_path:
+        return _resolver_pendente(msg, aluno, parceiro, pend, is_degustacao=False)
+
+    # Foto nova.
+    if msg.image_path:
+        # Fair use ANTES de gastar OCR/API.
+        if _excede_fair_use(aluno):
+            return [_out(M.M7_FAIR_USE.format(n=repo.contar_envios_hoje(aluno.id)),
+                         branding)]
+        return _fluxo_foto(msg, aluno, parceiro, gratis=False, is_degustacao=False)
+
+    # Redação digitada.
+    if text and len(text) >= _MIN_CHARS_REDACAO:
+        if _excede_fair_use(aluno):
+            return [_out(M.M7_FAIR_USE.format(n=repo.contar_envios_hoje(aluno.id)),
+                         branding)]
+        return _fluxo_texto_redacao(msg, aluno, parceiro, gratis=False,
+                                    is_degustacao=False)
+
+    return [_out(M.M15_FALLBACK, branding)]
+
+
+def _excede_fair_use(aluno) -> bool:
+    return repo.contar_envios_hoje(aluno.id) >= config.fair_use_dia()
+
+
+def _handle_comando(msg, aluno, parceiro) -> List:
+    branding = parceiro.branding if parceiro else None
+    text = (msg.text or "").strip()
+    if _RE_CANCELAR.match(text):
+        repo.atualizar_aluno(msg.phone, estado="aguardando_cancelamento")
+        return [_out(M.M11_CANCELAR.format(nome=_primeiro(aluno),
+                                           fim_ciclo=_fim_ciclo_str(aluno)), branding)]
+    if _RE_AJUDA.match(text):
+        return [_out(M.M13_AJUDA, branding)]
+    if _RE_EVOLUCAO.match(text):
+        return [_out(_montar_evolucao(aluno), branding)]
+    if _RE_TEMA.match(text):
+        tema = _sortear_e_guardar_tema(aluno)
+        return [_out(M.M14_TEMA.format(tema=tema), branding)]
+    return [_out(M.M15_FALLBACK, branding)]
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Fluxo do tema — foto → cascata → correção
+# ──────────────────────────────────────────────────────────────────────
+
+def _fluxo_foto(msg, aluno, parceiro, *, gratis, is_degustacao) -> List:
+    branding = parceiro.branding if parceiro else None
+    # OCR PRIMEIRO (§1.1): se ilegível, avisa já — não pede tema à toa.
+    try:
+        ocr = correction.transcrever(msg.image_path)
+    except Exception:  # noqa: BLE001
+        logger.exception("B2C: OCR falhou")
+        return [_out(M.M_FOTO_ILEGIVEL, branding)]
+    if getattr(ocr, "rejected", False):
+        return [_out(M.M_FOTO_ILEGIVEL, branding)]
+    texto = getattr(ocr, "text", "") or ""
+    caption = (msg.text or "").strip()
+
+    # Cascata de resolução do tema.
+    if len(caption) >= _MIN_CHARS_TEMA:
+        return _corrigir_e_entregar(msg, aluno, parceiro, texto=texto,
+                                    tema=caption, gratis=gratis,
+                                    is_degustacao=is_degustacao)
+
+    if len(caption) >= 1:
+        # Legenda dúbia (1–14) → M16b confirma.
+        repo.substituir_envio_pendente(aluno.id, aluno.parceiro_id,
+                                       texto_ocr=texto, gratis=gratis,
+                                       tema=caption)
+        return [_out(M.M16B_CONFIRMA_LEGENDA.format(caption=caption), branding)]
+
+    # Sem legenda: atalho do tema sorteado (<48h)?
+    if _tem_tema_sorteado_recente(aluno):
+        repo.substituir_envio_pendente(aluno.id, aluno.parceiro_id,
+                                       texto_ocr=texto, gratis=gratis,
+                                       tema=aluno.ultimo_tema_sorteado)
+        return [_out(M.M16A_ATALHO_SORTEADO.format(
+            ultimo_tema=aluno.ultimo_tema_sorteado), branding)]
+
+    # Sem legenda, sem atalho → pergunta o tema.
+    repo.substituir_envio_pendente(aluno.id, aluno.parceiro_id,
+                                   texto_ocr=texto, gratis=gratis, tema=None)
+    return [_out(M.M16_PEDE_TEMA, branding)]
+
+
+def _fluxo_texto_redacao(msg, aluno, parceiro, *, gratis, is_degustacao) -> List:
+    """Redação digitada sem tema identificável → mesmo fluxo M16 (§1.2)."""
+    branding = parceiro.branding if parceiro else None
+    texto = msg.text.strip()
+    repo.substituir_envio_pendente(aluno.id, aluno.parceiro_id,
+                                   texto_ocr=texto, gratis=gratis, tema=None)
+    return [_out(M.M16_PEDE_TEMA, branding)]
+
+
+def _tem_tema_sorteado_recente(aluno) -> bool:
+    if not aluno.ultimo_tema_sorteado or not aluno.ultimo_tema_sorteado_at:
+        return False
+    delta = _now() - aluno.ultimo_tema_sorteado_at
+    return delta < timedelta(hours=_TEMA_ATALHO_HORAS)
+
+
+def _resolver_pendente(msg, aluno, parceiro, pend, *, is_degustacao) -> List:
+    """Texto que resolve o tema de um envio pendente (§1.2)."""
+    branding = parceiro.branding if parceiro else None
+    text = (msg.text or "").strip()
+    candidato = pend.get("tema")  # None | caption/sorteado | sentinela
+
+    if candidato and candidato != _M17_SENTINEL and _RE_SIM.match(text):
+        tema = candidato
+    elif candidato == _M17_SENTINEL:
+        # 2ª resposta curta: aceita como tema assim mesmo.
+        tema = text
+    elif candidato:
+        # M16a/M16b ofereceram atalho, aluno digitou tema diferente.
+        tema = text
+    elif len(text) >= _MIN_CHARS_TEMA:
+        tema = text
+    else:
+        # M16 pediu tema e veio resposta curta sem atalho → M17 uma vez.
+        repo.atualizar_tema_pendente(pend["id"], _M17_SENTINEL)
+        return [_out(M.M17_ANTI_LOOP, branding)]
+
+    return _corrigir_e_entregar(
+        msg, aluno, parceiro, texto=pend["texto_ocr"], tema=tema,
+        gratis=bool(pend.get("gratis")), is_degustacao=is_degustacao,
+        envio_pendente_id=pend["id"],
+    )
+
+
+def _corrigir_e_entregar(msg, aluno, parceiro, *, texto, tema, gratis,
+                         is_degustacao, envio_pendente_id=None) -> List:
+    """Corrige `texto` contra `tema`, persiste e entrega M3 (degustação)
+    ou M6 (assinante)."""
+    branding = parceiro.branding if parceiro else None
+    import time as _time
+    t0 = _time.time()
+    try:
+        res = correction.corrigir_texto(texto, tema=tema)
+    except Exception:  # noqa: BLE001
+        logger.exception("B2C: correção falhou")
+        return [_out(M.M_FOTO_ILEGIVEL, branding)]
+    elapsed_ms = int((_time.time() - t0) * 1000)
+    custo = correction.estimar_custo_correcao_centavos(texto)
+
+    if envio_pendente_id:
+        repo.corrigir_envio_pendente(
+            envio_pendente_id, tema=tema, nota_total=res.nota_total,
+            notas_competencias=res.notas, custo_estimado_centavos=custo,
+            tempo_processamento_ms=elapsed_ms,
+        )
+    else:
+        repo.registrar_envio(
+            aluno.id, aluno.parceiro_id, texto_ocr=texto, texto_final=texto,
+            tema=tema, nota_total=res.nota_total, notas_competencias=res.notas,
+            gratis=gratis, custo_estimado_centavos=custo,
+            tempo_processamento_ms=elapsed_ms, status="corrigido",
+        )
+
+    if is_degustacao:
+        aluno2 = repo.incrementar_gratis(msg.phone) or aluno
+        replies = [_out(M.M3_ENTREGA_DEGUSTACAO.format(
+            tema=tema, nota_total=res.nota_total, **res.notas,
+            ponto_forte=res.ponto_forte, foco_melhoria=res.foco_melhoria,
+            nome_publico=parceiro.nome_publico if parceiro else "Redato",
+        ), branding)]
+        if aluno2.correcoes_gratis_usadas >= config.free_corrections():
+            replies.extend(_ir_para_paywall(msg, aluno2, parceiro))
+        return replies
+
+    # Assinante: M6 com bloco de evolução condicional (≥2 corrigidos).
+    texto_m6 = M.M6_BASE.format(
+        tema=tema, nota_total=res.nota_total, **res.notas,
+        ponto_forte=res.ponto_forte, foco_melhoria=res.foco_melhoria,
+    )
+    if repo.contar_corrigidos(aluno.id) >= 2:
+        texto_m6 += M.M6_EVOLUCAO_LINE.format(
+            ultimas_notas=_fmt_evolucao(repo.ultimas_notas(aluno.id)))
+    texto_m6 += M.M6_FECHO
+    return [_out(texto_m6, branding)]
+
+
+# ──────────────────────────────────────────────────────────────────────
+# Paywall / checkout (SPEC F2-F3)
+# ──────────────────────────────────────────────────────────────────────
 
 def _ir_para_paywall(msg, aluno, parceiro) -> List:
-    """Emite o paywall M4 com link real de checkout, ou pede CPF antes
-    (F3, quando B2C_EXIGE_CPF=1). Move o estado adequadamente."""
     branding = parceiro.branding if parceiro else None
     if config.exige_cpf() and not aluno.cpf:
         repo.atualizar_aluno(msg.phone, estado="aguardando_cpf")
         return [_out(M.M_PEDE_CPF, branding)]
-
     link = _criar_checkout(aluno, parceiro)
     repo.atualizar_aluno(msg.phone, estado="aguardando_pagamento")
     preco = parceiro.preco_centavos if parceiro else 3990
-    return [_out(
-        M.M4_PAYWALL.format(
-            nome_publico=parceiro.nome_publico if parceiro else "Redato",
-            preco=_fmt_reais(preco), link_checkout=link,
-        ),
-        branding,
-    )]
+    return [_out(M.M4_PAYWALL.format(
+        nome_publico=parceiro.nome_publico if parceiro else "Redato",
+        preco=_fmt_reais(preco), link_checkout=link,
+    ), branding)]
 
 
 def _criar_checkout(aluno, parceiro) -> str:
-    """Cria customer + subscription (com split) no gateway e persiste a
-    assinatura pendente. Retorna o invoiceUrl."""
     from redato_backend.billing.asaas import get_asaas_client
     client = get_asaas_client()
     preco = parceiro.preco_centavos if parceiro else 3990
@@ -292,15 +478,14 @@ def _criar_checkout(aluno, parceiro) -> str:
             share_pct=parceiro.share_pct if parceiro else None,
         )
     except Exception:  # noqa: BLE001
-        logger.exception("B2C: falha criando checkout Asaas para %s", aluno.telefone_e164)
-        return "https://wa.me/"  # link inócuo; aluno pode tentar de novo
+        logger.exception("B2C: falha criando checkout Asaas para %s",
+                         aluno.telefone_e164)
+        return "https://wa.me/"
     repo.upsert_assinatura(
         aluno.id, valor_centavos=preco,
         asaas_customer_id=customer.get("id"),
-        asaas_subscription_id=sub.get("id"),
-        status="pendente",
+        asaas_subscription_id=sub.get("id"), status="pendente",
     )
-    # CPF já cumpriu seu papel (emissão) — não guardamos além do necessário.
     if aluno.cpf:
         repo.atualizar_aluno(aluno.telefone_e164, cpf=None)
     return sub.get("invoiceUrl") or "https://wa.me/"
@@ -316,86 +501,31 @@ def _handle_cpf(msg, aluno, parceiro) -> List:
     link = _criar_checkout(aluno, parceiro)
     repo.atualizar_aluno(msg.phone, estado="aguardando_pagamento")
     preco = parceiro.preco_centavos if parceiro else 3990
-    return [_out(
-        M.M4_PAYWALL.format(
-            nome_publico=parceiro.nome_publico if parceiro else "Redato",
-            preco=_fmt_reais(preco), link_checkout=link,
-        ),
-        branding,
-    )]
+    return [_out(M.M4_PAYWALL.format(
+        nome_publico=parceiro.nome_publico if parceiro else "Redato",
+        preco=_fmt_reais(preco), link_checkout=link,
+    ), branding)]
 
 
 def _handle_aguardando_pagamento(msg, aluno, parceiro) -> List:
-    """Ainda não pagou. Foto/redação NÃO é corrigida — reforça o paywall
-    (critério #3: 2ª foto sem pagar → M4)."""
+    """Ainda não pagou. Foto/redação NÃO é corrigida — reforça o paywall."""
     branding = parceiro.branding if parceiro else None
     sub = repo.get_assinatura_por_aluno(aluno.id)
-    link = None
     if sub is None or not sub.asaas_subscription_id:
         link = _criar_checkout(aluno, parceiro)
     else:
         link = f"https://sandbox.asaas.com/i/{sub.asaas_subscription_id}"
     preco = parceiro.preco_centavos if parceiro else 3990
-    return [_out(
-        M.M4_PAYWALL.format(
-            nome_publico=parceiro.nome_publico if parceiro else "Redato",
-            preco=_fmt_reais(preco), link_checkout=link,
-        ),
-        branding,
-    )]
-
-
-def _handle_ativo(msg, aluno, parceiro) -> List:
-    branding = parceiro.branding if parceiro else None
-    text = (msg.text or "").strip()
-
-    # Comandos (F8) — antes de tratar como redação.
-    if text and not msg.image_path:
-        if _RE_CANCELAR.match(text):
-            repo.atualizar_aluno(msg.phone, estado="aguardando_cancelamento")
-            fim = _fim_ciclo_str(aluno)
-            return [_out(M.M11_CANCELAR.format(nome=_primeiro(aluno), fim_ciclo=fim), branding)]
-        if _RE_AJUDA.match(text):
-            return [_out(M.M13_AJUDA, branding)]
-        if _RE_EVOLUCAO.match(text):
-            return [_out(_montar_evolucao(aluno), branding)]
-        if _RE_TEMA.match(text):
-            tema = _sortear_tema(aluno)
-            return [_out(M.M14_TEMA.format(tema=tema), branding)]
-
-    # Fair use (F5): conta correções do dia ANTES de gastar API.
-    hoje = repo.contar_envios_hoje(aluno.id)
-    if hoje >= config.fair_use_dia():
-        return [_out(M.M7_FAIR_USE.format(n=hoje), branding)]
-
-    res, err, texto = _corrigir_entrada(msg)
-    if err:
-        return [_out(err, branding)]
-    if res is None:
-        return [_out(M.M15_FALLBACK, branding)]
-
-    repo.registrar_envio(
-        aluno.id, aluno.parceiro_id,
-        texto_ocr=texto, texto_final=texto,
-        nota_total=res.nota_total, notas_competencias=res.notas,
-        gratis=False,
-    )
-    evol = _fmt_evolucao(repo.ultimas_notas(aluno.id))
-    return [_out(
-        M.M6_ENTREGA_ASSINANTE.format(
-            nota_total=res.nota_total, **res.notas,
-            ponto_forte=res.ponto_forte, foco_melhoria=res.foco_melhoria,
-            ultimas_notas=evol,
-        ),
-        branding,
-    )]
+    return [_out(M.M4_PAYWALL.format(
+        nome_publico=parceiro.nome_publico if parceiro else "Redato",
+        preco=_fmt_reais(preco), link_checkout=link,
+    ), branding)]
 
 
 def _handle_confirma_cancelamento(msg, aluno, parceiro) -> List:
     branding = parceiro.branding if parceiro else None
     text = (msg.text or "").strip()
     if not _RE_SIM.match(text):
-        # Qualquer coisa que não seja SIM: volta pra ativo (desiste).
         repo.atualizar_aluno(msg.phone, estado="ativo")
         return [_out(M.M13_AJUDA, branding)]
     sub = repo.get_assinatura_por_aluno(aluno.id)
@@ -405,14 +535,13 @@ def _handle_confirma_cancelamento(msg, aluno, parceiro) -> List:
             get_asaas_client().cancel_subscription(sub.asaas_subscription_id)
         except Exception:  # noqa: BLE001
             logger.exception("B2C: falha cancelando assinatura Asaas")
-    # Mantém acesso até o fim do ciclo pago; marca cancelamento agendado.
     repo.atualizar_aluno(msg.phone, estado="cancelado")
-    fim = _fim_ciclo_str(aluno)
-    return [_out(M.M11_CANCELAR.format(nome=_primeiro(aluno), fim_ciclo=fim), branding)]
+    return [_out(M.M11_CANCELAR.format(nome=_primeiro(aluno),
+                                       fim_ciclo=_fim_ciclo_str(aluno)), branding)]
 
 
 def _handle_inadimplente(msg, aluno, parceiro) -> List:
-    """Recebe a redação, guarda, mas NÃO corrige (F6 D+5)."""
+    """Recebe a redação, guarda SEM rodar OCR/grader, responde M10 (§D10)."""
     branding = parceiro.branding if parceiro else None
     sub = repo.get_assinatura_por_aluno(aluno.id)
     link = (
@@ -420,55 +549,13 @@ def _handle_inadimplente(msg, aluno, parceiro) -> List:
         if sub and sub.asaas_subscription_id else "https://wa.me/"
     )
     if msg.image_path or (msg.text and len(msg.text.strip()) >= _MIN_CHARS_REDACAO):
-        # Guarda a redação pra corrigir depois da regularização.
-        texto = None
-        if msg.image_path:
-            try:
-                ocr = correction.transcrever(msg.image_path)
-                texto = getattr(ocr, "text", None)
-            except Exception:  # noqa: BLE001
-                logger.exception("B2C: OCR falhou no estado inadimplente")
-        else:
-            texto = msg.text
-        repo.registrar_envio(
-            aluno.id, aluno.parceiro_id, texto_ocr=texto, texto_final=texto,
-        )
+        repo.registrar_envio_bloqueado(aluno.id, aluno.parceiro_id)
     return [_out(M.M10_BLOQUEADO.format(link_fatura=link), branding)]
 
 
 # ──────────────────────────────────────────────────────────────────────
-# Helpers de correção / evolução / tema
+# Helpers de evolução / tema
 # ──────────────────────────────────────────────────────────────────────
-
-def _corrigir_entrada(msg):
-    """Resolve a entrada (foto ou texto) numa correção.
-
-    Retorna (ResultadoCorrecao|None, erro_msg|None, texto|None):
-    - (res, None, texto) : corrigiu
-    - (None, msg_erro, None) : erro amigável (foto ilegível)
-    - (None, None, None) : nada corrigível (não é foto nem redação)
-    """
-    if msg.image_path:
-        try:
-            ocr = correction.transcrever(msg.image_path)
-        except Exception:  # noqa: BLE001
-            logger.exception("B2C: OCR falhou")
-            return None, M.M_FOTO_ILEGIVEL, None
-        if getattr(ocr, "rejected", False):
-            return None, M.M_FOTO_ILEGIVEL, None
-        texto = getattr(ocr, "text", "") or ""
-    elif msg.text and len(msg.text.strip()) >= _MIN_CHARS_REDACAO:
-        texto = msg.text.strip()
-    else:
-        return None, None, None
-
-    try:
-        res = correction.corrigir_texto(texto)
-    except Exception:  # noqa: BLE001
-        logger.exception("B2C: correção falhou")
-        return None, M.M_FOTO_ILEGIVEL, None
-    return res, None, texto
-
 
 def _primeiro(aluno) -> str:
     return (aluno.nome or "").split(" ")[0] or "aluno(a)"
@@ -481,10 +568,13 @@ def _fim_ciclo_str(aluno) -> str:
     return "o fim do ciclo pago"
 
 
-def _sortear_tema(aluno) -> str:
-    # Sem aleatoriedade não-determinística: rotaciona pelo nº de envios.
-    idx = repo.contar_envios_hoje(aluno.id) % len(_TEMAS)
-    return _TEMAS[idx]
+def _sortear_e_guardar_tema(aluno) -> str:
+    # Rotação determinística (sem aleatoriedade) + persiste pro atalho M16a.
+    idx = repo.contar_corrigidos(aluno.id) % len(_TEMAS)
+    tema = _TEMAS[idx]
+    repo.atualizar_aluno(aluno.telefone_e164, ultimo_tema_sorteado=tema,
+                         ultimo_tema_sorteado_at=_now())
+    return tema
 
 
 def _montar_evolucao(aluno) -> str:
