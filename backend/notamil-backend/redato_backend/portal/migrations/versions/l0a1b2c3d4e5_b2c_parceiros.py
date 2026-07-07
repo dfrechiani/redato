@@ -76,6 +76,12 @@ def upgrade() -> None:
                   server_default="0"),
         sa.Column("consent_lgpd_at", sa.DateTime(timezone=True),
                   nullable=True),
+        sa.Column("consent_version", sa.String(32), nullable=True),
+        sa.Column("ultima_inbound_at", sa.DateTime(timezone=True),
+                  nullable=True),
+        sa.Column("ultimo_tema_sorteado", sa.Text(), nullable=True),
+        sa.Column("ultimo_tema_sorteado_at", sa.DateTime(timezone=True),
+                  nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
                   server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False,
@@ -107,12 +113,16 @@ def upgrade() -> None:
                   server_default="MONTHLY"),
         sa.Column("proximo_vencimento", sa.DateTime(timezone=True),
                   nullable=True),
+        sa.Column("overdue_desde", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("regua_estagio", sa.Integer(), nullable=False,
+                  server_default="0"),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
                   server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False,
                   server_default=sa.func.now()),
         sa.CheckConstraint(
-            "status IN ('pendente','ativa','atrasada','cancelada')",
+            "status IN ('pendente','ativa','atrasada','cancelada',"
+            "'atencao_split')",
             name="ck_assinatura_b2c_status_valido",
         ),
     )
@@ -131,6 +141,9 @@ def upgrade() -> None:
         sa.Column("imagem_url", sa.Text(), nullable=True),
         sa.Column("texto_ocr", sa.Text(), nullable=True),
         sa.Column("texto_final", sa.Text(), nullable=True),
+        sa.Column("tema", sa.Text(), nullable=True),
+        sa.Column("status", sa.String(20), nullable=False,
+                  server_default="corrigido"),
         sa.Column("nota_total", sa.Integer(), nullable=True),
         sa.Column("notas_competencias",
                   postgresql.JSONB(astext_type=sa.Text()), nullable=True),
@@ -142,6 +155,10 @@ def upgrade() -> None:
         sa.Column("custo_estimado_centavos", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False,
                   server_default=sa.func.now()),
+        sa.CheckConstraint(
+            "status IN ('aguardando_tema','corrigido','bloqueado')",
+            name="ck_envio_b2c_status_valido",
+        ),
     )
     op.create_index("ix_envios_b2c_aluno_id", "envios_b2c", ["aluno_id"])
     op.create_index("ix_envios_b2c_parceiro_id", "envios_b2c",

@@ -1073,6 +1073,23 @@ class AlunoB2C(Base):
     consent_lgpd_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )
+    # ADENDO §D14: versão do texto de consentimento aceito (prova de qual
+    # texto o aluno leu). Preenchido junto do consent_lgpd_at.
+    consent_version: Mapped[Optional[str]] = mapped_column(
+        String(32), nullable=True,
+    )
+    # ADENDO §D9: última mensagem recebida do aluno — decide janela de 24h
+    # do WhatsApp (freeform vs template).
+    ultima_inbound_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    # ADENDO §D7: último tema sorteado via comando 'tema' (atalho M16a).
+    ultimo_tema_sorteado: Mapped[Optional[str]] = mapped_column(
+        Text, nullable=True,
+    )
+    ultimo_tema_sorteado_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, nullable=False,
     )
@@ -1125,6 +1142,16 @@ class AssinaturaB2C(Base):
     proximo_vencimento: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )
+    # ADENDO §D8: régua de inadimplência dirigida por daily-tick.
+    # overdue_desde = quando entrou em atraso; regua_estagio avança
+    # 0→1 (M8/D0) →2 (M9/D+3) →3 (bloqueado/D+5). O tick só AVANÇA,
+    # nunca repete — idempotência.
+    overdue_desde: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    regua_estagio: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, nullable=False,
     )
@@ -1137,7 +1164,11 @@ class AssinaturaB2C(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('pendente','ativa','atrasada','cancelada')",
+            # ADENDO §D13: 'atencao_split' = Asaas sinalizou divergência de
+            # split (bloqueia a cobrança) — não quebra o fluxo, aparece nas
+            # métricas.
+            "status IN ('pendente','ativa','atrasada','cancelada',"
+            "'atencao_split')",
             name="ck_assinatura_b2c_status_valido",
         ),
     )
@@ -1165,6 +1196,16 @@ class EnvioB2C(Base):
     imagem_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     texto_ocr: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     texto_final: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # ADENDO §D7: toda correção é contra um tema. nullable só por causa
+    # dos envios 'bloqueado' (inadimplente) e 'aguardando_tema' (pendente);
+    # envio 'corrigido' SEMPRE tem tema.
+    tema: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # ADENDO §D7/§D10: aguardando_tema = OCR feito, falta o tema;
+    # corrigido = correção entregue; bloqueado = foto de inadimplente
+    # guardada sem OCR/grader.
+    status: Mapped[str] = mapped_column(
+        String(20), default="corrigido", nullable=False,
+    )
     nota_total: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     notas_competencias: Mapped[Optional[dict]] = mapped_column(
         PG_JSONB, nullable=True,
@@ -1184,6 +1225,13 @@ class EnvioB2C(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utc_now, nullable=False, index=True,
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('aguardando_tema','corrigido','bloqueado')",
+            name="ck_envio_b2c_status_valido",
+        ),
     )
 
     def __repr__(self) -> str:  # pragma: no cover
