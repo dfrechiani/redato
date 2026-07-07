@@ -44,3 +44,31 @@ def test_metricas_parceiro_inexistente(store):
     with pytest.raises(HTTPException) as exc:
         metricas("nao-existe", _=None)
     assert exc.value.status_code == 404
+
+
+def test_metricas_operacao_e_margem(store):
+    """§D11: custo médio, P50/P95, fotos bloqueadas, eventos pendentes e
+    margem estimada."""
+    p = store.add_parceiro(slug="demo", codigo_entrada="DEMO",
+                           preco_centavos=3990, share_pct=30)
+    a1 = store.add_aluno("+551", p.id, estado="ativo")
+    a2 = store.add_aluno("+552", p.id, estado="ativo")
+    # a1: 3 correções, a2: 1 — custo 35 centavos cada
+    for _ in range(3):
+        store.registrar_envio(a1.id, p.id, nota_total=800,
+                              custo_estimado_centavos=35, status="corrigido")
+    store.registrar_envio(a2.id, p.id, nota_total=700,
+                          custo_estimado_centavos=35, status="corrigido")
+    store.registrar_envio_bloqueado(a2.id, p.id)  # foto bloqueada
+
+    out = metricas("demo", _=None)
+    op = out["operacao"]
+    assert op["custo_medio_centavos"] == 35
+    assert op["correcoes_por_assinante_p50"] >= 1
+    assert op["correcoes_por_assinante_p95"] == 3
+    assert op["fotos_bloqueadas"] == 1
+    assert "eventos_pendentes" in op
+    fin = out["financeiro"]
+    # MRR = 2*3990; parte parceiro 30%; custo 4*35
+    assert fin["mrr_centavos"] == 2 * 3990
+    assert fin["margem_estimada_centavos"] == 2 * 3990 - int(2 * 3990 * 0.30) - 4 * 35

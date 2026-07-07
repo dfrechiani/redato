@@ -66,39 +66,88 @@ def test_evento_duplicado_nao_reprocessa(store):
 # Critério 5 — OVERDUE régua M8/M9/M10; pagamento reativa
 # ──────────────────────────────────────────────────────────────────────
 
-def test_overdue_regua_M8_M9_M10(store):
+def test_overdue_d0_manda_so_M8_e_inicia_regua(store):
+    """§D8: webhook OVERDUE = D0 (M8) + inicia régua. NÃO escala sozinho."""
     p, a = _seed_assinante(store, estado="ativo")
     enviados = []
-    notif = lambda phone, textos: enviados.append(textos[0])
-
-    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o1"), notificar=notif)
-    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o2"), notificar=notif)
-    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o3"), notificar=notif)
-
-    assert "renovar" in enviados[0].lower()          # M8 (D0)
-    assert "2 dias" in enviados[1]                    # M9
-    assert "guardei" in enviados[2].lower()           # M10
-    assert store.get_aluno_por_telefone("+5511777").estado == "inadimplente"
-    assert store.get_assinatura_por_aluno(a.id).status == "atrasada"
+    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o1"),
+                      notificar=lambda ph, tx: enviados.append(tx[0]))
+    assert len(enviados) == 1 and "renovar" in enviados[0].lower()  # M8
+    sub = store.get_assinatura_por_aluno(a.id)
+    assert sub.status == "atrasada" and sub.regua_estagio == 1
+    assert sub.overdue_desde is not None
+    # aluno segue ativo (carência até D+5)
+    assert store.get_aluno_por_telefone("+5511777").estado == "ativo"
 
 
-def test_pagamento_apos_overdue_reativa(store):
+def test_daily_tick_regua_M9_e_bloqueio_idempotente(store):
+    from datetime import timedelta
+    from redato_backend.b2c.tick import rodar_tick
+
     p, a = _seed_assinante(store, estado="ativo")
     processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o1"),
                       notificar=lambda *_: None)
-    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o2"),
+    od = store.get_assinatura_por_aluno(a.id).overdue_desde
+
+    # D+3 → M9 (estágio 2)
+    enviados = []
+    notif = lambda ph, tx: enviados.append(tx[0])
+    rodar_tick(agora=od + timedelta(days=3), notificar=notif)
+    assert len(enviados) == 1 and "2 dias" in enviados[0]           # M9
+    assert store.get_assinatura_por_aluno(a.id).regua_estagio == 2
+
+    # rodar de novo no MESMO dia → não repete M9 (idempotente)
+    rodar_tick(agora=od + timedelta(days=3), notificar=notif)
+    assert len(enviados) == 1
+
+    # D+5 → bloqueia (estágio 3, estado inadimplente); sem nova mensagem
+    rodar_tick(agora=od + timedelta(days=5), notificar=notif)
+    assert len(enviados) == 1
+    assert store.get_assinatura_por_aluno(a.id).regua_estagio == 3
+    assert store.get_aluno_por_telefone("+5511777").estado == "inadimplente"
+
+
+def test_pagamento_apos_overdue_zera_regua_e_reativa(store):
+    from datetime import timedelta
+    from redato_backend.b2c.tick import rodar_tick
+
+    p, a = _seed_assinante(store, estado="ativo")
+    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o1"),
                       notificar=lambda *_: None)
-    processar_webhook(_payload("PAYMENT_OVERDUE", event_id="o3"),
-                      notificar=lambda *_: None)
+    od = store.get_assinatura_por_aluno(a.id).overdue_desde
+    rodar_tick(agora=od + timedelta(days=5), notificar=lambda *_: None)
     assert store.get_aluno_por_telefone("+5511777").estado == "inadimplente"
 
     enviados = []
-    processar_webhook(
-        _payload("PAYMENT_RECEIVED", event_id="pay_ok"),
-        notificar=lambda phone, textos: enviados.append(textos[0]),
-    )
+    processar_webhook(_payload("PAYMENT_RECEIVED", event_id="pay_ok"),
+                      notificar=lambda ph, tx: enviados.append(tx[0]))
+    sub = store.get_assinatura_por_aluno(a.id)
     assert store.get_aluno_por_telefone("+5511777").estado == "ativo"
-    assert store.get_assinatura_por_aluno(a.id).status == "ativa"
+    assert sub.status == "ativa" and sub.regua_estagio == 0
+    assert sub.overdue_desde is None
+    assert "ativa" in enviados[0].lower()                          # M5
+
+
+def test_evento_desconhecido_fica_pendente(store):
+    """§D13: evento não reconhecido → processado=false + eventos_pendentes."""
+    p, a = _seed_assinante(store, estado="ativo")
+    res = processar_webhook(
+        {"id": "evt_x", "event": "PAYMENT_ANTICIPATED",
+         "payment": {"id": "pay_9", "subscription": "sub_x"}},
+        notificar=lambda *_: None,
+    )
+    assert res["resultado"]["handled"] is False
+    assert store.contar_eventos_pendentes(p.id) == 1
+
+
+def test_split_divergencia_marca_atencao(store):
+    p, a = _seed_assinante(store, estado="ativo")
+    processar_webhook(
+        {"id": "evt_s", "event": "PAYMENT_SPLIT_DIVERGENCE_BLOCK",
+         "payment": {"id": "pay_s", "subscription": "sub_x"}},
+        notificar=lambda *_: None,
+    )
+    assert store.get_assinatura_por_aluno(a.id).status == "atencao_split"
 
 
 def test_subscription_deleted_cancela(store):
@@ -151,7 +200,9 @@ def test_checkout_real_envia_split_pro_gateway(
     p = store.add_parceiro(preco_centavos=4990, wallet_id_asaas="w_luma",
                            share_pct=40)
     store.add_aluno("+5511777", p.id, estado="degustacao", nome="Maria")
-    maybe_route_b2c(InboundMessage(phone="+5511777", image_path="/tmp/f.jpg"))
+    maybe_route_b2c(InboundMessage(
+        phone="+5511777", text="Impactos da IA na educação brasileira",
+        image_path="/tmp/f.jpg"))
 
     assert mock_asaas.subscriptions, "assinatura não foi criada no gateway"
     split = mock_asaas.subscriptions[0]["payload"]["split"]

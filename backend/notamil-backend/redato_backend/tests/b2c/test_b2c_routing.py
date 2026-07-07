@@ -93,20 +93,23 @@ def test_degustacao_corrige_uma_e_depois_paywall(
     p = store.add_parceiro(preco_centavos=3990, wallet_id_asaas="w_1",
                            share_pct=30)
     a = store.add_aluno("+5511777", p.id, estado="degustacao", nome="Maria")
+    tema = "Democratização do acesso à leitura no Brasil"
 
-    # 1ª foto → corrige (M3) + já dispara paywall (M4)
-    replies = maybe_route_b2c(_msg(phone="+5511777", image_path="/tmp/f.jpg"))
+    # 1ª foto COM tema na legenda → corrige (M3, com "📝 Tema:") + paywall (M4)
+    replies = maybe_route_b2c(_msg(phone="+5511777", text=tema, image_path="/tmp/f.jpg"))
     textos = " ".join(r.text for r in replies)
     assert "880/1000" in textos
+    assert "📝 Tema:" in textos
     assert "assinatura" in textos.lower()
     assert store.get_aluno_por_telefone("+5511777").estado == "aguardando_pagamento"
-    assert len([e for e in store.envios if e["aluno_id"] == a.id]) == 1
+    corrigidos = [e for e in store.envios if e["aluno_id"] == a.id and e.get("status") == "corrigido"]
+    assert len(corrigidos) == 1 and corrigidos[0]["tema"] == tema
 
-    # 2ª foto sem pagar → só paywall, NÃO corrige (nenhum envio novo)
-    replies2 = maybe_route_b2c(_msg(phone="+5511777", image_path="/tmp/f2.jpg"))
+    # 2ª foto sem pagar → só paywall, NÃO corrige (nenhum corrigido novo)
+    replies2 = maybe_route_b2c(_msg(phone="+5511777", text=tema, image_path="/tmp/f2.jpg"))
     assert all("880/1000" not in r.text for r in replies2)
     assert "assinatura" in " ".join(r.text for r in replies2).lower()
-    assert len([e for e in store.envios if e["aluno_id"] == a.id]) == 1
+    assert len([e for e in store.envios if e["aluno_id"] == a.id and e.get("status") == "corrigido"]) == 1
 
 
 def test_foto_ilegivel_na_degustacao(store, b2c_on, sem_b2g, monkeypatch):
@@ -143,12 +146,15 @@ def test_fair_use_bloqueia_11a(store, b2c_on, sem_b2g, fake_correcao):
 def test_ativo_corrige_e_entrega_M6(store, b2c_on, sem_b2g, fake_correcao):
     p = store.add_parceiro()
     a = store.add_aluno("+5511777", p.id, estado="ativo", nome="Maria")
-    store.registrar_envio(a.id, p.id, nota_total=800)  # histórico p/ evolução
-    replies = maybe_route_b2c(_msg(phone="+5511777", image_path="/tmp/f.jpg"))
+    store.registrar_envio(a.id, p.id, nota_total=800)  # 1 corrigido no histórico
+    tema = "Desinformação nas redes sociais"
+    replies = maybe_route_b2c(_msg(phone="+5511777", text=tema, image_path="/tmp/f.jpg"))
     txt = replies[0].text
     assert "880/1000" in txt
+    assert "📝 Tema:" in txt
+    # 2º corrigido → bloco de evolução aparece (≥2)
     assert "evolução" in txt.lower()
-    assert len([e for e in store.envios if e["aluno_id"] == a.id]) == 2
+    assert len([e for e in store.envios if e["aluno_id"] == a.id and e.get("status") == "corrigido"]) == 2
 
 
 # ──────────────────────────────────────────────────────────────────────

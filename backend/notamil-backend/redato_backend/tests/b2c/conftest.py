@@ -58,6 +58,10 @@ class FakeStore:
             cpf=kw.get("cpf"),
             correcoes_gratis_usadas=kw.get("correcoes_gratis_usadas", 0),
             consent_lgpd_at=kw.get("consent_lgpd_at"),
+            consent_version=kw.get("consent_version"),
+            ultima_inbound_at=kw.get("ultima_inbound_at"),
+            ultimo_tema_sorteado=kw.get("ultimo_tema_sorteado"),
+            ultimo_tema_sorteado_at=kw.get("ultimo_tema_sorteado_at"),
         )
         self.alunos[telefone] = a
         self.alunos_by_id[aid] = a
@@ -101,14 +105,23 @@ class FakeStore:
 
     def registrar_envio(self, aluno_id, parceiro_id, **kw) -> str:
         eid = self._nid("env")
+        kw.setdefault("status", "corrigido")
         self.envios.append({
             "id": eid, "aluno_id": aluno_id, "parceiro_id": parceiro_id,
             "created_at": datetime.now(timezone.utc), **kw,
         })
         return eid
 
+    def _by_id(self, eid):
+        return next((e for e in self.envios if e["id"] == eid), None)
+
     def contar_envios_hoje(self, aluno_id, agora=None) -> int:
-        return sum(1 for e in self.envios if e["aluno_id"] == aluno_id)
+        return sum(1 for e in self.envios
+                   if e["aluno_id"] == aluno_id and e.get("status") == "corrigido")
+
+    def contar_corrigidos(self, aluno_id) -> int:
+        return sum(1 for e in self.envios
+                   if e["aluno_id"] == aluno_id and e.get("status") == "corrigido")
 
     def ultimas_notas(self, aluno_id, limite=5) -> List[int]:
         notas = [e["nota_total"] for e in self.envios
@@ -118,6 +131,105 @@ class FakeStore:
     def listar_notas_competencias(self, aluno_id, limite=20) -> List[Dict[str, Any]]:
         return [e["notas_competencias"] for e in self.envios
                 if e["aluno_id"] == aluno_id and e.get("notas_competencias")][-limite:]
+
+    # tema pendente ----------------------------------------------------
+    def get_envio_pendente(self, aluno_id):
+        pend = [e for e in self.envios
+                if e["aluno_id"] == aluno_id and e.get("status") == "aguardando_tema"]
+        if not pend:
+            return None
+        e = pend[-1]
+        return {"id": e["id"], "texto_ocr": e.get("texto_ocr"),
+                "tema": e.get("tema"), "gratis": bool(e.get("gratis"))}
+
+    def substituir_envio_pendente(self, aluno_id, parceiro_id, *,
+                                  texto_ocr, gratis=False, tema=None) -> str:
+        self.envios = [e for e in self.envios
+                       if not (e["aluno_id"] == aluno_id
+                               and e.get("status") == "aguardando_tema")]
+        return self.registrar_envio(
+            aluno_id, parceiro_id, texto_ocr=texto_ocr, texto_final=texto_ocr,
+            tema=tema, gratis=gratis, status="aguardando_tema",
+        )
+
+    def corrigir_envio_pendente(self, envio_id, *, tema, nota_total,
+                                notas_competencias, custo_estimado_centavos=None,
+                                tempo_processamento_ms=None) -> None:
+        e = self._by_id(envio_id)
+        if e is None:
+            return
+        e.update(status="corrigido", tema=tema, nota_total=nota_total,
+                 notas_competencias=notas_competencias,
+                 custo_estimado_centavos=custo_estimado_centavos,
+                 tempo_processamento_ms=tempo_processamento_ms)
+
+    def atualizar_tema_pendente(self, envio_id, tema) -> None:
+        e = self._by_id(envio_id)
+        if e is not None and e.get("status") == "aguardando_tema":
+            e["tema"] = tema
+
+    def registrar_envio_bloqueado(self, aluno_id, parceiro_id) -> str:
+        return self.registrar_envio(aluno_id, parceiro_id, status="bloqueado")
+
+    # régua ------------------------------------------------------------
+    def iniciar_overdue(self, sub_id, quando) -> None:
+        aid = self.sub_index.get(sub_id)
+        sub = self.assinaturas.get(aid) if aid else None
+        if sub is None:
+            return
+        sub.status = "atrasada"
+        if sub.overdue_desde is None:
+            sub.overdue_desde = quando
+        if sub.regua_estagio < 1:
+            sub.regua_estagio = 1
+
+    def avancar_regua(self, sub_id, novo_estagio) -> None:
+        aid = self.sub_index.get(sub_id)
+        sub = self.assinaturas.get(aid) if aid else None
+        if sub and novo_estagio > sub.regua_estagio:
+            sub.regua_estagio = novo_estagio
+
+    def zerar_regua(self, sub_id) -> None:
+        aid = self.sub_index.get(sub_id)
+        sub = self.assinaturas.get(aid) if aid else None
+        if sub:
+            sub.overdue_desde = None
+            sub.regua_estagio = 0
+
+    def listar_atrasadas_para_tick(self):
+        out = []
+        for aid, sub in self.assinaturas.items():
+            if sub.status == "atrasada" and sub.overdue_desde and sub.regua_estagio < 3:
+                a = self.alunos_by_id.get(aid)
+                if a:
+                    out.append({
+                        "sub_id": sub.asaas_subscription_id,
+                        "overdue_desde": sub.overdue_desde,
+                        "regua_estagio": sub.regua_estagio,
+                        "aluno_id": a.id, "telefone": a.telefone_e164,
+                        "nome": a.nome, "parceiro_id": a.parceiro_id,
+                    })
+        return out
+
+    # métricas ---------------------------------------------------------
+    def contar_fotos_bloqueadas(self, parceiro_id) -> int:
+        return sum(1 for e in self.envios
+                   if e["parceiro_id"] == parceiro_id and e.get("status") == "bloqueado")
+
+    def contar_eventos_pendentes(self, parceiro_id) -> int:
+        alunos_ids = {a.id for a in self.alunos.values() if a.parceiro_id == parceiro_id}
+        return sum(1 for ev in self.eventos.values()
+                   if ev.get("aluno_id") in alunos_ids and not ev.get("processado"))
+
+    def correcoes_por_assinante_ativo(self, parceiro_id) -> List[int]:
+        ativos = {a.id for a in self.alunos.values()
+                  if a.parceiro_id == parceiro_id
+                  and a.estado in ("ativo", "aguardando_cancelamento")}
+        contagem = {}
+        for e in self.envios:
+            if e["aluno_id"] in ativos and e.get("status") == "corrigido":
+                contagem[e["aluno_id"]] = contagem.get(e["aluno_id"], 0) + 1
+        return list(contagem.values())
 
     def get_assinatura_por_aluno(self, aluno_id) -> Optional[AssinaturaDTO]:
         return self.assinaturas.get(aluno_id)
@@ -190,11 +302,15 @@ class FakeStore:
         return out
 
     def metricas_envios(self, parceiro_id) -> Dict[str, Any]:
-        envs = [e for e in self.envios if e["parceiro_id"] == parceiro_id]
+        envs = [e for e in self.envios if e["parceiro_id"] == parceiro_id
+                and e.get("status") == "corrigido"]
+        tempos = [e["tempo_processamento_ms"] for e in envs
+                  if e.get("tempo_processamento_ms")]
         return {
             "total_correcoes": len(envs),
-            "tempo_medio_ms": None,
-            "custo_estimado_centavos": 0,
+            "tempo_medio_ms": int(sum(tempos) / len(tempos)) if tempos else None,
+            "custo_estimado_centavos": sum(e.get("custo_estimado_centavos") or 0
+                                           for e in envs),
         }
 
 
@@ -202,11 +318,18 @@ _REPO_FNS = [
     "get_parceiro_por_codigo", "get_parceiro_por_slug", "get_parceiro_por_id",
     "get_aluno_por_telefone", "get_aluno_por_id", "criar_aluno",
     "atualizar_aluno", "incrementar_gratis", "registrar_envio",
-    "contar_envios_hoje", "ultimas_notas", "listar_notas_competencias",
+    "contar_envios_hoje", "contar_corrigidos", "ultimas_notas",
+    "listar_notas_competencias", "get_envio_pendente",
+    "substituir_envio_pendente", "corrigir_envio_pendente",
+    "atualizar_tema_pendente", "registrar_envio_bloqueado",
     "get_assinatura_por_aluno", "get_assinatura_por_subscription",
     "upsert_assinatura", "atualizar_status_assinatura",
+    "iniciar_overdue", "avancar_regua", "zerar_regua",
+    "listar_atrasadas_para_tick",
     "registrar_evento_billing", "contar_eventos_tipo",
     "marcar_evento_processado", "contar_alunos_por_estado", "metricas_envios",
+    "contar_fotos_bloqueadas", "contar_eventos_pendentes",
+    "correcoes_por_assinante_ativo",
 ]
 
 
@@ -253,13 +376,13 @@ def fake_correcao(monkeypatch):
     def _transcrever(image_path):
         return _Ocr()
 
-    def _corrigir(texto, grader=None):
+    def _corrigir(texto, *, tema=None, grader=None):
         return C.ResultadoCorrecao(
             nota_total=880,
             notas={"c1": 200, "c2": 160, "c3": 160, "c4": 200, "c5": 160},
             ponto_forte="tese clara e bem delimitada",
             foco_melhoria="aprofundar o repertório na C2",
-            raw={},
+            raw={"_tema": tema},
         )
 
     monkeypatch.setattr(C, "transcrever", _transcrever)
