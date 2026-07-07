@@ -25,7 +25,7 @@ from typing import List, Optional
 
 from sqlalchemy import (
     Boolean, CheckConstraint, DateTime, ForeignKey, Index, Integer,
-    String, Text, UniqueConstraint, func,
+    Numeric, String, Text, UniqueConstraint, func,
 )
 from sqlalchemy.dialects.postgresql import (
     ARRAY as PG_ARRAY,
@@ -975,3 +975,243 @@ class ReescritaIndividual(Base):
             f"<ReescritaIndividual aluno={self.aluno_turma_id} "
             f"partida={self.partida_id}>"
         )
+
+
+# ══════════════════════════════════════════════════════════════════════
+# B2C — Correção {Parceiro} (influencers). SPEC_B2C_REDATO.md.
+#
+# Tabelas 100% paralelas ao fluxo escola (B2G): NENHUMA FK para
+# Escola/Turma/AlunoTurma/Envio/Atividade. O motor de correção é o
+# mesmo (reutilizado por função), mas os dados vivem aqui. Todo o
+# módulo fica atrás da flag REDATO_B2C_ENABLED — se desligada, estas
+# tabelas simplesmente não são lidas nem escritas.
+# ══════════════════════════════════════════════════════════════════════
+
+# Estados válidos do AlunoB2C (FSM por telefone). Validados em app +
+# CheckConstraint pra integridade no banco.
+B2C_ALUNO_ESTADOS = (
+    "novo", "aguardando_nome", "aguardando_cpf", "degustacao",
+    "aguardando_pagamento", "ativo", "aguardando_cancelamento",
+    "inadimplente", "bloqueado", "cancelado",
+)
+B2C_ASSINATURA_STATUS = ("pendente", "ativa", "atrasada", "cancelada")
+
+
+class ParceiroB2C(Base):
+    """Professor-influencer que revende a correção sob a própria marca.
+
+    `share_pct`/`preco_centavos` nunca aparecem em mensagem ao aluno
+    (D4). `branding` guarda saudação/emoji/assinatura/cor pra camada de
+    copy do parceiro (D6)."""
+    __tablename__ = "parceiros_b2c"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    slug: Mapped[str] = mapped_column(String(64), unique=True, index=True,
+                                      nullable=False)
+    codigo_entrada: Mapped[str] = mapped_column(
+        String(32), unique=True, index=True, nullable=False,
+    )
+    nome_publico: Mapped[str] = mapped_column(String(120), nullable=False)
+    nome_professor: Mapped[str] = mapped_column(String(120), nullable=False)
+    wallet_id_asaas: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True,
+    )
+    share_pct: Mapped[Optional[float]] = mapped_column(
+        Numeric(5, 2), nullable=True,
+    )
+    preco_centavos: Mapped[int] = mapped_column(
+        Integer, default=3990, nullable=False,
+    )
+    ativo: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    branding: Mapped[Optional[dict]] = mapped_column(PG_JSONB, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+
+    alunos: Mapped[List["AlunoB2C"]] = relationship(
+        back_populates="parceiro", lazy="selectin",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "share_pct IS NULL OR (share_pct >= 0 AND share_pct <= 100)",
+            name="ck_parceiro_b2c_share_pct_range",
+        ),
+        CheckConstraint(
+            "preco_centavos > 0", name="ck_parceiro_b2c_preco_positivo",
+        ),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<ParceiroB2C slug={self.slug} codigo={self.codigo_entrada}>"
+
+
+class AlunoB2C(Base):
+    """Aluno que chegou pelo link de um parceiro. FSM por telefone."""
+    __tablename__ = "alunos_b2c"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    telefone_e164: Mapped[str] = mapped_column(
+        String(20), unique=True, index=True, nullable=False,
+    )
+    nome: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    parceiro_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("parceiros_b2c.id"),
+        nullable=False, index=True,
+    )
+    estado: Mapped[str] = mapped_column(
+        String(32), default="novo", nullable=False,
+    )
+    # Slot efêmero pro CPF em coleta (quando B2C_EXIGE_CPF=1). Não é
+    # persistência de dado sensível de longo prazo — é limpo assim que
+    # o customer Asaas é criado.
+    cpf: Mapped[Optional[str]] = mapped_column(String(14), nullable=True)
+    correcoes_gratis_usadas: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False,
+    )
+    consent_lgpd_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, onupdate=_utc_now,
+        nullable=False,
+    )
+
+    parceiro: Mapped[ParceiroB2C] = relationship(back_populates="alunos")
+    assinatura: Mapped[Optional["AssinaturaB2C"]] = relationship(
+        back_populates="aluno", uselist=False, lazy="selectin",
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "estado IN ('novo','aguardando_nome','aguardando_cpf',"
+            "'degustacao','aguardando_pagamento','ativo',"
+            "'aguardando_cancelamento','inadimplente','bloqueado',"
+            "'cancelado')",
+            name="ck_aluno_b2c_estado_valido",
+        ),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<AlunoB2C tel={self.telefone_e164} estado={self.estado}>"
+
+
+class AssinaturaB2C(Base):
+    """Assinatura recorrente do aluno no Asaas (com split pro parceiro)."""
+    __tablename__ = "assinaturas_b2c"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    aluno_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("alunos_b2c.id"),
+        nullable=False, index=True,
+    )
+    asaas_customer_id: Mapped[Optional[str]] = mapped_column(
+        String(64), nullable=True,
+    )
+    asaas_subscription_id: Mapped[Optional[str]] = mapped_column(
+        String(64), index=True, nullable=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(16), default="pendente", nullable=False,
+    )
+    valor_centavos: Mapped[int] = mapped_column(Integer, nullable=False)
+    ciclo: Mapped[str] = mapped_column(
+        String(16), default="MONTHLY", nullable=False,
+    )
+    proximo_vencimento: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, onupdate=_utc_now,
+        nullable=False,
+    )
+
+    aluno: Mapped[AlunoB2C] = relationship(back_populates="assinatura")
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pendente','ativa','atrasada','cancelada')",
+            name="ck_assinatura_b2c_status_valido",
+        ),
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return (
+            f"<AssinaturaB2C aluno={self.aluno_id} status={self.status}>"
+        )
+
+
+class EnvioB2C(Base):
+    """Uma correção entregue a um aluno B2C. Não acopla em `Envio`
+    (esse referencia Atividade/Turma). Guarda as 5 notas + diagnóstico."""
+    __tablename__ = "envios_b2c"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    aluno_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("alunos_b2c.id"),
+        nullable=False, index=True,
+    )
+    parceiro_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("parceiros_b2c.id"),
+        nullable=False, index=True,
+    )
+    imagem_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    texto_ocr: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    texto_final: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    nota_total: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    notas_competencias: Mapped[Optional[dict]] = mapped_column(
+        PG_JSONB, nullable=True,
+    )
+    diagnostico: Mapped[Optional[dict]] = mapped_column(
+        PG_JSONB, nullable=True,
+    )
+    # 1 = degustação grátis; contagem por dia para fair use lê created_at.
+    gratis: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    tempo_processamento_ms: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True,
+    )
+    custo_estimado_centavos: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False, index=True,
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<EnvioB2C aluno={self.aluno_id} nota={self.nota_total}>"
+
+
+class EventoBilling(Base):
+    """Evento de webhook do gateway (idempotência). `tipo` = event do
+    Asaas (PAYMENT_CONFIRMED, PAYMENT_OVERDUE, ...). `dedupe_key` é o id
+    do evento no gateway — UNIQUE garante que reprocessar é no-op."""
+    __tablename__ = "eventos_billing"
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    aluno_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("alunos_b2c.id"),
+        nullable=True, index=True,
+    )
+    tipo: Mapped[str] = mapped_column(String(64), nullable=False)
+    dedupe_key: Mapped[str] = mapped_column(
+        String(128), unique=True, index=True, nullable=False,
+    )
+    payload: Mapped[Optional[dict]] = mapped_column(PG_JSONB, nullable=True)
+    processado: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utc_now, nullable=False,
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"<EventoBilling tipo={self.tipo} key={self.dedupe_key}>"
