@@ -41,7 +41,13 @@ def _carregar_env() -> None:
         if line.startswith("#") or "=" not in line:
             continue
         k, v = line.split("=", 1)
-        os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+        k, v = k.strip(), v.strip().strip('"').strip("'")
+        # `setdefault` NÃO serve: o shell pode ter a var setada como STRING
+        # VAZIA (ex.: `export ANTHROPIC_API_KEY=` no profile), e setdefault
+        # não sobrescreve chave existente. Sobrescrevemos quando o valor
+        # atual está ausente OU vazio.
+        if not os.environ.get(k):
+            os.environ[k] = v
 
 
 _carregar_env()
