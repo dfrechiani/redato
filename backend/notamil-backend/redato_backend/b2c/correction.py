@@ -101,6 +101,7 @@ def _default_grader(texto: str, tema: Optional[str] = None) -> Dict[str, Any]:
         activity_id=None,
         request_id=f"b2c_{int(time.time())}",
         user_id="b2c",
+        force_claude=True,   # ADENDO §D7: FT não usa tema; B2C sempre Claude v2
     )
 
 
@@ -111,8 +112,29 @@ def transcrever(image_path: Any) -> Any:
     return transcribe_with_quality_check(image_path)
 
 
-def corrigir_texto(texto: str, *, grader: Optional[Grader] = None) -> ResultadoCorrecao:
-    """Corrige um texto já transcrito. `grader` injetável pros testes."""
+def corrigir_texto(
+    texto: str, *, tema: Optional[str] = None,
+    grader: Optional[Grader] = None,
+) -> ResultadoCorrecao:
+    """Corrige um texto já transcrito CONTRA um tema (D7). `grader`
+    injetável pros testes."""
     g = grader or _default_grader
-    tool_args = g(texto)
+    tool_args = g(texto, tema)
     return extrair_resultado(tool_args)
+
+
+def estimar_custo_correcao_centavos(texto: str) -> int:
+    """Estimativa de custo por correção (§D11), em centavos de BRL.
+
+    Fórmula (documentada, aproximada por tokens):
+      - OCR (Claude vision, 1 página): ~R$ 0,06 fixo.
+      - Grader Claude v2: entrada ≈ prompt(~1200 tok) + redação(len/4 tok);
+        saída ≈ 1500 tok. A ~US$3/1M in e US$15/1M out, câmbio ~R$5,5:
+        custo ≈ (in*3 + out*15)/1e6 * 5,5 * 100 centavos.
+    Não é contabilidade fiscal — é sinal de margem pro dashboard.
+    """
+    tokens_in = 1200 + max(0, len(texto)) // 4
+    tokens_out = 1500
+    grader_usd = (tokens_in * 3 + tokens_out * 15) / 1_000_000
+    total_brl = 0.06 + grader_usd * 5.5
+    return max(1, round(total_brl * 100))

@@ -70,8 +70,17 @@ def _claude_grade_essay(data: Dict[str, Any]) -> Dict[str, Any]:
     # OF14 (completo_integral) usa GPT-FT BTBOS5VF como backend padrão desde
     # 2026-04-30. Rollback rápido: REDATO_OF14_BACKEND=claude (1 env var, sem
     # deploy). Fallback automático: se FT falha, cai pro Claude path abaixo.
+    #
+    # PINO B2C (ADENDO §D7): o modelo fine-tunado NÃO foi treinado pra usar
+    # `theme` — ele não penaliza C2 por fuga ao tema. O B2C, que corrige
+    # SEMPRE contra um tema real, não pode cair no FT nem por acidente.
+    # Como o B2C passa activity_id=None (_mission_mode is None), ele já não
+    # entraria aqui; `_force_claude` é o pino explícito e testável, imune a
+    # mudanças futuras no roteamento por activity_id.
+    force_claude = bool(data.get("_force_claude"))
     if (
-        _mission_mode == MissionMode.COMPLETO_INTEGRAL
+        not force_claude
+        and _mission_mode == MissionMode.COMPLETO_INTEGRAL
         and os.getenv("REDATO_OF14_BACKEND", "ft") == "ft"
     ):
         try:
@@ -208,6 +217,7 @@ def grade_essay_completo(
     activity_id: Optional[str] = None,
     request_id: Optional[str] = None,
     user_id: Optional[str] = None,
+    force_claude: bool = False,
 ) -> Dict[str, Any]:
     """Ponto público único do grader completo (5 competências ENEM).
 
@@ -216,7 +226,10 @@ def grade_essay_completo(
     {theme}` no user_msg, e `grade_of14_with_ft(theme=...)` no path FT).
     Nunca passar tema vazio: quem chama garante um tema real.
 
-    bot.py (B2G) e b2c/correction.py importam ESTA função.
+    `force_claude=True` (ADENDO §D7): força o caminho Claude v2, que
+    penaliza C2 por fuga ao tema. O B2C usa isso — o modelo FT não foi
+    treinado pra usar tema. bot.py (B2G) e b2c/correction.py importam
+    ESTA função.
     """
     import time
     data = {
@@ -225,5 +238,6 @@ def grade_essay_completo(
         "activity_id": activity_id,
         "theme": tema,
         "content": texto,
+        "_force_claude": force_claude,
     }
     return _claude_grade_essay(data)
