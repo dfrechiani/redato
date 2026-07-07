@@ -37,7 +37,7 @@ alembic -c redato_backend/portal/alembic.ini upgrade head # aplica l0a1b2c3d4e5
 alembic -c redato_backend/portal/alembic.ini current      # confirma l0a1b2c3d4e5 (head)
 ```
 
-**Ciclo validado localmente (feito):** contra um Postgres efêmero real (via `pgserver`), a cadeia inteira rodou `upgrade head → downgrade -1 (l→k) → upgrade head (k→l)` sem erro; as 6 tabelas B2C (parceiros_b2c, alunos_b2c, assinaturas_b2c, envios_b2c, eventos_billing, notificacoes_degradadas) e as colunas novas (`envios_b2c.tema/status` etc.) presentes ao fim. A migration `l0a1b2c3d4e5` (head único) é reversível nos dois sentidos. Rerodar antes do deploy: `python /tmp/migration_cycle_test.py` (ou equivalente com `pgserver`).
+**Ciclo validado localmente (feito):** contra um Postgres efêmero real (via `pgserver`), a cadeia inteira rodou `upgrade head → downgrade -1 (l→k) → upgrade head (k→l)` sem erro; as 6 tabelas B2C (parceiros_b2c, alunos_b2c, assinaturas_b2c, envios_b2c, eventos_billing, notificacoes_degradadas) e as colunas novas (`envios_b2c.tema/status` etc.) presentes ao fim. A migration `l0a1b2c3d4e5` (head único) é reversível nos dois sentidos. Rerodar antes do deploy: `pip install pgserver && python scripts/test_migration_cycle.py`.
 
 ## 3. Seed do parceiro
 - `python scripts/seed_parceiro.py` → parceiro DEMO (idempotente). Parceiros reais só depois do piloto validado.
