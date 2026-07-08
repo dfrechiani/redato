@@ -61,6 +61,18 @@ ANTHROPIC_API_KEY=sk-... python scripts/validar_tema_c2.py
 - **Passa** se a C2 cai no par off-topic (diagnóstico de tangenciamento) em todos os pares → exit 0.
 - **Falha** (exit 2) → o grader está ignorando o tema; o produto voltaria a ser tema-agnóstico prometendo o contrário. Investigar o prompt do grader ANTES de prosseguir.
 
+## 5.5 Dia D do sender (checklist técnico — quando o número existir)
+O piloto depende de um número WhatsApp (sender) registrado. No dia em que ele existir, ANTES de ligar a flag:
+
+1. **Webhook do sender → produção.** No provedor do sender (Twilio console → o número/Messaging Service), aponta o webhook de mensagens recebidas para `POST https://<backend-prod>/twilio/webhook` (o MESMO endpoint do B2G — o desvio B2C é interno, decidido no `handle_inbound`). Método POST, validação de assinatura ligada (`TWILIO_VALIDATE_SIGNATURE=1` + `TWILIO_PUBLIC_URL` da prod).
+2. **Envs no Railway:**
+   - `B2C_NUMERO_WHATSAPP=<numero E.164 do sender>` (ex.: `5511999999999`) — usado no deep link e no kit do parceiro.
+   - `TWILIO_CONTENT_SID_M5`, `TWILIO_CONTENT_SID_M8`, `TWILIO_CONTENT_SID_M9` — os Content SIDs dos templates aprovados (§0.1). Os nomes na Meta e a ordem exata das variáveis são a fonte de verdade em `redato_backend/b2c/templates.py`; submeta os corpos de lá literais. Sem esses SIDs, M5/M8/M9 fora da janela 24h degradam (visível em `envios_degradados`).
+3. **Confere o deep link do DEMO com o número real:** monta `https://wa.me/<B2C_NUMERO_WHATSAPP>?text=QUERO+DEMO` e abre no teu celular — deve abrir a conversa com o sender já com "QUERO DEMO" digitado. O código `QUERO DEMO` já está gravado no banco desde o seed; só o número faltava.
+4. **Cadastra o webhook do Asaas** (se ainda não): `POST https://<backend-prod>/billing/asaas/webhook` com `asaas-access-token: $ASAAS_WEBHOOK_TOKEN`.
+5. **Cadastra o cron do daily-tick** (10h BRT) batendo em `POST https://<backend-prod>/internal/b2c/daily-tick` com `x-b2c-tick-token: $B2C_TICK_TOKEN`.
+6. **E2E do telefone do Daniel — a TRAVA FINAL antes do flag on** (ver §6). Só liga `REDATO_B2C_ENABLED=true` depois deste E2E passar ponta a ponta.
+
 ## 6. Ligar a flag + teste manual
 - `REDATO_B2C_ENABLED=true`.
 - Teste com o telefone do Daniel + código DEMO: onboarding → **foto com o tema na legenda** → correção (abre com "📝 Tema:") → paywall sandbox → pagamento simulado → M5 → correção de assinante. Testar também: foto sem legenda → M16 → responder tema.
