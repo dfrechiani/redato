@@ -125,7 +125,8 @@ def handle_asaas_event(
         path = notify.notificar_negocio(
             aluno.telefone_e164,
             M.assinar(M.M5_LIBERADO.format(nome=nome), branding),
-            template_key="M5", template_vars=[nome, nome_publico, link],
+            template_key="M5",
+            valores={"nome": nome, "nome_publico": nome_publico},
             ultima_inbound_at=aluno.ultima_inbound_at, override=notificar,
         )
         degradado = path == "freeform_fallback"
@@ -145,7 +146,9 @@ def handle_asaas_event(
             aluno.telefone_e164,
             M.assinar(M.M8_OVERDUE_D0.format(
                 nome=nome, nome_publico=nome_publico, link_fatura=link), branding),
-            template_key="M8", template_vars=[nome, nome_publico, link],
+            template_key="M8",
+            valores={"nome": nome, "nome_publico": nome_publico,
+                     "link_fatura": link},
             ultima_inbound_at=aluno.ultima_inbound_at, override=notificar,
         )
         degradado = path == "freeform_fallback"

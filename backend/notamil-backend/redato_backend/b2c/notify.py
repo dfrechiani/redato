@@ -6,8 +6,12 @@ pré-aprovado (Content API); freeform falha em silêncio.
 
 `enviar_negocio` decide: dentro da janela → freeform; fora → template
 com Content SID (env `TWILIO_CONTENT_SID_{M5|M8|M9}`). Retorna o caminho
-usado (`freeform` | `content_sid` | `freeform_fallback`) — o MVP/teste
-usa um `sender` mock que registra o caminho.
+usado (`freeform` | `content_sid` | `freeform_fallback`).
+
+As variáveis do template são montadas por `templates.build_content_
+variables` a partir da ORDEM declarada em `templates.TEMPLATES` — o
+caller passa um dict nome→valor (`valores`), nunca uma lista posicional.
+Isso mata o bug "variável na posição errada" (ex.: nome_publico vazio).
 
 M3/M6/M16 são sempre resposta imediata (dentro da janela) — não passam
 por aqui, vão como reply normal do bot.
@@ -17,7 +21,9 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
+
+from redato_backend.b2c import templates as T
 
 
 logger = logging.getLogger(__name__)
@@ -34,17 +40,19 @@ class TwilioSender:
         TW.send_replies(phone, [texto])
 
     def template(self, phone: str, content_sid: str,
-                 variables: List[str]) -> None:
+                 content_variables: Dict[str, str]) -> None:
         from redato_backend.whatsapp import twilio_provider as TW
         fn = getattr(TW, "send_template", None)
         if fn is not None:
-            fn(phone, content_sid, variables)
+            fn(phone, content_sid, content_variables)
         else:  # provider ainda sem suporte a template — não perder a msg
             logger.warning(
                 "twilio_provider sem send_template; degradando content_sid "
                 "%s pra freeform", content_sid,
             )
-            TW.send_replies(phone, [f"[{content_sid}] " + " · ".join(variables)])
+            vals = " · ".join(content_variables[k]
+                              for k in sorted(content_variables))
+            TW.send_replies(phone, [f"[{content_sid}] " + vals])
 
 
 def enviar_negocio(
@@ -52,7 +60,7 @@ def enviar_negocio(
     texto: str,
     *,
     template_key: Optional[str] = None,
-    template_vars: Optional[List[str]] = None,
+    valores: Optional[Dict[str, str]] = None,
     ultima_inbound_at: Optional[datetime] = None,
     agora: Optional[datetime] = None,
     sender: Optional[Any] = None,
@@ -71,7 +79,8 @@ def enviar_negocio(
 
     sid = os.getenv(f"TWILIO_CONTENT_SID_{template_key}") if template_key else None
     if sid:
-        sender.template(telefone, sid, template_vars or [])
+        content_vars = T.build_content_variables(template_key, valores or {})
+        sender.template(telefone, sid, content_vars)
         return "content_sid"
 
     # Fora da janela e sem template aprovado (gate do Daniel, §15). Não
@@ -90,7 +99,7 @@ def notificar_negocio(
     texto: str,
     *,
     template_key: str,
-    template_vars: List[str],
+    valores: Dict[str, str],
     ultima_inbound_at: Optional[datetime],
     override: Optional[Callable[[str, List[str]], None]] = None,
 ) -> str:
@@ -101,5 +110,5 @@ def notificar_negocio(
         return "override"
     return enviar_negocio(
         telefone, texto, template_key=template_key,
-        template_vars=template_vars, ultima_inbound_at=ultima_inbound_at,
+        valores=valores, ultima_inbound_at=ultima_inbound_at,
     )

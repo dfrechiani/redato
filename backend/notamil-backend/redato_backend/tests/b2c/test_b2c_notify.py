@@ -24,7 +24,8 @@ _AGORA = datetime(2026, 7, 7, 12, 0, tzinfo=timezone.utc)
 def test_dentro_da_janela_usa_freeform():
     spy = _SpySender()
     caminho = enviar_negocio(
-        "+5511777", "oi", template_key="M8", template_vars=["A", "B", "L"],
+        "+5511777", "oi", template_key="M8",
+        valores={"nome": "A", "nome_publico": "B", "link_fatura": "L"},
         ultima_inbound_at=_AGORA - timedelta(hours=2), agora=_AGORA, sender=spy,
     )
     assert caminho == "freeform"
@@ -35,11 +36,14 @@ def test_fora_da_janela_com_template_usa_content_sid(monkeypatch):
     monkeypatch.setenv("TWILIO_CONTENT_SID_M8", "HXcontent123")
     spy = _SpySender()
     caminho = enviar_negocio(
-        "+5511777", "oi", template_key="M8", template_vars=["Ana", "Luma", "link"],
+        "+5511777", "oi", template_key="M8",
+        valores={"nome": "Ana", "nome_publico": "Luma", "link_fatura": "link"},
         ultima_inbound_at=_AGORA - timedelta(hours=30), agora=_AGORA, sender=spy,
     )
     assert caminho == "content_sid"
-    assert spy.template_calls == [("+5511777", "HXcontent123", ["Ana", "Luma", "link"])]
+    # ContentVariables posicional montado pela ORDEM da spec (M8).
+    assert spy.template_calls == [
+        ("+5511777", "HXcontent123", {"1": "Ana", "2": "Luma", "3": "link"})]
     assert not spy.freeform_calls
 
 
@@ -47,7 +51,8 @@ def test_fora_da_janela_sem_template_degrada_freeform(monkeypatch):
     monkeypatch.delenv("TWILIO_CONTENT_SID_M8", raising=False)
     spy = _SpySender()
     caminho = enviar_negocio(
-        "+5511777", "oi", template_key="M8", template_vars=[],
+        "+5511777", "oi", template_key="M8",
+        valores={"nome": "A", "nome_publico": "B", "link_fatura": "L"},
         ultima_inbound_at=_AGORA - timedelta(hours=30), agora=_AGORA, sender=spy,
     )
     assert caminho == "freeform_fallback"
@@ -58,7 +63,8 @@ def test_sem_ultima_inbound_trata_como_fora_da_janela(monkeypatch):
     monkeypatch.setenv("TWILIO_CONTENT_SID_M5", "HXm5")
     spy = _SpySender()
     caminho = enviar_negocio(
-        "+5511777", "oi", template_key="M5", template_vars=["x"],
+        "+5511777", "oi", template_key="M5",
+        valores={"nome": "x", "nome_publico": "y"},
         ultima_inbound_at=None, agora=_AGORA, sender=spy,
     )
     assert caminho == "content_sid"

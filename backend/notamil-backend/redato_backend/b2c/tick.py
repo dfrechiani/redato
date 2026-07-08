@@ -73,11 +73,14 @@ def rodar_tick(
             repo.avancar_regua(a["sub_id"], 2)
             aluno = repo.get_aluno_por_id(a["aluno_id"])
             ultima_inbound = aluno.ultima_inbound_at if aluno else None
+            nome_publico = parceiro.nome_publico if parceiro else "Redato"
             path = notify.notificar_negocio(
                 a["telefone"],
                 M.assinar(M.M9_OVERDUE_D3.format(nome=nome, link_fatura=link),
                           branding),
-                template_key="M9", template_vars=[nome, "", link],
+                template_key="M9",
+                valores={"nome": nome, "nome_publico": nome_publico,
+                         "link_fatura": link},
                 ultima_inbound_at=ultima_inbound, override=notificar,
             )
             degradado = path == "freeform_fallback"
