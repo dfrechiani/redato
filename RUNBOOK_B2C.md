@@ -3,6 +3,12 @@
 > Operacional. Complementa SPEC_B2C_REDATO.md §8 e ADENDO_B2C_REDATO.md §14.
 > Nada avança antes do gate correspondente. Sandbox até o Daniel autorizar produção.
 
+## Registro de deploy (estado atual — memória durável)
+- **2026-07-08** · `feat/b2c-mvp` mergeada em `main` (fast-forward, commit `c691750`) e empurrada → deploy Railway **inerte** (`REDATO_B2C_ENABLED` ausente = false).
+- **2026-07-08** · Migration aplicada em PRODUÇÃO via Railway Shell: `k0a1b2c3d4e5 → l0a1b2c3d4e5`. `alembic current` = **`l0a1b2c3d4e5 (head)`**. 6 tabelas B2C criadas (vazias) + `notificacoes_degradadas`.
+- **2026-07-08** · `seed_parceiro.py` rodado → parceiro **DEMO** criado (código de entrada `QUERO DEMO`).
+- **Estado:** software 100% armado e DORMENTE. Flag off, rotas respondendo `disabled`/401. **A migration NÃO está pendente.** Falta só env externa (ver §0 e "🔴 esperando env externa").
+
 ## 0. Pré-requisitos (gates do Daniel — §15 do adendo, podem correr em paralelo)
 1. **Templates Twilio M5/M8/M9** submetidos e aprovados na Meta (lead time de horas a dias). Sem eles a régua de cobrança fora da janela de 24h não entrega. Content SIDs vão para `TWILIO_CONTENT_SID_M5/_M8/_M9`.
 2. **Conta Asaas PJ + sandbox** → `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN` nos envs (NUNCA no chat/git). Validar no sandbox: exige CPF? (se sim, `B2C_EXIGE_CPF=1`) + eco do split na assinatura criada.
