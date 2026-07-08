@@ -67,3 +67,17 @@ def test_fmt_reais():
 def test_fmt_evolucao():
     assert _fmt_evolucao([800, 840, 880]) == "800 → 840 → 880"
     assert _fmt_evolucao([]) == "primeira correção"
+
+
+# ── alerta de fuga ao tema (backlog B2C) ──────────────────────────────
+
+def test_alerta_fuga_tema_dispara_com_c2_zero():
+    from redato_backend.b2c import messages as M
+    assert M.alerta_fuga_tema({"c1": 120, "c2": 0, "c3": 80, "c4": 120,
+                               "c5": 40}) == M.M_ALERTA_FUGA_TEMA
+
+
+def test_alerta_fuga_tema_silencioso_com_c2_positiva():
+    from redato_backend.b2c import messages as M
+    assert M.alerta_fuga_tema({"c1": 120, "c2": 40, "c3": 80}) == ""
+    assert M.alerta_fuga_tema({}) == ""   # sem c2 → sem alerta
