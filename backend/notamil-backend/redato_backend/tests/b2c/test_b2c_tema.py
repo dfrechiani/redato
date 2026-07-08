@@ -132,6 +132,50 @@ def test_M6_sem_evolucao_no_primeiro(store, b2c_on, sem_b2g, cap_tema):
     assert "evolução" not in r[0].text.lower()        # 1º corrigido → sem evolução
 
 
+# ── backlog: aviso de fuga ao tema (C2 == 0) em M3 e M6 ─────────────────
+
+@pytest.fixture
+def cap_fuga(monkeypatch):
+    """OCR ok + correção que zera a C2 — simula fuga TOTAL ao tema (motor
+    derruba C2 contra o tema, ADENDO §D7)."""
+    class _Ocr:
+        text = "Redação de teste com conteúdo suficiente pra corrigir."
+        rejected = False
+        quality_issues = []
+
+    monkeypatch.setattr(C, "transcrever", lambda p: _Ocr())
+
+    def _corr(texto, *, tema=None, grader=None):
+        return C.ResultadoCorrecao(
+            nota_total=400, notas={"c1": 120, "c2": 0, "c3": 120, "c4": 120, "c5": 40},
+            ponto_forte="estrutura em pé", foco_melhoria="a redação não trata o tema proposto",
+            raw={},
+        )
+    monkeypatch.setattr(C, "corrigir_texto", _corr)
+
+
+def test_M6_avisa_fuga_ao_tema_quando_c2_zero(store, b2c_on, sem_b2g, cap_fuga):
+    p = store.add_parceiro()
+    store.add_aluno("+5511777", p.id, estado="ativo", nome="Ana")
+    r = maybe_route_b2c(_msg(text="Um tema qualquer de treino do ENEM", image_path="/tmp/f.jpg"))
+    assert "anula a redação" in r[0].text          # aviso pedagógico presente
+    assert "Manda a próxima" in r[0].text           # veio DEPOIS do fecho M6
+
+
+def test_M3_avisa_fuga_ao_tema_quando_c2_zero(store, b2c_on, sem_b2g, cap_fuga):
+    p = store.add_parceiro()
+    store.add_aluno("+5511777", p.id, estado="degustacao", nome="Ana")
+    r = maybe_route_b2c(_msg(text="Um tema qualquer de treino do ENEM", image_path="/tmp/f.jpg"))
+    assert "anula a redação" in r[0].text
+
+
+def test_M6_sem_aviso_quando_c2_positiva(store, b2c_on, sem_b2g, cap_tema):
+    p = store.add_parceiro()
+    store.add_aluno("+5511777", p.id, estado="ativo", nome="Ana")
+    r = maybe_route_b2c(_msg(text="Um tema qualquer de treino do ENEM", image_path="/tmp/f.jpg"))
+    assert "anula a redação" not in r[0].text       # C2 120 → sem aviso
+
+
 # ── 19: nenhuma copy contém ** (negrito é asterisco simples) ────────────
 
 def test_nenhuma_copy_tem_asterisco_duplo():

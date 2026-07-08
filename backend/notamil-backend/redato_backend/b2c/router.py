@@ -427,11 +427,12 @@ def _corrigir_e_entregar(msg, aluno, parceiro, *, texto, tema, gratis,
 
     if is_degustacao:
         aluno2 = repo.incrementar_gratis(msg.phone) or aluno
-        replies = [_out(M.M3_ENTREGA_DEGUSTACAO.format(
+        texto_m3 = M.M3_ENTREGA_DEGUSTACAO.format(
             tema=tema, nota_total=res.nota_total, **res.notas,
             ponto_forte=res.ponto_forte, foco_melhoria=res.foco_melhoria,
             nome_publico=parceiro.nome_publico if parceiro else "Redato",
-        ), branding)]
+        ) + M.alerta_fuga_tema(res.notas)
+        replies = [_out(texto_m3, branding)]
         if aluno2.correcoes_gratis_usadas >= config.free_corrections():
             replies.extend(_ir_para_paywall(msg, aluno2, parceiro))
         return replies
@@ -445,6 +446,7 @@ def _corrigir_e_entregar(msg, aluno, parceiro, *, texto, tema, gratis,
         texto_m6 += M.M6_EVOLUCAO_LINE.format(
             ultimas_notas=_fmt_evolucao(repo.ultimas_notas(aluno.id)))
     texto_m6 += M.M6_FECHO
+    texto_m6 += M.alerta_fuga_tema(res.notas)
     return [_out(texto_m6, branding)]
 
 

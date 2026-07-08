@@ -83,6 +83,18 @@ M6_BASE = (
 M6_EVOLUCAO_LINE = " 📈 Sua evolução: {ultimas_notas}."
 M6_FECHO = " Manda a próxima quando quiser!"
 
+# Aviso pedagógico de fuga ao tema (backlog B2C). Quando o motor zera a C2
+# por fuga TOTAL ao tema, o B2C — ao contrário do ENEM oficial, que ANULA a
+# redação (zero global) — pontua ~400 e entrega diagnóstico, porque nota zero
+# seca não ensina e C2 zerada + diagnóstico ensina. Esta linha torna a
+# divergência EXPLÍCITA (o público conhece a regra "padrão ENEM"), virando
+# feature pedagógica em vez de divergência silenciosa do INEP. O router anexa
+# a M3/M6 via `alerta_fuga_tema`. NÃO mexe no motor nem no prompt do grader.
+M_ALERTA_FUGA_TEMA = (
+    " ⚠️ No ENEM oficial, fugir do tema anula a redação inteira (zero). "
+    "Aqui a gente pontua e mostra onde melhorar pra você treinar."
+)
+
 M7_FAIR_USE = (
     "Você treinou MUITO hoje ({n} redações!) 🔥 Pra correção manter a "
     "qualidade, seguimos amanhã. Que tal reescrever a de hoje aplicando "
@@ -173,6 +185,15 @@ M_FOTO_ILEGIVEL = (
 # ──────────────────────────────────────────────────────────────────────
 # Branding helpers
 # ──────────────────────────────────────────────────────────────────────
+
+def alerta_fuga_tema(notas: Dict[str, Any]) -> str:
+    """Linha de aviso de fuga ao tema, ou "" se não houver fuga.
+
+    Sinal: C2 == 0. O motor deriva a C2 CONTRA o tema (ADENDO §D7) e a zera
+    na fuga total — mesmo comportamento que o gate `validar_tema_c2.py`
+    exige. Pura: só olha as notas, não toca no motor."""
+    return M_ALERTA_FUGA_TEMA if notas.get("c2") == 0 else ""
+
 
 def assinar(texto: str, branding: Optional[Dict[str, Any]]) -> str:
     """Aplica a assinatura do parceiro ao fim da mensagem, se houver.
